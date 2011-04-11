@@ -1,1 +1,14 @@
-Good old readme.
+Setup steps:
+
+1) Download Z3, and copy the include and lib files to z3/[z3version]/include and
+z3/[z3version]/lib respectively. (eg: z3/2.19/include/z3.h and
+z3/2.19/lib/libz3.so).
+
+2) Download sbt. Run 'sbt update' from the current directory.
+
+3) Run 'sbt package' to create the jar file. It will be in
+target/[scalaversion]/scalaz3.jar and will contain the shared library required
+by the bindings.
+
+4) For testing, run 'LD_LIBRARY_PATH=z3/[z3version]/lib sbt test'.
+

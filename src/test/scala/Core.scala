@@ -1,0 +1,28 @@
+import org.scalatest.FunSuite
+import org.scalatest.matchers.ShouldMatchers
+
+class Core extends FunSuite with ShouldMatchers {
+  import z3.scala._
+
+  test("Core") {
+    val z3 = new Z3Context(new Z3Config("MODEL" -> true))
+
+    val x = z3.mkFreshConst("x", z3.mkIntSort)
+    val y = z3.mkFreshConst("y", z3.mkIntSort)
+    val p1 = z3.mkFreshConst("p1", z3.mkBoolSort)
+    val p2 = z3.mkFreshConst("p2", z3.mkBoolSort)
+    val p3 = z3.mkFreshConst("p3", z3.mkBoolSort)
+  
+    val zero = z3.mkInt(0, z3.mkIntSort)
+
+    z3.assertCnstr(p1 --> !(!(x === zero)))
+    z3.assertCnstr(p2 --> !(y === zero))
+    z3.assertCnstr(p3 --> !(x === zero))
+
+    val (result, model, core) = z3.checkAssumptions(p1, p2, p3)
+
+    result should equal (Some(false))
+    core.toSet should equal (Set(p1, p3))
+  }
+}
+

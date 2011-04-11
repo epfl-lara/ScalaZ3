@@ -1,0 +1,131 @@
+package z3.scala.dsl
+
+import z3.scala.{Z3AST,Z3Context}
+
+sealed trait SortTree
+trait TopSort extends SortTree
+trait BoolSort extends TopSort
+trait IntSort extends TopSort
+trait RealSort extends TopSort
+trait BitvectorSort extends TopSort
+trait ArraySort extends TopSort
+trait BottomSort extends BoolSort with IntSort with RealSort with BitvectorSort with ArraySort
+
+sealed trait Tree[+T >: BottomSort <: TopSort] {
+  private[dsl] def build(z3 : Z3Context) : Z3AST
+
+  private var built : Boolean = false
+  private var t : Z3AST = null
+  def ast(z3 : Z3Context) : Z3AST = {
+    if(!built) {
+      built = true
+      t = build(z3)
+    }
+    t
+  }
+}
+
+/** Instances of Val should never be created manually, but rather always
+ * through a ValHandler. The type parameter refers to a Scala type for a
+ * value that the user wishes to obtain through a call to choose, find or
+ * findAll. */
+abstract class Val[A] extends Tree[BottomSort]
+
+sealed trait BinaryOp[+A >: BottomSort <: TopSort,B >: BottomSort <: TopSort] extends Tree[B] {
+  val left : Tree[A]
+  val right : Tree[A]
+}
+sealed trait BinaryPred[+A >: BottomSort <: TopSort] extends BinaryOp[A,BoolSort]
+
+sealed trait NAryPred[+A >: BottomSort <: TopSort] extends Tree[BoolSort] {
+  val args : Seq[Tree[A]]
+}
+
+case class BoolConstant(value : Boolean) extends Tree[BoolSort] {
+  private[dsl] def build(z3 : Z3Context) = if(value) z3.mkTrue else z3.mkFalse
+}
+
+case class IntConstant(value : Int) extends Tree[IntSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkInt(value, z3.mkIntSort)
+}
+
+case class BoolVar() extends Tree[BoolSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkFreshConst("C", z3.mkBoolSort)
+}
+
+case class IntVar() extends Tree[IntSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkFreshConst("I", z3.mkIntSort)
+}
+
+case class Eq[+A >: BottomSort <: TopSort](left : Tree[A], right : Tree[A]) extends BinaryPred[A] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkEq(left.ast(z3), right.ast(z3))
+}
+
+case class Distinct[+A >: BottomSort <: TopSort](args : Tree[A]*) extends NAryPred[A] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkDistinct(args.map(_.ast(z3)) : _*)
+}
+
+case class And[+A >: BottomSort <: BoolSort](args : Tree[A]*) extends NAryPred[A] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkAnd(args.map(_.ast(z3)) : _*)
+}
+
+case class Or[+A >: BottomSort <: BoolSort](args : Tree[A]*) extends NAryPred[A] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkOr(args.map(_.ast(z3)) : _*)
+}
+
+case class Not[+A >: BottomSort <: BoolSort](tree : Tree[A]) extends Tree[BoolSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkNot(tree.ast(z3))
+}
+
+case class Iff[+A >: BottomSort <: BoolSort](left : Tree[A], right : Tree[A]) extends BinaryPred[BoolSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkIff(left.ast(z3), right.ast(z3))
+}
+
+case class Implies[+A >: BottomSort <: BoolSort](left : Tree[A], right : Tree[A]) extends BinaryPred[BoolSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkImplies(left.ast(z3), right.ast(z3))
+}
+
+case class Xor[+A >: BottomSort <: BoolSort](left : Tree[A], right : Tree[A]) extends BinaryPred[BoolSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkXor(left.ast(z3), right.ast(z3))
+}
+
+case class Add[+A >: BottomSort <: IntSort](args : Tree[A]*) extends Tree[IntSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkAdd(args.map(_.ast(z3)) : _*)
+}
+
+case class Mul[+A >: BottomSort <: IntSort](args : Tree[A]*) extends Tree[IntSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkMul(args.map(_.ast(z3)) : _*)
+}
+
+case class Sub[+A >: BottomSort <: IntSort](left : Tree[A], right : Tree[A]) extends BinaryOp[A,IntSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkSub(left.ast(z3), right.ast(z3))
+}
+
+case class Div[+A >: BottomSort <: IntSort](left : Tree[A], right : Tree[A]) extends BinaryOp[A,IntSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkDiv(left.ast(z3), right.ast(z3))
+}
+
+case class Mod[+A >: BottomSort <: IntSort](left : Tree[A], right : Tree[A]) extends BinaryOp[A,IntSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkMod(left.ast(z3), right.ast(z3))
+}
+
+case class Rem[+A >: BottomSort <: IntSort](left : Tree[A], right : Tree[A]) extends BinaryOp[A,IntSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkRem(left.ast(z3), right.ast(z3))
+}
+
+case class LT[+A >: BottomSort <: IntSort](left : Tree[A], right : Tree[A]) extends BinaryPred[IntSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkLT(left.ast(z3), right.ast(z3))
+}
+
+case class LE[+A >: BottomSort <: IntSort](left : Tree[A], right : Tree[A]) extends BinaryPred[IntSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkLE(left.ast(z3), right.ast(z3))
+}
+
+case class GT[+A >: BottomSort <: IntSort](left : Tree[A], right : Tree[A]) extends BinaryPred[IntSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkGT(left.ast(z3), right.ast(z3))
+}
+
+case class GE[+A >: BottomSort <: IntSort](left : Tree[A], right : Tree[A]) extends BinaryPred[IntSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkGE(left.ast(z3), right.ast(z3))
+}
+

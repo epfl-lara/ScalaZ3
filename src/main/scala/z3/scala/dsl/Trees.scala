@@ -31,6 +31,25 @@ sealed trait Tree[+T >: BottomSort <: TopSort] {
  * findAll. */
 abstract class Val[A] extends Tree[BottomSort]
 
+/** This class is used to bridge the gap between non-DSL Z3ASTs and DSL ASTs.
+ * There are two important things to check: that the Z3Context is the correct
+ * one (when the DSL tree actually gets converted), and that the sort is the
+ * advertised one. This second check is currently not performed. It will need
+ * to be a runtime check that can happen through an implicit "checker"
+ * parameter. */
+case class Z3ASTWrapper[+A >: BottomSort <: TopSort](ast : Z3AST) extends Tree[A] {
+  def build(z3 : Z3Context) : Z3AST = returnIfCompatible(z3)
+  override def ast(z3 : Z3Context) : Z3AST = returnIfCompatible(z3)
+
+  private def returnIfCompatible(z3 : Z3Context) : Z3AST = {
+    if(z3.ptr != ast.context.ptr) {
+      throw new Exception("Error: using incompatible context to convert DSL Tree.")
+    } else {
+      this.ast
+    }
+  }
+}
+
 sealed trait BinaryOp[+A >: BottomSort <: TopSort,B >: BottomSort <: TopSort] extends Tree[B] {
   val left : Tree[A]
   val right : Tree[A]

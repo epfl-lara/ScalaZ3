@@ -2,14 +2,11 @@ package z3.scala
 
 import z3.Pointer
 import z3.Z3Wrapper
-import Z3ASTTypes._
 
 import scala.collection.mutable.{Map=>MutableMap,Set=>MutableSet}
 import scala.util.Random.nextInt
 
 class ProceduralAttachment[T](context: Z3Context) extends Z3Theory(context, "PA" + nextInt) {
-  private type A = TopType
-  private type B = BottomType
   private def randomName(prefix: String) : String = prefix + nextInt
 
   private val thySort : Z3Sort = mkTheorySort(context.mkStringSymbol(randomName("ts-")))
@@ -34,7 +31,7 @@ class ProceduralAttachment[T](context: Z3Context) extends Z3Theory(context, "PA"
     (() => value)
   }
 
-  private def boolAST(value : Boolean) : TypedZ3AST[BoolType] = if(value) context.mkTrue else context.mkFalse
+  private def boolAST(value : Boolean) : Z3AST = if(value) context.mkTrue else context.mkFalse
 
   type Pred1 = T => Boolean
   type Pred2 = (T,T) => Boolean
@@ -166,11 +163,9 @@ class ProceduralAttachment[T](context: Z3Context) extends Z3Theory(context, "PA"
   }
 
   override def finalCheck : Boolean = {
-    //println("It's final check time, let's see the apps !")
-    //println("  " + getApps[B].map(_.toString).mkString("\n  "))
     var toReturn = true
 
-    for(curr <- getApps[B]) context.getASTKind(curr) match {
+    for(curr <- getApps) context.getASTKind(curr) match {
       case Z3AppAST(fd, args) if allPredicates(fd) => toReturn = toReturn & treatAssignment(fd, args : _*)
       case Z3AppAST(fd, args) if allFunctions(fd) => {
         if(getEqClassValue(curr).isEmpty) {
@@ -232,7 +227,7 @@ class ProceduralAttachment[T](context: Z3Context) extends Z3Theory(context, "PA"
           val newArgs2 = newArgs.map(_.get)
           val result = interpret(fd, newArgs2 : _*)
           result match {
-            case Some(ast) => assertAxiomProxy(fd(newArgs2 : _*) === ast)
+            case Some(ast) => assertAxiomProxy(context.mkEq(fd(newArgs2 : _*), ast))
             case _ => ;
           }
         }

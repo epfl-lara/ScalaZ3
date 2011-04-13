@@ -1,7 +1,7 @@
 package z3.scala
 
 import z3.{Z3Wrapper,Pointer}
-import Z3ASTTypes._
+import scala.collection.mutable.{Set=>MutableSet}
 
 object Z3Context {
   sealed abstract class ADTSortReference
@@ -86,12 +86,39 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
     Z3Wrapper.updateParamValue(this.ptr, paramID, paramValue)
   }
 
+  private val usedIntSymbols : MutableSet[Int] = MutableSet.empty
+  private var lastUsed : Int = -1
+
   def mkIntSymbol(i: Int) : Z3Symbol = {
+    usedIntSymbols += i
     new Z3Symbol(Z3Wrapper.mkIntSymbol(this.ptr, i), this)
   }
 
+  def mkFreshIntSymbol : Z3Symbol = {
+    var i = lastUsed + 1
+    while(usedIntSymbols(i)) {
+      i += 1
+    }
+    lastUsed = i
+    mkIntSymbol(i)
+  }
+
+  private val usedStringSymbols : MutableSet[String] = MutableSet.empty
   def mkStringSymbol(s: String) : Z3Symbol = {
+    usedStringSymbols += s
     new Z3Symbol(Z3Wrapper.mkStringSymbol(this.ptr, s), this)
+  }
+
+  def mkFreshStringSymbol(s: String) : Z3Symbol = {
+    if(!usedStringSymbols(s)) {
+      mkStringSymbol(s)
+    } else {
+      var i = 0
+      while(usedStringSymbols(s + i)) {
+        i += 1
+      }
+      mkStringSymbol(s + i)
+    }
   }
 
   def isArrayValue(ast: Z3AST) : Option[Int] = {
@@ -233,280 +260,295 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
     Z3Wrapper.isEqAST(this.ptr, t1.ptr, t2.ptr)
   }
 
-  def mkApp[A >: BottomType <: TopType](funcDecl: Z3FuncDecl, args: TypedZ3AST[_]*) : TypedZ3AST[A] = {
+  def mkApp(funcDecl: Z3FuncDecl, args: Z3AST*) : Z3AST = {
     if(funcDecl.arity != args.size)
       throw new IllegalArgumentException("Calling mkApp with wrong number of arguments.")
 
-    new TypedZ3AST[A](Z3Wrapper.mkApp(this.ptr, funcDecl.ptr, args.size, Z3Wrapper.toPtrArray(args.toArray)), this)
+    new Z3AST(Z3Wrapper.mkApp(this.ptr, funcDecl.ptr, args.size, Z3Wrapper.toPtrArray(args.toArray)), this)
   }
 
   def isEqFuncDecl(fd1: Z3FuncDecl, fd2: Z3FuncDecl) : Boolean = {
     Z3Wrapper.isEqFuncDecl(this.ptr, fd1.ptr, fd2.ptr)
   }
 
-  def mkConst[A >: BottomType <: TopType](symbol: Z3Symbol, sort: Z3Sort) : TypedZ3AST[A] = {
-    new TypedZ3AST[A](Z3Wrapper.mkConst(this.ptr, symbol.ptr, sort.ptr), this)
+  def mkConst(symbol: Z3Symbol, sort: Z3Sort) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkConst(this.ptr, symbol.ptr, sort.ptr), this)
   }
 
-  def mkIntConst(symbol: Z3Symbol) : TypedZ3AST[NumeralType] = {
-    mkConst[NumeralType](symbol, mkIntSort)
+  def mkIntConst(symbol: Z3Symbol) : Z3AST = {
+    mkConst(symbol, mkIntSort)
   }
 
-  def mkBoolConst(symbol: Z3Symbol) : TypedZ3AST[BoolType] = {
-    mkConst[BoolType](symbol, mkBoolSort)
+  def mkBoolConst(symbol: Z3Symbol) : Z3AST = {
+    mkConst(symbol, mkBoolSort)
   }
 
   def mkFuncDecl(symbol: Z3Symbol, domainSorts: Seq[Z3Sort], rangeSort: Z3Sort) : Z3FuncDecl = {
     new Z3FuncDecl(Z3Wrapper.mkFuncDecl(this.ptr, symbol.ptr, domainSorts.size, Z3Wrapper.toPtrArray(domainSorts.toArray), rangeSort.ptr), domainSorts.size, this)
   }
 
-  def mkFreshConst[A >: BottomType <: TopType](prefix: String, sort: Z3Sort) : TypedZ3AST[A] = {
-    new TypedZ3AST[A](Z3Wrapper.mkFreshConst(this.ptr, prefix, sort.ptr), this)
+  def mkFreshConst(prefix: String, sort: Z3Sort) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkFreshConst(this.ptr, prefix, sort.ptr), this)
   }
 
-  def mkFreshIntConst(prefix: String) : TypedZ3AST[NumeralType] = {
-    mkFreshConst[NumeralType](prefix, mkIntSort)
+  def mkFreshIntConst(prefix: String) : Z3AST = {
+    mkFreshConst(prefix, mkIntSort)
   }
 
-  def mkFreshBoolConst(prefix: String) : TypedZ3AST[BoolType] = {
-    mkFreshConst[BoolType](prefix, mkBoolSort)
+  def mkFreshBoolConst(prefix: String) : Z3AST = {
+    mkFreshConst(prefix, mkBoolSort)
   }
 
   def mkFreshFuncDecl(prefix: String, domainSorts: Seq[Z3Sort], rangeSort: Z3Sort) : Z3FuncDecl = {
     new Z3FuncDecl(Z3Wrapper.mkFreshFuncDecl(this.ptr, prefix, domainSorts.size, Z3Wrapper.toPtrArray(domainSorts.toArray), rangeSort.ptr), domainSorts.size, this)
   }
 
-  def mkTrue() : TypedZ3AST[BoolType] = {
-    new TypedZ3AST[BoolType](Z3Wrapper.mkTrue(this.ptr), this)
+  def mkTrue() : Z3AST = {
+    new Z3AST(Z3Wrapper.mkTrue(this.ptr), this)
   }
 
-  def mkFalse() : TypedZ3AST[BoolType] = {
-    new TypedZ3AST[BoolType](Z3Wrapper.mkFalse(this.ptr), this)
+  def mkFalse() : Z3AST = {
+    new Z3AST(Z3Wrapper.mkFalse(this.ptr), this)
   }
 
-  def mkEq(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BoolType] = {
-    new TypedZ3AST[BoolType](Z3Wrapper.mkEq(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkEq(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkEq(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkDistinct(args: Z3AST*) : TypedZ3AST[BoolType] = {
+  def mkDistinct(args: Z3AST*) : Z3AST = {
     if(args.size == 0) {
       throw new IllegalArgumentException("mkDistinct needs at least one argument")
     } else if(args.size == 1) {
       mkTrue
     } else {
-      new TypedZ3AST[BoolType](Z3Wrapper.mkDistinct(this.ptr, args.length, Z3Wrapper.toPtrArray(args.toArray)), this)
+      new Z3AST(Z3Wrapper.mkDistinct(this.ptr, args.length, Z3Wrapper.toPtrArray(args.toArray)), this)
     }
   }
 
-  def mkNot(ast: Z3AST) : TypedZ3AST[BoolType] = {
-    new TypedZ3AST[BoolType](Z3Wrapper.mkNot(this.ptr, ast.ptr), this)
+  def mkNot(ast: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkNot(this.ptr, ast.ptr), this)
   }
 
-  def mkITE[A >: BottomType <: TopType](t1: Z3AST, t2: Z3AST, t3: Z3AST) : TypedZ3AST[A] = {
-    new TypedZ3AST[A](Z3Wrapper.mkITE(this.ptr, t1.ptr, t2.ptr, t3.ptr), this)
+  def mkITE(t1: Z3AST, t2: Z3AST, t3: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkITE(this.ptr, t1.ptr, t2.ptr, t3.ptr), this)
   }
 
-  def mkIff(t1: Z3AST, t2: Z3AST) : TypedZ3AST[BoolType] = {
-    new TypedZ3AST[BoolType](Z3Wrapper.mkIff(this.ptr, t1.ptr, t2.ptr), this)
+  def mkIff(t1: Z3AST, t2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkIff(this.ptr, t1.ptr, t2.ptr), this)
   }
 
-  def mkImplies(t1: Z3AST, t2: Z3AST) : TypedZ3AST[BoolType] = {
-    new TypedZ3AST[BoolType](Z3Wrapper.mkImplies(this.ptr, t1.ptr, t2.ptr), this)
+  def mkImplies(t1: Z3AST, t2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkImplies(this.ptr, t1.ptr, t2.ptr), this)
   }
 
-  def mkXor(t1: Z3AST, t2: Z3AST) : TypedZ3AST[BoolType] = {
-    new TypedZ3AST[BoolType](Z3Wrapper.mkXor(this.ptr, t1.ptr, t2.ptr), this)
+  def mkXor(t1: Z3AST, t2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkXor(this.ptr, t1.ptr, t2.ptr), this)
   }
 
-  def mkAnd(args: Z3AST*) : TypedZ3AST[BoolType] = {
+  def mkAnd(args: Z3AST*) : Z3AST = {
     if(args.size == 0) {
       throw new IllegalArgumentException("mkAnd needs at least one argument")
     } else if(args.size == 1) {
-      new TypedZ3AST[BoolType](args(0).ptr, this)
+      new Z3AST(args(0).ptr, this)
     } else {
-      new TypedZ3AST[BoolType](Z3Wrapper.mkAnd(this.ptr, args.length, Z3Wrapper.toPtrArray(args.toArray)), this)
+      new Z3AST(Z3Wrapper.mkAnd(this.ptr, args.length, Z3Wrapper.toPtrArray(args.toArray)), this)
     }
   }
 
-  def mkOr(args: Z3AST*) : TypedZ3AST[BoolType] = {
+  def mkOr(args: Z3AST*) : Z3AST = {
     if(args.size == 0) {
       throw new IllegalArgumentException("mkOr needs at least one argument")
     } else if(args.size == 1) {
-      new TypedZ3AST[BoolType](args(0).ptr, this)
+      new Z3AST(args(0).ptr, this)
     } else {
-      new TypedZ3AST[BoolType](Z3Wrapper.mkOr(this.ptr, args.length, Z3Wrapper.toPtrArray(args.toArray)), this)
+      new Z3AST(Z3Wrapper.mkOr(this.ptr, args.length, Z3Wrapper.toPtrArray(args.toArray)), this)
     }
   }
 
-  def mkAdd(args: Z3AST*) : TypedZ3AST[NumeralType] = {
+  def mkAdd(args: Z3AST*) : Z3AST = {
     if(args.size == 0) {
       throw new IllegalArgumentException("mkAdd needs at least one argument")
     } else if(args.size == 1) {
-      new TypedZ3AST[NumeralType](args(0).ptr, this)
+      new Z3AST(args(0).ptr, this)
     } else {
-      new TypedZ3AST[NumeralType](Z3Wrapper.mkAdd(this.ptr, args.length, Z3Wrapper.toPtrArray(args.toArray)), this)
+      new Z3AST(Z3Wrapper.mkAdd(this.ptr, args.length, Z3Wrapper.toPtrArray(args.toArray)), this)
     }
   }
 
-  def mkMul(args: Z3AST*) : TypedZ3AST[NumeralType] = {
+  def mkMul(args: Z3AST*) : Z3AST = {
     if(args.size == 0) {
       throw new IllegalArgumentException("mkMul needs at least one argument")
     } else if(args.size == 1) {
-      new TypedZ3AST[NumeralType](args(0).ptr, this)
+      new Z3AST(args(0).ptr, this)
     } else {
-      new TypedZ3AST[NumeralType](Z3Wrapper.mkMul(this.ptr, args.length, Z3Wrapper.toPtrArray(args.toArray)), this)
+      new Z3AST(Z3Wrapper.mkMul(this.ptr, args.length, Z3Wrapper.toPtrArray(args.toArray)), this)
     }
   }
 
-  def mkSub(args: Z3AST*) : TypedZ3AST[NumeralType] = {
+  def mkSub(args: Z3AST*) : Z3AST = {
     if(args.size == 0) {
       throw new IllegalArgumentException("mkSub needs at least one argument")
     } else if(args.size == 1) {
-      new TypedZ3AST[NumeralType](args(0).ptr, this)
+      new Z3AST(args(0).ptr, this)
     } else {
-      new TypedZ3AST[NumeralType](Z3Wrapper.mkSub(this.ptr, args.length, Z3Wrapper.toPtrArray(args.toArray)), this)
+      new Z3AST(Z3Wrapper.mkSub(this.ptr, args.length, Z3Wrapper.toPtrArray(args.toArray)), this)
     }
   }
 
-  def mkUnaryMinus(ast: Z3AST) : TypedZ3AST[NumeralType] = {
-    new TypedZ3AST[NumeralType](Z3Wrapper.mkUnaryMinus(this.ptr, ast.ptr), this)
+  def mkUnaryMinus(ast: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkUnaryMinus(this.ptr, ast.ptr), this)
   }
 
-  def mkDiv(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[NumeralType] = {
-    new TypedZ3AST[NumeralType](Z3Wrapper.mkDiv(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkDiv(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkDiv(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkMod(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[NumeralType] = {
-    new TypedZ3AST[NumeralType](Z3Wrapper.mkMod(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkMod(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkMod(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkRem(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[NumeralType] = {
-    new TypedZ3AST[NumeralType](Z3Wrapper.mkRem(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkRem(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkRem(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkLT(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BoolType] = {
-    new TypedZ3AST[BoolType](Z3Wrapper.mkLT(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkLT(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkLT(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkLE(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BoolType] = {
-    new TypedZ3AST[BoolType](Z3Wrapper.mkLE(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkLE(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkLE(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkGT(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BoolType] = {
-    new TypedZ3AST[BoolType](Z3Wrapper.mkGT(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkGT(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkGT(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkGE(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BoolType] = {
-    new TypedZ3AST[BoolType](Z3Wrapper.mkGE(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkGE(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkGE(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkInt2Real(ast: Z3AST) : TypedZ3AST[NumeralType] = {
-    new TypedZ3AST[NumeralType](Z3Wrapper.mkInt2Real(this.ptr, ast.ptr), this)
+  def mkInt2Real(ast: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkInt2Real(this.ptr, ast.ptr), this)
   }
 
-  def mkReal2Int(ast: Z3AST) : TypedZ3AST[NumeralType] = {
-    new TypedZ3AST[NumeralType](Z3Wrapper.mkReal2Int(this.ptr, ast.ptr), this)
+  def mkReal2Int(ast: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkReal2Int(this.ptr, ast.ptr), this)
   }
 
-  def mkIsInt(ast: Z3AST) : TypedZ3AST[BoolType] = {
-    new TypedZ3AST[BoolType](Z3Wrapper.mkIsInt(this.ptr, ast.ptr), this)
+  def mkIsInt(ast: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkIsInt(this.ptr, ast.ptr), this)
   }
 
   def mkArraySort(domain: Z3Sort, range: Z3Sort) : Z3Sort = {
     new Z3Sort(Z3Wrapper.mkArraySort(this.ptr, domain.ptr, range.ptr), this)
   }
 
-  def mkSelect[A >: BottomType <: TopType](array: Z3AST, index: Z3AST) : TypedZ3AST[A] = {
-    new TypedZ3AST[A](Z3Wrapper.mkSelect(this.ptr, array.ptr, index.ptr), this)
+  def mkSelect(array: Z3AST, index: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkSelect(this.ptr, array.ptr, index.ptr), this)
   }
 
-  def mkStore(array: Z3AST, index: Z3AST, value: Z3AST) : TypedZ3AST[ArrayType] = {
-    new TypedZ3AST[ArrayType](Z3Wrapper.mkStore(this.ptr, array.ptr, index.ptr, value.ptr), this)
+  def mkStore(array: Z3AST, index: Z3AST, value: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkStore(this.ptr, array.ptr, index.ptr, value.ptr), this)
   }
 
-  def mkConstArray(sort: Z3Sort, value: Z3AST) : TypedZ3AST[ArrayType] = {
-    new TypedZ3AST[ArrayType](Z3Wrapper.mkConstArray(this.ptr, sort.ptr, value.ptr), this)
+  def mkConstArray(sort: Z3Sort, value: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkConstArray(this.ptr, sort.ptr, value.ptr), this)
   }
 
-  def mkArrayDefault[A >: BottomType <: TopType](array: Z3AST) : TypedZ3AST[A] = {
-    new TypedZ3AST[A](Z3Wrapper.mkArrayDefault(this.ptr, array.ptr), this)
+  def mkArrayDefault(array: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkArrayDefault(this.ptr, array.ptr), this)
+  }
+
+  def mkTupleSort(name : String, sorts : Z3Sort*) : (Z3Sort,Z3FuncDecl,Seq[Z3FuncDecl]) = mkTupleSort(mkStringSymbol(name), sorts : _*)
+
+  def mkTupleSort(name : Z3Symbol, sorts : Z3Sort*) : (Z3Sort,Z3FuncDecl,Seq[Z3FuncDecl]) = {
+    require(sorts.size > 0)
+    val sz = sorts.size
+    val consPtr = new Pointer(0L)
+    val projFuns = new Array[Long](sz)
+    val fieldNames = sorts.map(s => mkFreshStringSymbol(name + "-field")).toArray
+    val sortPtr = Z3Wrapper.mkTupleSort(this.ptr, name.ptr, sz, fieldNames.map(_.ptr), sorts.map(_.ptr).toArray, consPtr, projFuns)
+    val newSort = new Z3Sort(sortPtr, this)
+    val consFuncDecl = new Z3FuncDecl(consPtr.ptr, sz, this)
+    val projFuncDecls = projFuns.map(ptr => new Z3FuncDecl(ptr, 1, this)).toSeq
+    (newSort, consFuncDecl, projFuncDecls)
   }
 
   def mkSetSort(underlying: Z3Sort) : Z3Sort = {
     new Z3Sort(Z3Wrapper.mkSetSort(this.ptr, underlying.ptr), this)
   }
 
-  def mkEmptySet(sort: Z3Sort) : TypedZ3AST[ArrayType] = {
-    new TypedZ3AST[ArrayType](Z3Wrapper.mkEmptySet(this.ptr, sort.ptr), this)
+  def mkEmptySet(sort: Z3Sort) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkEmptySet(this.ptr, sort.ptr), this)
   }
 
-  def mkFullSet(sort: Z3Sort) : TypedZ3AST[ArrayType] = {
-    new TypedZ3AST[ArrayType](Z3Wrapper.mkFullSet(this.ptr, sort.ptr), this)
+  def mkFullSet(sort: Z3Sort) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkFullSet(this.ptr, sort.ptr), this)
   }
 
-  def mkSetAdd(set: Z3AST, elem: Z3AST) : TypedZ3AST[ArrayType] = {
-    new TypedZ3AST[ArrayType](Z3Wrapper.mkSetAdd(this.ptr, set.ptr, elem.ptr), this)
+  def mkSetAdd(set: Z3AST, elem: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkSetAdd(this.ptr, set.ptr, elem.ptr), this)
   }
 
-  def mkSetDel(set: Z3AST, elem: Z3AST) : TypedZ3AST[ArrayType] = {
-    new TypedZ3AST[ArrayType](Z3Wrapper.mkSetDel(this.ptr, set.ptr, elem.ptr), this)
+  def mkSetDel(set: Z3AST, elem: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkSetDel(this.ptr, set.ptr, elem.ptr), this)
   }
 
-  def mkSetUnion(args: Z3AST*) : TypedZ3AST[ArrayType] = {
+  def mkSetUnion(args: Z3AST*) : Z3AST = {
     if(args.size == 0) {
       throw new IllegalArgumentException("mkSetUnion needs at least one argument")
     } else if(args.size == 1) {
-      new TypedZ3AST[ArrayType](args(0).ptr, this)
+      new Z3AST(args(0).ptr, this)
     } else {
-      new TypedZ3AST[ArrayType](Z3Wrapper.mkSetUnion(this.ptr, args.length, Z3Wrapper.toPtrArray(args.toArray)), this)
+      new Z3AST(Z3Wrapper.mkSetUnion(this.ptr, args.length, Z3Wrapper.toPtrArray(args.toArray)), this)
     }
   }
 
-  def mkSetIntersect(args: Z3AST*) : TypedZ3AST[ArrayType] = {
+  def mkSetIntersect(args: Z3AST*) : Z3AST = {
     if(args.size == 0) {
       throw new IllegalArgumentException("mkSetIntersect needs at least one argument")
     } else if(args.size == 1) {
-      new TypedZ3AST[ArrayType](args(0).ptr, this)
+      new Z3AST(args(0).ptr, this)
     } else {
-      new TypedZ3AST[ArrayType](Z3Wrapper.mkSetIntersect(this.ptr, args.length, Z3Wrapper.toPtrArray(args.toArray)), this)
+      new Z3AST(Z3Wrapper.mkSetIntersect(this.ptr, args.length, Z3Wrapper.toPtrArray(args.toArray)), this)
     }
   }
 
-  def mkSetDifference(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[ArrayType] = {
-    new TypedZ3AST[ArrayType](Z3Wrapper.mkSetDifference(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkSetDifference(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkSetDifference(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkSetComplement(ast: Z3AST) : TypedZ3AST[ArrayType] = {
-    new TypedZ3AST[ArrayType](Z3Wrapper.mkSetComplement(this.ptr, ast.ptr), this)
+  def mkSetComplement(ast: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkSetComplement(this.ptr, ast.ptr), this)
   }
 
-  def mkSetMember(elem: Z3AST, set: Z3AST) : TypedZ3AST[BoolType] = {
-    new TypedZ3AST[BoolType](Z3Wrapper.mkSetMember(this.ptr, elem.ptr, set.ptr), this)
+  def mkSetMember(elem: Z3AST, set: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkSetMember(this.ptr, elem.ptr, set.ptr), this)
   }
 
-  def mkSetSubset(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BoolType] = {
-    new TypedZ3AST[BoolType](Z3Wrapper.mkSetSubset(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkSetSubset(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkSetSubset(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkInt(value: Int, sort: Z3Sort) : TypedZ3AST[NumeralType] = {
-    new TypedZ3AST[NumeralType](Z3Wrapper.mkInt(this.ptr, value, sort.ptr), this)
+  def mkInt(value: Int, sort: Z3Sort) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkInt(this.ptr, value, sort.ptr), this)
   }
 
   def mkPattern(args: Z3AST*) : Z3Pattern = {
     new Z3Pattern(Z3Wrapper.mkPattern(this.ptr, args.size, Z3Wrapper.toPtrArray(args.toArray)), this)
   }
 
-  def mkBound[A >: BottomType <: TopType](index: Int, sort: Z3Sort) : TypedZ3AST[A] = {
-    new TypedZ3AST[A](Z3Wrapper.mkBound(this.ptr, index, sort.ptr), this)
+  def mkBound(index: Int, sort: Z3Sort) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkBound(this.ptr, index, sort.ptr), this)
   }
 
-  def mkForAll(weight: Int, patterns: Seq[Z3Pattern], decls: Seq[(Z3Symbol,Z3Sort)], body: Z3AST) : TypedZ3AST[BoolType] = mkQuantifier(true, weight, patterns, decls, body)
+  def mkForAll(weight: Int, patterns: Seq[Z3Pattern], decls: Seq[(Z3Symbol,Z3Sort)], body: Z3AST) : Z3AST = mkQuantifier(true, weight, patterns, decls, body)
 
-  def mkExists(weight: Int, patterns: Seq[Z3Pattern], decls: Seq[(Z3Symbol,Z3Sort)], body: Z3AST) : TypedZ3AST[BoolType] = mkQuantifier(false, weight, patterns, decls, body)
+  def mkExists(weight: Int, patterns: Seq[Z3Pattern], decls: Seq[(Z3Symbol,Z3Sort)], body: Z3AST) : Z3AST = mkQuantifier(false, weight, patterns, decls, body)
 
-  def mkQuantifier(isForAll: Boolean, weight: Int, patterns: Seq[Z3Pattern], decls: Seq[(Z3Symbol,Z3Sort)], body: Z3AST) : TypedZ3AST[BoolType] = {
+  def mkQuantifier(isForAll: Boolean, weight: Int, patterns: Seq[Z3Pattern], decls: Seq[(Z3Symbol,Z3Sort)], body: Z3AST) : Z3AST = {
     val (declSyms, declSorts) = decls.unzip
-    new TypedZ3AST[BoolType](
+    new Z3AST(
       Z3Wrapper.mkQuantifier(
         this.ptr,
         isForAll,
@@ -525,148 +567,148 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
     new Z3Sort(Z3Wrapper.mkBVSort(this.ptr, size), this)
   }
 
-  def mkBVNot(ast: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkBVNot(this.ptr, ast.ptr), this)
+  def mkBVNot(ast: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkBVNot(this.ptr, ast.ptr), this)
   }
 
-  def mkBVRedAnd(ast: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkBVRedAnd(this.ptr, ast.ptr), this)
+  def mkBVRedAnd(ast: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkBVRedAnd(this.ptr, ast.ptr), this)
   }
 
-  def mkBVRedOr(ast: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkBVRedOr(this.ptr, ast.ptr), this)
+  def mkBVRedOr(ast: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkBVRedOr(this.ptr, ast.ptr), this)
   }
 
-  def mkBVAnd(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkBVAnd(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkBVAnd(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkBVAnd(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkBVOr(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkBVOr(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkBVOr(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkBVOr(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkBVXor(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkBVXor(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkBVXor(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkBVXor(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkBVNand(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkBVNand(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkBVNand(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkBVNand(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkBVNor(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkBVNor(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkBVNor(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkBVNor(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkBVXnor(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkBVXnor(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkBVXnor(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkBVXnor(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkBVNeg(ast: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkBVNeg(this.ptr, ast.ptr), this)
+  def mkBVNeg(ast: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkBVNeg(this.ptr, ast.ptr), this)
   }
 
-  def mkBVAdd(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkBVAdd(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkBVAdd(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkBVAdd(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkBVSub(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkBVSub(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkBVSub(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkBVSub(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkBVMul(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkBVMul(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkBVMul(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkBVMul(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkBVUdiv(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkBVUdiv(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkBVUdiv(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkBVUdiv(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkBVSdiv(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkBVSdiv(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkBVSdiv(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkBVSdiv(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkBVUrem(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkBVUrem(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkBVUrem(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkBVUrem(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkBVSrem(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkBVSrem(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkBVSrem(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkBVSrem(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkBVSmod(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkBVSmod(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkBVSmod(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkBVSmod(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkBVUlt(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkBVUlt(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkBVUlt(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkBVUlt(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkBVSlt(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkBVSlt(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkBVSlt(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkBVSlt(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkBVUle(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkBVUle(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkBVUle(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkBVUle(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkBVSle(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkBVSle(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkBVSle(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkBVSle(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkBVUgt(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkBVUgt(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkBVUgt(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkBVUgt(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkBVSgt(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkBVSgt(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkBVSgt(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkBVSgt(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkBVUge(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkBVUge(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkBVUge(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkBVUge(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkBVSge(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkBVSge(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkBVSge(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkBVSge(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkConcat(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkConcat(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkConcat(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkConcat(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkExtract(high: Int, low: Int, ast: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkExtract(this.ptr, high, low, ast.ptr), this)
+  def mkExtract(high: Int, low: Int, ast: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkExtract(this.ptr, high, low, ast.ptr), this)
   }
 
-  def mkSignExt(extraSize: Int, ast: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkSignExt(this.ptr, extraSize, ast.ptr), this)
+  def mkSignExt(extraSize: Int, ast: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkSignExt(this.ptr, extraSize, ast.ptr), this)
   }
 
-  def mkZeroExt(extraSize: Int, ast: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkZeroExt(this.ptr, extraSize, ast.ptr), this)
+  def mkZeroExt(extraSize: Int, ast: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkZeroExt(this.ptr, extraSize, ast.ptr), this)
   }
 
-  def mkBVShl(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkBVShl(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkBVShl(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkBVShl(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkBVLshr(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkBVLshr(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkBVLshr(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkBVLshr(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkBVAshr(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkBVAshr(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkBVAshr(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkBVAshr(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkExtRotateLeft(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkExtRotateLeft(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkExtRotateLeft(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkExtRotateLeft(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkExtRotateRight(ast1: Z3AST, ast2: Z3AST) : TypedZ3AST[BVType] = {
-    new TypedZ3AST[BVType](Z3Wrapper.mkExtRotateRight(this.ptr, ast1.ptr, ast2.ptr), this)
+  def mkExtRotateRight(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkExtRotateRight(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
-  def mkBVAddNoOverflow(ast1: Z3AST, ast2: Z3AST, isSigned: Boolean) : TypedZ3AST[BoolType] = {
-    new TypedZ3AST[BoolType](Z3Wrapper.mkBVAddNoOverflow(this.ptr, ast1.ptr, ast2.ptr, isSigned), this)
+  def mkBVAddNoOverflow(ast1: Z3AST, ast2: Z3AST, isSigned: Boolean) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkBVAddNoOverflow(this.ptr, ast1.ptr, ast2.ptr, isSigned), this)
   }
 
   def getSymbolKind(symbol: Z3Symbol) : Z3SymbolKind[_] = {
@@ -756,8 +798,8 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
     Z3Wrapper.getAppNumArgs(this.ptr, ast.ptr)
   }
 
-  private def getAppArg[A >: BottomType <: TopType](ast: Z3AST, i: Int) : TypedZ3AST[A] = {
-    new TypedZ3AST[A](Z3Wrapper.getAppArg(this.ptr, ast.ptr, i), this)
+  private def getAppArg(ast: Z3AST, i: Int) : Z3AST = {
+    new Z3AST(Z3Wrapper.getAppArg(this.ptr, ast.ptr, i), this)
   }
 
   def getDeclName(fd: Z3FuncDecl) : Z3Symbol = {
@@ -811,6 +853,10 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
     Z3Wrapper.assertCnstr(this.ptr, ast.ptr)
   }
 
+  def assertCnstr(tree : dsl.Tree[dsl.BoolSort]) : Unit = {
+    Z3Wrapper.assertCnstr(this.ptr, tree.ast(this).ptr)
+  }
+
   def check() : Option[Boolean] = {
     i2ob(Z3Wrapper.check(this.ptr))
   }
@@ -822,7 +868,7 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
     (res, model)
   }
 
-  def checkAssumptions[A >: BottomType <: TopType](assumptions: Z3AST*) : (Option[Boolean],Z3Model,Seq[TypedZ3AST[A]]) = {
+  def checkAssumptions(assumptions: Z3AST*) : (Option[Boolean],Z3Model,Seq[Z3AST]) = {
     val modelPtr = new Pointer(0L)
     val coreSizePtr = new Z3Wrapper.IntPtr()
     val core = new Array[Long](assumptions.size)
@@ -832,9 +878,9 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
     val model = new Z3Model(modelPtr.ptr, this)
 
     val coreSeq = if(coreSizePtr.value > 0) {
-      core.take(coreSizePtr.value).toSeq.map(p => new TypedZ3AST[A](p, this))
+      core.take(coreSizePtr.value).toSeq.map(p => new Z3AST(p, this))
     } else {
-      Seq.empty[TypedZ3AST[A]]
+      Seq.empty[Z3AST]
     }
 
     (res, model, coreSeq)
@@ -843,7 +889,7 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
   def checkAndGetAllModels(): Iterator[Z3Model] = {
     val context = this
     new Iterator[Z3Model] {
-      var constraints: TypedZ3AST[BoolType] = context.mkTrue
+      var constraints: Z3AST = context.mkTrue
       var nextModel: Option[Option[Z3Model]] = None
       
       override def hasNext: Boolean =  nextModel match {
@@ -856,7 +902,7 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
           val toReturn = (result match {
             case (Some(true), m) =>
               nextModel = Some(Some(m))
-              val newConstraints = m.getModelConstantInterpretations[BottomType].foldLeft(context.mkTrue){
+              val newConstraints = m.getModelConstantInterpretations.foldLeft(context.mkTrue){
                 (acc, s) => context.mkAnd(acc, context.mkEq(s._1(), s._2))
               }
               constraints = context.mkAnd(constraints, context.mkNot(newConstraints))
@@ -882,7 +928,7 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
           context.pop(1)
           val toReturn = (result match {
             case (Some(true), m) =>
-              val newConstraints = m.getModelConstantInterpretations[BottomType].foldLeft(context.mkTrue){
+              val newConstraints = m.getModelConstantInterpretations.foldLeft(context.mkTrue){
                 (acc, s) => context.mkAnd(acc, context.mkEq(s._1(), s._2))
               }
               constraints = context.mkAnd(constraints, context.mkNot(newConstraints))
@@ -902,7 +948,7 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
   def checkAndGetAllEventualModels(): Iterator[(Option[Boolean], Z3Model)] = {
     val context = this
     new Iterator[(Option[Boolean], Z3Model)] {
-      var constraints: TypedZ3AST[BoolType] = context.mkTrue
+      var constraints: Z3AST = context.mkTrue
       var nextModel: Option[Option[(Option[Boolean],Z3Model)]] = None
       
       override def hasNext: Boolean =  nextModel match {
@@ -918,7 +964,7 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
               false
             case (outcome, m) =>
               nextModel = Some(Some((outcome, m)))
-              val newConstraints = m.getModelConstantInterpretations[BottomType].foldLeft(context.mkTrue){
+              val newConstraints = m.getModelConstantInterpretations.foldLeft(context.mkTrue){
                 (acc, s) => context.mkAnd(acc, context.mkEq(s._1(), s._2))
               }
               constraints = context.mkAnd(constraints, context.mkNot(newConstraints))
@@ -940,7 +986,7 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
             case (Some(false), _) =>
               throw new Exception("Requesting a new model while there are no more models.")
             case (outcome, m) =>
-              val newConstraints = m.getModelConstantInterpretations[BottomType].foldLeft(context.mkTrue){
+              val newConstraints = m.getModelConstantInterpretations.foldLeft(context.mkTrue){
                 (acc, s) => context.mkAnd(acc, context.mkEq(s._1(), s._2))
               }
               constraints = context.mkAnd(constraints, context.mkNot(newConstraints))
@@ -969,9 +1015,9 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
     }    
   }
 
-//  def mkLabel[A >: BottomType <: TopType](symbol: Z3Symbol, polarity: Boolean, ast: Z3AST[A]) : Z3AST[A] = {
-//    new Z3AST[A](Z3Wrapper.mkLabel(this.ptr, symbol.ptr, polarity, ast.ptr), this)
-//  }
+  def mkLabel(symbol: Z3Symbol, polarity: Boolean, ast: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkLabel(this.ptr, symbol.ptr, polarity, ast.ptr), this)
+  }
 
 //  def getRelevantLabels : Z3Literals = {
 //    new Z3Literals(Z3Wrapper.getRelevantLabels(this.ptr), this)
@@ -998,8 +1044,8 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
 //    new Z3Symbol(Z3Wrapper.getLabelSymbol(this.ptr, lbls.ptr, idx), this)
 //  }
 
-  def getLiteral[A >: BottomType <: TopType](lbls: Z3Literals, idx: Int) : TypedZ3AST[A] = {
-    new TypedZ3AST[A](Z3Wrapper.getLiteral(this.ptr, lbls.ptr, idx), this)
+  def getLiteral(lbls: Z3Literals, idx: Int) : Z3AST = {
+    new Z3AST(Z3Wrapper.getLiteral(this.ptr, lbls.ptr, idx), this)
   }
 
   def disableLiteral(lbls: Z3Literals, idx: Int) : Unit = {
@@ -1036,30 +1082,30 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
   def parseSMTLIBFile(fileName: String, sorts: Map[Z3Symbol,Z3Sort], decls: Map[Z3Symbol,Z3FuncDecl]) : Unit = parseSMTLIB(true, fileName, sorts, decls)
   def parseSMTLIBString(str: String, sorts: Map[Z3Symbol,Z3Sort], decls: Map[Z3Symbol,Z3FuncDecl]) : Unit = parseSMTLIB(false, str, sorts, decls)
 
-  def getSMTLIBFormulas : Iterator[TypedZ3AST[BoolType]] = {
+  def getSMTLIBFormulas : Iterator[Z3AST] = {
     val ctx = this
-    new Iterator[TypedZ3AST[BoolType]] {
+    new Iterator[Z3AST] {
       val total : Int = Z3Wrapper.getSMTLIBNumFormulas(ctx.ptr)
       var returned : Int = 0
 
       override def hasNext : Boolean = (returned < total)
-      override def next() : TypedZ3AST[BoolType] = {
-        val toReturn = new TypedZ3AST[BoolType](Z3Wrapper.getSMTLIBFormula(ctx.ptr, returned), ctx)
+      override def next() : Z3AST = {
+        val toReturn = new Z3AST(Z3Wrapper.getSMTLIBFormula(ctx.ptr, returned), ctx)
         returned += 1
         toReturn
       }
     }
   }
 
-  def getSMTLIBAssumptions : Iterator[TypedZ3AST[BoolType]] = {
+  def getSMTLIBAssumptions : Iterator[Z3AST] = {
     val ctx = this
-    new Iterator[TypedZ3AST[BoolType]] {
+    new Iterator[Z3AST] {
       val total : Int = Z3Wrapper.getSMTLIBNumAssumptions(ctx.ptr)
       var returned : Int = 0
 
       override def hasNext : Boolean = (returned < total)
-      override def next() : TypedZ3AST[BoolType] = {
-        val toReturn = new TypedZ3AST[BoolType](Z3Wrapper.getSMTLIBAssumption(ctx.ptr, returned), ctx)
+      override def next() : Z3AST = {
+        val toReturn = new Z3AST(Z3Wrapper.getSMTLIBAssumption(ctx.ptr, returned), ctx)
         returned += 1
         toReturn
       }

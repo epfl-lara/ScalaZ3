@@ -1,35 +1,33 @@
 package z3.scala
 
-import z3.scala.Z3ASTTypes._
-
 /** This class is inherited to use convenient implicit conversion and utility
  * methods */
 class Z3Application(val cfg: Z3Config = new Z3Config("MODEL" -> true)) {
   val ctx = new Z3Context(cfg)
 
-  def conjunct(args: Iterable[TypedZ3AST[_ >: BottomType <: BoolType]]): TypedZ3AST[BoolType] = {
+  def conjunct(args: Iterable[Z3AST]): Z3AST = {
     if (args.size == 0)
       ctx.mkTrue
     else
       ctx.mkAnd(args.toSeq: _*)
   }
 
-  def disjunct(args: Iterable[TypedZ3AST[_ >: BottomType <: BoolType]]): TypedZ3AST[BoolType] = {
+  def disjunct(args: Iterable[Z3AST]): Z3AST = {
     if (args.size == 0)
       ctx.mkFalse
     else
       ctx.mkOr(args.toSeq: _*)
   }
 
-  def forAll[A >: BottomType <: TopType](args: Iterable[TypedZ3AST[A]], pred: (TypedZ3AST[A] => TypedZ3AST[BoolType])): TypedZ3AST[BoolType] = {
+  def forAll(args: Iterable[Z3AST], pred: (Z3AST => Z3AST)): Z3AST = {
     conjunct(args.map(pred))
   }
 
-  implicit def int2Const(i: Int): TypedZ3AST[NumeralType] = ctx.mkInt(i, ctx.mkIntSort)
-  implicit def bool2Const(b: Boolean): TypedZ3AST[BoolType] =
+  implicit def int2Const(i: Int): Z3AST = ctx.mkInt(i, ctx.mkIntSort)
+  implicit def bool2Const(b: Boolean): Z3AST =
     if (b) ctx.mkTrue else ctx.mkFalse
 
-  implicit def intList2constList(xs: List[Int]): List[TypedZ3AST[NumeralType]] =
+  implicit def intList2constList(xs: List[Int]): List[Z3AST] =
     xs.map(x => int2Const(x))
 
   implicit def string2Symbol(s: String): Z3Symbol = ctx.mkStringSymbol(s)

@@ -173,6 +173,8 @@ public final class Z3Wrapper {
     public static native long mkConstArray(long contextPtr, long sortPtr, long astPtrVal);
     public static native long mkArrayDefault(long contextPtr, long astPtrArr);
 
+    public static native long mkTupleSort(long contextPtr, long symPtr, int numFields, long[] fieldNames, long[] fieldSorts, Pointer constructor, long[] projFuns);
+
     public static native long mkSetSort(long contextPtr, long sortPtr);
     public static native long mkEmptySet(long contextPtr, long sortPtr);
     public static native long mkFullSet(long contextPtr, long sortPtr);

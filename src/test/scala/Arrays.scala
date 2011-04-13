@@ -18,7 +18,7 @@ class Arrays extends FunSuite with ShouldMatchers {
     // x = array1[6]
     z3.assertCnstr(x === z3.mkSelect(array1, z3.mkInt(6, is)))
     // array2 = array1[x - 40 -> 0]
-    z3.assertCnstr(array2 === z3.mkStore(array1, x - z3.mkInt(40, is), z3.mkInt(0, is)))
+    z3.assertCnstr(array2 === z3.mkStore(array1, z3.mkSub(x, z3.mkInt(40, is)), z3.mkInt(0, is)))
 
     // "reading" the default value of array2 (should be 42)
     val fourtyTwo = z3.mkFreshConst("ft", is)

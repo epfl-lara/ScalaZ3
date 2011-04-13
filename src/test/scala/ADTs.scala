@@ -1,7 +1,6 @@
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import z3.scala._
-import z3.scala.Z3ASTTypes._
 
 class EmptyTheory(z3: Z3Context) extends Z3Theory(z3, "dummy")
 
@@ -76,7 +75,7 @@ class ADTs extends FunSuite with ShouldMatchers {
     val consTailSelector: Z3FuncDecl = selesSeq2(0)(1)
 
     // ...and finally we can use them to build a problem.
-    val x:  TypedZ3AST[NumeralType] = ctx.mkConst[NumeralType](ctx.mkStringSymbol("x"), intSort)
+    val x:  Z3AST = ctx.mkIntConst(ctx.mkStringSymbol("x"))
     val t1: Z3AST = ctx.mkConst(ctx.mkStringSymbol("t1"), treeSort)
     val t2: Z3AST = ctx.mkConst(ctx.mkStringSymbol("t2"), treeSort)
     val t3: Z3AST = ctx.mkConst(ctx.mkStringSymbol("t3"), treeSort)

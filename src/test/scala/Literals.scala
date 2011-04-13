@@ -3,6 +3,7 @@ import org.scalatest.matchers.ShouldMatchers
 
 class Literals extends FunSuite with ShouldMatchers {
   import z3.scala._
+  import z3.scala.dsl._
 
   test("Literals") {
     val z3 = new Z3Context(new Z3Config("MODEL" -> true))

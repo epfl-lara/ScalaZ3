@@ -19,5 +19,5 @@ package object scala {
   // private val scalaAPIVersionString = "z3.scala 1.1  (2010-12-03)"
   // private val scalaAPIVersionString = "z3.scala 1.0  (2010-09-16)"
 
-  type Z3AST = TypedZ3AST[Z3ASTTypes.TopType]
+  // type Z3AST = TypedZ3AST[Z3ASTTypes.TopType]
 }

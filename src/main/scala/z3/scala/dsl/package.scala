@@ -3,6 +3,8 @@ package z3.scala
 package object dsl {
   import Operands._
 
+  implicit def z3ASTToBoolOperand(ast : Z3AST) : BoolOperand[BoolSort] = new BoolOperand[BoolSort](Z3ASTWrapper[BoolSort](ast))
+
   implicit def booleanValueToBoolOperand(value : Boolean) : BoolOperand[BoolSort] = new BoolOperand[BoolSort](BoolConstant(value))
 
   implicit def boolTreeToBoolOperand[T >: BottomSort <: BoolSort](tree : Tree[T]) : BoolOperand[BoolSort] = 
@@ -10,12 +12,15 @@ package object dsl {
 
   implicit def boolOperandToBoolTree(operand : BoolOperand[_]) : Tree[BoolSort] = operand.tree.asInstanceOf[Tree[BoolSort]]
 
+  implicit def z3ASTToIntOperand(ast : Z3AST) : IntOperand[IntSort] = new IntOperand[IntSort](Z3ASTWrapper[IntSort](ast))
+
   implicit def intValueToIntOperand(value : Int) : IntOperand[IntSort] = new IntOperand[IntSort](IntConstant(value))
 
   implicit def intTreeToIntOperand[T >: BottomSort <: IntSort](tree : Tree[T]) : IntOperand[IntSort] = 
     new IntOperand[IntSort](tree)
 
   implicit def intOperandToIntTree(operand : IntOperand[_]) : Tree[IntSort] = operand.tree.asInstanceOf[Tree[IntSort]]
+
 
   // The following is for the choose magic.
 

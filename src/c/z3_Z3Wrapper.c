@@ -519,6 +519,56 @@ extern "C" {
         return astToJLong(Z3_mk_array_default(asZ3Context(contextPtr), asZ3AST(arrayASTPtr)));
     }
 
+    JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkTupleSort (JNIEnv * env, jclass cls, jlong contextPtr, jlong symbolPtr, jint numFields, jlongArray fieldNames, jlongArray fieldSorts, jobject consFunPtr, jlongArray projFunPtrs) {
+        Z3_func_decl consFuncDecl;
+        Z3_func_decl * projFuncDecls;
+        Z3_symbol * cFieldSymbols;
+        Z3_sort * cFieldSorts;
+        jlong * fsyms = (*env)->GetLongArrayElements(env, fieldNames, NULL);
+        jlong * fsorts = (*env)->GetLongArrayElements(env, fieldSorts, NULL);
+        jlong * newProjFuns;
+        jlong newSortPtr;
+        int i = 0;
+        int sz = (int)numFields;
+        jclass mc;
+        jfieldID fid;
+
+        if(sz > 0) {
+            cFieldSymbols = (Z3_symbol*)malloc(sz * sizeof(Z3_symbol));
+            cFieldSorts = (Z3_sort*)malloc(sz * sizeof(Z3_sort));
+            projFuncDecls = (Z3_func_decl*)malloc(sz * sizeof(Z3_func_decl));
+            newProjFuns = (jlong*)malloc(sz * sizeof(jlong));
+        }
+
+        for(i = 0; i < sz; ++i) {
+            cFieldSymbols[i] = asZ3Symbol(fsyms[i]);
+            cFieldSorts[i] = asZ3Sort(fsorts[i]);
+        }
+
+        (*env)->ReleaseLongArrayElements(env, fieldNames, fsyms, JNI_ABORT);
+        (*env)->ReleaseLongArrayElements(env, fieldSorts, fsorts, JNI_ABORT);
+
+        newSortPtr = sortToJLong(Z3_mk_tuple_sort(asZ3Context(contextPtr), asZ3Symbol(symbolPtr), sz, cFieldSymbols, cFieldSorts, &consFuncDecl, projFuncDecls));
+
+        mc = (*env)->GetObjectClass(env, consFunPtr);
+        fid = (*env)->GetFieldID(env, mc, "ptr", "J");
+        (*env)->SetLongField(env, consFunPtr, fid, funcDeclToJLong(consFuncDecl));
+
+        if(sz > 0) {
+          for(i = 0; i < sz; ++i) {
+              newProjFuns[i] = funcDeclToJLong(projFuncDecls[i]);
+          }
+          (*env)->SetLongArrayRegion(env, projFunPtrs, 0, (jsize)sz, newProjFuns);
+          free(cFieldSymbols);
+          free(cFieldSorts);
+          free(projFuncDecls);
+          free(newProjFuns);
+        }
+
+        return newSortPtr;
+    }
+    
+
     JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkSetSort (JNIEnv * env, jclass cls, jlong contextPtr, jlong sortPtr) {
         return sortToJLong(Z3_mk_set_sort(asZ3Context(contextPtr), asZ3Sort(sortPtr)));
     }

@@ -35,21 +35,6 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
     Z3Wrapper.softCheckCancel(this.ptr)
   }
 
-  @deprecated("Use Z3Context.toString instead.")
-  def print: Unit = {
-    Z3Wrapper.printContext(this.ptr)
-  }
-
-  @deprecated("Use Z3AST.toString instead.")
-  def printAST(ast: Z3AST): Unit = {
-    Z3Wrapper.printAST(this.ptr, ast.ptr)
-  }
-
-  @deprecated("Use Z3Model.toString instead.")
-  def printModel(model: Z3Model): Unit = {
-    Z3Wrapper.printModel(this.ptr, model.ptr)
-  }
-
   override def toString : String = {
     Z3Wrapper.contextToString(this.ptr)
   }

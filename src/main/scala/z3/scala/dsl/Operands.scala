@@ -84,4 +84,18 @@ object Operands {
       new BoolOperand(GE(tree, other.tree))
     }
   }
+
+  class SetOperand private[dsl](val tree : Tree[_ >: BottomSort <: SetSort]) {
+    def ++(other : SetOperand) : SetOperand = {
+      new SetOperand(SetUnion(tree, other.tree))
+    }
+
+    def **(other : SetOperand) : SetOperand = {
+      new SetOperand(SetIntersect(tree, other.tree))
+    }
+
+    def --(other : SetOperand) : SetOperand = {
+      new SetOperand(SetDifference(tree, other.tree))
+    }
+  }
 }

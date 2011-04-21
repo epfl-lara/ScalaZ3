@@ -27,7 +27,7 @@ import z3.scala.dsl._
            (columns(i) - columns(j) !== j - i))
 
     /* We assert all of the above */
-    ctx.assertCnstr(diffCnstr)
+    ctx assertCnstr diffCnstr
     boundsCnstr map (ctx.assertCnstr(_))
     diagonalsCnstr map (ctx.assertCnstr(_))
 

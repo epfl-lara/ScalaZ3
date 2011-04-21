@@ -6,9 +6,10 @@ sealed trait TopSort
 sealed trait BoolSort extends TopSort
 sealed trait IntSort extends TopSort
 sealed trait RealSort extends TopSort
-sealed trait BitvectorSort extends TopSort
+sealed trait BVSort extends TopSort
+sealed trait SetSort extends TopSort
 sealed trait ArraySort extends TopSort
-sealed trait BottomSort extends BoolSort with IntSort with RealSort with BitvectorSort with ArraySort
+sealed trait BottomSort extends BoolSort with IntSort with RealSort with BVSort with SetSort with ArraySort
 
 sealed trait Tree[+T >: BottomSort <: TopSort] {
   private[dsl] def build(z3 : Z3Context) : Z3AST
@@ -147,3 +148,14 @@ case class GE[+A >: BottomSort <: IntSort](left : Tree[A], right : Tree[A]) exte
   private[dsl] def build(z3 : Z3Context) = z3.mkGE(left.ast(z3), right.ast(z3))
 }
 
+case class SetUnion[+A >: BottomSort <: SetSort](args: Tree[A]*) extends Tree[SetSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkSetUnion(args.map(_.ast(z3)) : _*)
+}
+
+case class SetIntersect[+A >: BottomSort <: SetSort](args: Tree[A]*) extends Tree[SetSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkSetIntersect(args.map(_.ast(z3)) : _*)
+}
+
+case class SetDifference[+A >: BottomSort <: SetSort](left : Tree[A], right : Tree[A]) extends Tree[SetSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkSetDifference(left.ast(z3), right.ast(z3))
+}

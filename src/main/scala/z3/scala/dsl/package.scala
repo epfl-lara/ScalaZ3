@@ -34,6 +34,7 @@ package object dsl {
 
   implicit def intOperandToIntTree(operand : IntOperand) : Tree[IntSort] = operand.tree.asInstanceOf[Tree[IntSort]]
 
+  // TODO add intset methods...
 
   // The following is for the choose magic.
 
@@ -50,6 +51,8 @@ package object dsl {
     def convert(model : Z3Model, ast : Z3AST) : Int =
       model.evalAs[Int](ast).getOrElse(0)
   }
+
+  // TODO add intset val handler
 
   def choose[T](predicate : Val[T] => Tree[BoolSort])(implicit vh : ValHandler[T]) : T = find(predicate)(vh) match {
     case Some(result) => result

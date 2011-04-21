@@ -3,6 +3,7 @@ package z3.scala
 package object dsl {
   import Operands._
 
+  class UnsatisfiableConstraintException extends Exception
   class SortMismatchException(msg : String) extends Exception("Sort mismatch: " + msg)
 
   implicit def z3ASTToBoolOperand(ast : Z3AST) : BoolOperand[BoolSort] = {
@@ -50,6 +51,11 @@ package object dsl {
       model.evalAs[Int](ast).getOrElse(0)
   }
 
+  def choose[T](predicate : Val[T] => Tree[BoolSort])(implicit vh : ValHandler[T]) : T = find(predicate)(vh) match {
+    case Some(result) => result
+    case None => throw new UnsatisfiableConstraintException
+  }
+
   def find[T](predicate : Val[T] => Tree[BoolSort])(implicit vh : ValHandler[T]) : Option[T] = {
     val z3 = new Z3Context("MODEL" -> true)
     val valTree = vh.construct
@@ -69,6 +75,24 @@ package object dsl {
         None
       }
     }
+  }
+
+  def findAll[T](predicate : Val[T] => Tree[BoolSort])(implicit vh : ValHandler[T]) : Iterator[T] = {
+    val z3 = new Z3Context("MODEL" -> true)
+    val valTree = vh.construct
+    val valAST = valTree.ast(z3)
+    val constraintTree = predicate(valTree)
+
+    z3.assertCnstr(constraintTree.ast(z3))
+    z3.checkAndGetAllModels.map(m => {
+      val result = vh.convert(m, valAST)
+      result
+    })
+  }
+
+  def choose[T1,T2](predicate : (Val[T1],Val[T2]) => Tree[BoolSort])(implicit vh1 : ValHandler[T1], vh2 : ValHandler[T2]) : (T1,T2) = find(predicate)(vh1, vh2) match {
+    case Some(p) => p
+    case None => throw new UnsatisfiableConstraintException
   }
 
   def find[T1,T2](predicate : (Val[T1],Val[T2]) => Tree[BoolSort])(implicit vh1 : ValHandler[T1], vh2 : ValHandler[T2]) : Option[(T1,T2)] = {
@@ -93,19 +117,6 @@ package object dsl {
         None
       }
     }
-  }
-
-  def findAll[T](predicate : Val[T] => Tree[BoolSort])(implicit vh : ValHandler[T]) : Iterator[T] = {
-    val z3 = new Z3Context("MODEL" -> true)
-    val valTree = vh.construct
-    val valAST = valTree.ast(z3)
-    val constraintTree = predicate(valTree)
-
-    z3.assertCnstr(constraintTree.ast(z3))
-    z3.checkAndGetAllModels.map(m => {
-      val result = vh.convert(m, valAST)
-      result
-    })
   }
 
   def findAll[T1,T2](predicate : (Val[T1],Val[T2]) => Tree[BoolSort])(implicit vh1 : ValHandler[T1], vh2 : ValHandler[T2]) : Iterator[(T1,T2)] = {

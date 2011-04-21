@@ -33,9 +33,6 @@ object Z3Model {
 }
 
 class Z3Model private[z3](ptr: Long, private val context: Z3Context) extends Pointer(ptr) {
-  @deprecated("Use Z3Model.toString instead.")
-  def print: Unit = context.printModel(this)
-
   override def toString : String = context.modelToString(this)
 
   def delete: Unit = {

@@ -18,9 +18,17 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
     case _ => Some(true)
   }
 
+  private var deleted : Boolean = false
+  override def finalize() : Unit = {
+    if(!deleted) this.delete()
+  }
+
   def delete() : Unit = {
-    Z3Wrapper.delContext(this.ptr)
-    this.ptr = 0
+    if(!deleted) {
+      Z3Wrapper.delContext(this.ptr)
+      this.ptr = 0
+      deleted = true
+    }
   }
 
   def softCheckCancel() : Unit = {

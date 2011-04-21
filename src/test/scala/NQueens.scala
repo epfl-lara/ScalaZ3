@@ -12,12 +12,10 @@ import z3.scala.dsl._
     val ctx = new Z3Context("MODEL" -> true)
 
     /* Declaring column variables */
-    val columns = (0 until numCols).toList.map{
-      j => IntVar()
-    }
+    val columns = (0 until numCols).map{ _ => IntVar() }
 
     /* All queens are on different columns */
-    val diffCnstr = ctx.mkDistinct(columns map (_.ast(ctx)): _*)
+    val diffCnstr = Distinct(columns: _*)
 
     /* Columns are within the bounds */
     val boundsCnstr = for (c <- columns) yield (c >= 0 && c < numCols)
@@ -33,14 +31,10 @@ import z3.scala.dsl._
     boundsCnstr map (ctx.assertCnstr(_))
     diagonalsCnstr map (ctx.assertCnstr(_))
 
-    val models = scala.collection.mutable.Set[Z3Model]()
-    for (model <- ctx.checkAndGetAllModels) {
-      models += model
-      model.delete
-    }
+    val nbModels = ctx.checkAndGetAllModels.size
 
-    println("Total number of models: " + models.size)
-    models.size should equal (92)
+    println("Total number of models: " + nbModels)
+    nbModels should equal (92)
 
     ctx.delete
   }

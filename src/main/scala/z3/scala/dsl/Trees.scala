@@ -38,7 +38,7 @@ abstract class Val[A] extends Tree[BottomSort]
  * advertised one. This second check is currently not performed. It will need
  * to be a runtime check that can happen through an implicit "checker"
  * parameter. */
-case class Z3ASTWrapper[+A >: BottomSort <: TopSort](ast : Z3AST) extends Tree[A] {
+case class Z3ASTWrapper[+A >: BottomSort <: TopSort] private[z3](ast : Z3AST) extends Tree[A] {
   def build(z3 : Z3Context) : Z3AST = returnIfCompatible(z3)
   override def ast(z3 : Z3Context) : Z3AST = returnIfCompatible(z3)
 

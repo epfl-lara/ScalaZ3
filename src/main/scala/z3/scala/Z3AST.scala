@@ -15,6 +15,7 @@ class Z3AST private[z3](ptr : Long, val context : Z3Context) extends Pointer(ptr
   override def hashCode : Int = hc
   override def toString : String = context.astToString(this)
 
+  lazy val getSort : Z3Sort = context.getSort(this)
 
   def ===(that: Z3AST): Z3AST = context.mkEq(this, that)
   def !==(that: Z3AST): Z3AST = context.mkDistinct(context.mkEq(this, that))

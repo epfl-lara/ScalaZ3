@@ -841,7 +841,7 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
     Z3Wrapper.push(this.ptr)
   }
 
-  def pop(numScopes : Int) : Unit = {
+  def pop(numScopes : Int = 1) : Unit = {
     Z3Wrapper.pop(this.ptr, numScopes)
   }
 

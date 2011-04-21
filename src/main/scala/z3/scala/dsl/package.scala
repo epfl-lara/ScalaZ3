@@ -3,7 +3,14 @@ package z3.scala
 package object dsl {
   import Operands._
 
-  implicit def z3ASTToBoolOperand(ast : Z3AST) : BoolOperand[BoolSort] = new BoolOperand[BoolSort](Z3ASTWrapper[BoolSort](ast))
+  class SortMismatchException(msg : String) extends Exception("Sort mismatch: " + msg)
+
+  implicit def z3ASTToBoolOperand(ast : Z3AST) : BoolOperand[BoolSort] = {
+    if(!ast.getSort.isBoolSort) {
+      throw new SortMismatchException("expected boolean operand, got: " + ast)
+    }
+    new BoolOperand[BoolSort](Z3ASTWrapper[BoolSort](ast))
+  }
 
   implicit def booleanValueToBoolOperand(value : Boolean) : BoolOperand[BoolSort] = new BoolOperand[BoolSort](BoolConstant(value))
 
@@ -12,7 +19,12 @@ package object dsl {
 
   implicit def boolOperandToBoolTree(operand : BoolOperand[_]) : Tree[BoolSort] = operand.tree.asInstanceOf[Tree[BoolSort]]
 
-  implicit def z3ASTToIntOperand(ast : Z3AST) : IntOperand[IntSort] = new IntOperand[IntSort](Z3ASTWrapper[IntSort](ast))
+  implicit def z3ASTToIntOperand(ast : Z3AST) : IntOperand[IntSort] = {
+    if(!ast.getSort.isIntSort) {
+      throw new SortMismatchException("expected integer operand, got: " + ast)
+    }
+    new IntOperand[IntSort](Z3ASTWrapper[IntSort](ast))
+  }
 
   implicit def intValueToIntOperand(value : Int) : IntOperand[IntSort] = new IntOperand[IntSort](IntConstant(value))
 

@@ -8,4 +8,7 @@ class Z3Sort private[z3](ptr: Long, context: Z3Context) extends Pointer(ptr) {
   }
 
   override def toString : String = context.sortToString(this)
+
+  lazy val isBoolSort : Boolean = context.isEqSort(this, context.mkBoolSort)
+  lazy val isIntSort : Boolean = context.isEqSort(this, context.mkIntSort)
 }

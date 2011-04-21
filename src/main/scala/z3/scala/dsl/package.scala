@@ -98,6 +98,11 @@ package object dsl {
     case None => throw new UnsatisfiableConstraintException
   }
 
+  def choose[T1,T2,T3](predicate : (Val[T1],Val[T2],Val[T3]) => Tree[BoolSort])(implicit vh1 : ValHandler[T1], vh2 : ValHandler[T2], vh3 : ValHandler[T3]) : (T1,T2,T3) = find(predicate)(vh1, vh2, vh3) match {
+    case Some(p) => p
+    case None => throw new UnsatisfiableConstraintException
+  }
+
   def find[T1,T2](predicate : (Val[T1],Val[T2]) => Tree[BoolSort])(implicit vh1 : ValHandler[T1], vh2 : ValHandler[T2]) : Option[(T1,T2)] = {
     val z3 = new Z3Context("MODEL" -> true)
     val valTree1 = vh1.construct
@@ -113,6 +118,33 @@ package object dsl {
         m.delete
         z3.delete
         Some((result1,result2))
+      }
+      case (_, m) => {
+        m.delete
+        z3.delete
+        None
+      }
+    }
+  }
+
+  def find[T1,T2,T3](predicate : (Val[T1],Val[T2],Val[T3]) => Tree[BoolSort])(implicit vh1 : ValHandler[T1], vh2 : ValHandler[T2], vh3 : ValHandler[T3]) : Option[(T1,T2,T3)] = {
+    val z3 = new Z3Context("MODEL" -> true)
+    val valTree1 = vh1.construct
+    val valTree2 = vh2.construct
+    val valTree3 = vh3.construct
+    val valAST1 = valTree1.ast(z3)
+    val valAST2 = valTree2.ast(z3)
+    val valAST3 = valTree3.ast(z3)
+    val constraintTree = predicate(valTree1,valTree2, valTree3)
+    z3.assertCnstr(constraintTree.ast(z3))
+    z3.checkAndGetModel match {
+      case (Some(true), m) => {
+        val result1 = vh1.convert(m, valAST1)
+        val result2 = vh2.convert(m, valAST2)
+        val result3 = vh3.convert(m, valAST3)
+        m.delete
+        z3.delete
+        Some((result1,result2,result3))
       }
       case (_, m) => {
         m.delete

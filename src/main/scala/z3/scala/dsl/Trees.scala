@@ -2,14 +2,13 @@ package z3.scala.dsl
 
 import z3.scala.{Z3AST,Z3Context}
 
-sealed trait SortTree
-trait TopSort extends SortTree
-trait BoolSort extends TopSort
-trait IntSort extends TopSort
-trait RealSort extends TopSort
-trait BitvectorSort extends TopSort
-trait ArraySort extends TopSort
-trait BottomSort extends BoolSort with IntSort with RealSort with BitvectorSort with ArraySort
+sealed trait TopSort
+sealed trait BoolSort extends TopSort
+sealed trait IntSort extends TopSort
+sealed trait RealSort extends TopSort
+sealed trait BitvectorSort extends TopSort
+sealed trait ArraySort extends TopSort
+sealed trait BottomSort extends BoolSort with IntSort with RealSort with BitvectorSort with ArraySort
 
 sealed trait Tree[+T >: BottomSort <: TopSort] {
   private[dsl] def build(z3 : Z3Context) : Z3AST

@@ -10,10 +10,10 @@ class Calendar extends FunSuite with ShouldMatchers {
     val totalDays = 10593
     val originYear = 1980
 
-    val (year, day) = choose((year: Val[Int], day: Val[Int]) =>
-      totalDays === day + (year - originYear) * 365 + (((year - 1) / 4) - ((year - 1) / 100) + ((year - 1) / 400) - ((originYear - 1)/4 - (originYear - 1)/100 + (originYear - 1)/400)) &&
-      day >= 1 &&
-      day <= 366)
+    val (year, day, _) = choose((year: Val[Int], day: Val[Int], leapDays: Val[Int]) =>
+      leapDays === (year - 1) / 4 - (year - 1) / 100 + (year - 1) / 400 - ((originYear - 1) / 4 - (originYear - 1) / 100 + (originYear - 1) / 400)
+      && totalDays === (year - originYear) * 365 + leapDays + day
+      && day > 0 && day <= 366)
 
     year should equal (2008)
     day should equal (366)

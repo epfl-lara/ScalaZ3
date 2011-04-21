@@ -5,16 +5,18 @@ class QuickPA extends FunSuite with ShouldMatchers {
   import z3.scala._
   import z3.scala.dsl._
 
-  def check(z3: Z3Context, exp: String)(block : => Unit) : Unit = {
+  def check(z3: Z3Context, exp: String)(block : => Unit) : Option[Boolean] = {
     z3.push
     block
     println(exp)
-    z3.check match {
+    val res = z3.check
+    res match {
       case None => println(" -> unknown")
       case Some(true) => println(" -> sat")
       case Some(false) => println(" -> unsat")
     }
     z3.pop(1)
+    res
   }
 
   test("QuickPA") {
@@ -30,15 +32,15 @@ class QuickPA extends FunSuite with ShouldMatchers {
     
     check(z3, "Sat?") {
       z3.assertCnstr(oddLength("hello"))
-    }
+    } should equal (Some(true))
 
     check(z3, "Unsat?") {
       z3.assertCnstr(!oddLength("world"))
-    }
+    } should equal (Some(false))
 
     check(z3, "Unsat?") {
       z3.assertCnstr(!(concat("hello", "world") === concat("hel", "loworld")))
-    }
+    } should equal (Some(false))
 
     check(z3, "Unsat?") {
       val s1 = variable
@@ -49,6 +51,6 @@ class QuickPA extends FunSuite with ShouldMatchers {
         && oddLength(concat(s2, s1))
         && substr(concat(s1, s2), "low")
       )
-    }
+    } should equal (Some(false))
   }
 }

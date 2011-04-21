@@ -25,11 +25,17 @@ class Calendar extends Z3Application with FunSuite with ShouldMatchers {
 
     val (res, model) = ctx.checkAndGetModel
 
+    res should equal (Some(true))
+
     res match {
       case Some(true) => 
+        val evalYear = model.evalAs[Int](year)
+        val evalDays = model.evalAs[Int](days)
         println("Sat.")
-        println("Year          : " + model.evalAs[Int](year))
-        println("Remaining Days: " + model.evalAs[Int](days))
+        println("Year          : " + evalYear)
+        println("Remaining Days: " + evalDays)
+        evalYear should equal (Some(1982))
+        evalDays should equal (Some(1))
       case Some(false) => println("Unsat.")
       case _ => println("Unknown!")
     }

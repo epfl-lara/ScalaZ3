@@ -5,83 +5,83 @@ package z3.scala.dsl
  * operations on operands always return operands, never trees. Conversion from
  * and to trees are done by implicit functions in the dsl package object. */
 object Operands {
-  class BoolOperand[T >: BottomSort <: BoolSort](val tree : Tree[T]) {
-    def &&[T2 >: BottomSort <: BoolSort](other : BoolOperand[T2]) : BoolOperand[BoolSort] = {
-      new BoolOperand[BoolSort](And(tree, other.tree))
+  class BoolOperand private[dsl](val tree : Tree[_ >: BottomSort <: BoolSort]) {
+    def &&[T >: BottomSort <: BoolSort](other : BoolOperand) : BoolOperand = {
+      new BoolOperand(And(tree, other.tree))
     }
 
-    def ||[T2 >: BottomSort <: BoolSort](other : BoolOperand[T2]) : BoolOperand[BoolSort] = {
-      new BoolOperand[BoolSort](Or(tree, other.tree))
+    def ||(other : BoolOperand) : BoolOperand = {
+      new BoolOperand(Or(tree, other.tree))
     }
     
-    def unary_! : BoolOperand[BoolSort] = {
-      new BoolOperand[BoolSort](Not(tree))
+    def unary_! : BoolOperand= {
+      new BoolOperand(Not(tree))
     }
 
-    def <-->[T2 >: BottomSort <: BoolSort](other : BoolOperand[T2]) : BoolOperand[BoolSort] = {
-      new BoolOperand[BoolSort](Iff(tree, other.tree))
+    def <-->(other : BoolOperand) : BoolOperand = {
+      new BoolOperand(Iff(tree, other.tree))
     }
 
-    def ===[T2 >: BottomSort <: BoolSort](other : BoolOperand[T2]) = <-->(other)
+    def ===(other : BoolOperand) = <-->(other)
 
-    def -->[T2 >: BottomSort <: BoolSort](other : BoolOperand[T2]) : BoolOperand[BoolSort] = {
-      new BoolOperand[BoolSort](Implies(tree, other.tree))
+    def -->(other : BoolOperand) : BoolOperand = {
+      new BoolOperand(Implies(tree, other.tree))
     }
 
-    def ^^[T2 >: BottomSort <: BoolSort](other : BoolOperand[T2]) : BoolOperand[BoolSort] = {
-      new BoolOperand[BoolSort](Xor(tree, other.tree))
+    def ^^(other : BoolOperand) : BoolOperand = {
+      new BoolOperand(Xor(tree, other.tree))
     }
 
-    def !==[T2 >: BottomSort <: BoolSort](other : BoolOperand[T2]) = ^^(other)
+    def !==(other : BoolOperand) = ^^(other)
   }
 
-  class IntOperand[T >: BottomSort <: IntSort](val tree : Tree[T]) {
-    def +[T2 >: BottomSort <: IntSort](other : IntOperand[T2]) : IntOperand[IntSort] = {
-      new IntOperand[IntSort](Add(tree, other.tree))
+  class IntOperand private[dsl](val tree : Tree[_ >: BottomSort <: IntSort]) {
+    def +(other : IntOperand) : IntOperand= {
+      new IntOperand(Add(tree, other.tree))
     }
 
-    def *[T2 >: BottomSort <: IntSort](other : IntOperand[T2]) : IntOperand[IntSort] = {
-      new IntOperand[IntSort](Mul(tree, other.tree))
+    def *(other : IntOperand) : IntOperand = {
+      new IntOperand(Mul(tree, other.tree))
     }
 
-    def -[T2 >: BottomSort <: IntSort](other : IntOperand[T2]) : IntOperand[IntSort] = {
-      new IntOperand[IntSort](Sub(tree, other.tree))
+    def -(other : IntOperand) : IntOperand = {
+      new IntOperand(Sub(tree, other.tree))
     }
 
-    def /[T2 >: BottomSort <: IntSort](other : IntOperand[T2]) : IntOperand[IntSort] = {
-      new IntOperand[IntSort](Div(tree, other.tree))
+    def /(other : IntOperand) : IntOperand = {
+      new IntOperand(Div(tree, other.tree))
     }
 
-    def %[T2 >: BottomSort <: IntSort](other : IntOperand[T2]) : IntOperand[IntSort] = {
-      new IntOperand[IntSort](Mod(tree, other.tree))
+    def %(other : IntOperand) : IntOperand = {
+      new IntOperand(Mod(tree, other.tree))
     }
 
-    def rem[T2 >: BottomSort <: IntSort](other : IntOperand[T2]) : IntOperand[IntSort] = {
-      new IntOperand[IntSort](Rem(tree, other.tree))
+    def rem(other : IntOperand) : IntOperand = {
+      new IntOperand(Rem(tree, other.tree))
     }
 
-    def ===[T2 >: BottomSort <: IntSort](other : IntOperand[T2]) : BoolOperand[BoolSort] = {
-      new BoolOperand[BoolSort](Eq(tree, other.tree))
+    def ===(other : IntOperand) : BoolOperand = {
+      new BoolOperand(Eq(tree, other.tree))
     }
 
-    def !==[T2 >: BottomSort <: IntSort](other : IntOperand[T2]) : BoolOperand[BoolSort] = {
-      new BoolOperand[BoolSort](Distinct(tree, other.tree))
+    def !==(other : IntOperand) : BoolOperand = {
+      new BoolOperand(Distinct(tree, other.tree))
     }
 
-    def <[T2 >: BottomSort <: IntSort](other : IntOperand[T2]) : BoolOperand[BoolSort] = {
-      new BoolOperand[BoolSort](LT(tree, other.tree))
+    def <(other : IntOperand) : BoolOperand = {
+      new BoolOperand(LT(tree, other.tree))
     }
 
-    def <=[T2 >: BottomSort <: IntSort](other : IntOperand[T2]) : BoolOperand[BoolSort] = {
-      new BoolOperand[BoolSort](LE(tree, other.tree))
+    def <=(other : IntOperand) : BoolOperand = {
+      new BoolOperand(LE(tree, other.tree))
     }
 
-    def >[T2 >: BottomSort <: IntSort](other : IntOperand[T2]) : BoolOperand[BoolSort] = {
-      new BoolOperand[BoolSort](GT(tree, other.tree))
+    def >(other : IntOperand) : BoolOperand = {
+      new BoolOperand(GT(tree, other.tree))
     }
 
-    def >=[T2 >: BottomSort <: IntSort](other : IntOperand[T2]) : BoolOperand[BoolSort] = {
-      new BoolOperand[BoolSort](GE(tree, other.tree))
+    def >=(other : IntOperand) : BoolOperand = {
+      new BoolOperand(GE(tree, other.tree))
     }
   }
 }

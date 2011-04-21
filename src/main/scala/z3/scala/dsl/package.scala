@@ -5,33 +5,33 @@ package object dsl {
 
   class SortMismatchException(msg : String) extends Exception("Sort mismatch: " + msg)
 
-  implicit def z3ASTToBoolOperand(ast : Z3AST) : BoolOperand[BoolSort] = {
+  implicit def z3ASTToBoolOperand(ast : Z3AST) : BoolOperand = {
     if(!ast.getSort.isBoolSort) {
       throw new SortMismatchException("expected boolean operand, got: " + ast)
     }
-    new BoolOperand[BoolSort](Z3ASTWrapper[BoolSort](ast))
+    new BoolOperand(Z3ASTWrapper[BoolSort](ast))
   }
 
-  implicit def booleanValueToBoolOperand(value : Boolean) : BoolOperand[BoolSort] = new BoolOperand[BoolSort](BoolConstant(value))
+  implicit def booleanValueToBoolOperand(value : Boolean) : BoolOperand = new BoolOperand(BoolConstant(value))
 
-  implicit def boolTreeToBoolOperand[T >: BottomSort <: BoolSort](tree : Tree[T]) : BoolOperand[BoolSort] = 
-    new BoolOperand[BoolSort](tree)
+  implicit def boolTreeToBoolOperand[T >: BottomSort <: BoolSort](tree : Tree[T]) : BoolOperand =
+    new BoolOperand(tree)
 
-  implicit def boolOperandToBoolTree(operand : BoolOperand[_]) : Tree[BoolSort] = operand.tree.asInstanceOf[Tree[BoolSort]]
+  implicit def boolOperandToBoolTree(operand : BoolOperand) : Tree[BoolSort] = operand.tree.asInstanceOf[Tree[BoolSort]]
 
-  implicit def z3ASTToIntOperand(ast : Z3AST) : IntOperand[IntSort] = {
+  implicit def z3ASTToIntOperand(ast : Z3AST) : IntOperand = {
     if(!ast.getSort.isIntSort) {
       throw new SortMismatchException("expected integer operand, got: " + ast)
     }
-    new IntOperand[IntSort](Z3ASTWrapper[IntSort](ast))
+    new IntOperand(Z3ASTWrapper[IntSort](ast))
   }
 
-  implicit def intValueToIntOperand(value : Int) : IntOperand[IntSort] = new IntOperand[IntSort](IntConstant(value))
+  implicit def intValueToIntOperand(value : Int) : IntOperand = new IntOperand(IntConstant(value))
 
-  implicit def intTreeToIntOperand[T >: BottomSort <: IntSort](tree : Tree[T]) : IntOperand[IntSort] = 
-    new IntOperand[IntSort](tree)
+  implicit def intTreeToIntOperand[T >: BottomSort <: IntSort](tree : Tree[T]) : IntOperand =
+    new IntOperand(tree)
 
-  implicit def intOperandToIntTree(operand : IntOperand[_]) : Tree[IntSort] = operand.tree.asInstanceOf[Tree[IntSort]]
+  implicit def intOperandToIntTree(operand : IntOperand) : Tree[IntSort] = operand.tree.asInstanceOf[Tree[IntSort]]
 
 
   // The following is for the choose magic.

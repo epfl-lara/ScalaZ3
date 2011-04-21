@@ -58,4 +58,57 @@ package object dsl {
       }
     }
   }
+
+  def find[T1,T2](predicate : (Val[T1],Val[T2]) => Tree[BoolSort])(implicit vh1 : ValHandler[T1], vh2 : ValHandler[T2]) : Option[(T1,T2)] = {
+    val z3 = new Z3Context("MODEL" -> true)
+    val valTree1 = vh1.construct
+    val valTree2 = vh2.construct
+    val valAST1 = valTree1.ast(z3)
+    val valAST2 = valTree2.ast(z3)
+    val constraintTree = predicate(valTree1,valTree2)
+    z3.assertCnstr(constraintTree.ast(z3))
+    z3.checkAndGetModel match {
+      case (Some(true), m) => {
+        val result1 = vh1.convert(m, valAST1)
+        val result2 = vh2.convert(m, valAST2)
+        m.delete
+        z3.delete
+        Some((result1,result2))
+      }
+      case (_, m) => {
+        m.delete
+        z3.delete
+        None
+      }
+    }
+  }
+
+  def findAll[T](predicate : Val[T] => Tree[BoolSort])(implicit vh : ValHandler[T]) : Iterator[T] = {
+    val z3 = new Z3Context("MODEL" -> true)
+    val valTree = vh.construct
+    val valAST = valTree.ast(z3)
+    val constraintTree = predicate(valTree)
+
+    z3.assertCnstr(constraintTree.ast(z3))
+    z3.checkAndGetAllModels.map(m => {
+      val result = vh.convert(m, valAST)
+      result
+    })
+  }
+
+  def findAll[T1,T2](predicate : (Val[T1],Val[T2]) => Tree[BoolSort])(implicit vh1 : ValHandler[T1], vh2 : ValHandler[T2]) : Iterator[(T1,T2)] = {
+    val z3 = new Z3Context("MODEL" -> true)
+    val valTree1 = vh1.construct
+    val valTree2 = vh2.construct
+    val valAST1 = valTree1.ast(z3)
+    val valAST2 = valTree2.ast(z3)
+    val constraintTree = predicate(valTree1, valTree2)
+
+    z3.assertCnstr(constraintTree.ast(z3))
+    z3.checkAndGetAllModels.map(m => {
+      val result1 = vh1.convert(m, valAST1)
+      val result2 = vh2.convert(m, valAST2)
+      (result1,result2)
+    })
+  }
 }

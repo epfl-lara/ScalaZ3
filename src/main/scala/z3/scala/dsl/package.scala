@@ -66,7 +66,7 @@ package object dsl {
     }
 
     def convert(model : Z3Model, ast : Z3AST) : Set[Int] =
-      model.evalAs[Set[Int]](ast).getOrElse(Set[Int](42))
+      model.evalAs[Set[Int]](ast).getOrElse(Set[Int]())
   }
 
   def choose[T](predicate : Val[T] => Tree[BoolSort])(implicit vh : ValHandler[T]) : T = find(predicate)(vh) match {

@@ -51,6 +51,15 @@ package object dsl {
     def convert(model : Z3Model, ast : Z3AST) : A
   }
 
+  implicit object BooleanValHandler extends ValHandler[Boolean] {
+    def construct : Val[Boolean] = new Val[Boolean] {
+      def build(z3 : Z3Context) = z3.mkFreshConst("B", z3.mkBoolSort)
+    }
+
+    def convert(model : Z3Model, ast : Z3AST) : Boolean =
+      model.evalAs[Boolean](ast).getOrElse(false)
+  }
+
   implicit object IntValHandler extends ValHandler[Int] {
     def construct : Val[Int] = new Val[Int] {
       def build(z3 : Z3Context) = z3.mkFreshConst("I", z3.mkIntSort)

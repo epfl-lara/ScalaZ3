@@ -29,7 +29,17 @@ sealed trait Tree[+T >: BottomSort <: TopSort] {
  * through a ValHandler. The type parameter refers to a Scala type for a
  * value that the user wishes to obtain through a call to choose, find or
  * findAll. */
-abstract class Val[A] extends Tree[BottomSort]
+abstract class Val[A] extends Tree[BottomSort] {
+  import Operands._
+
+  def ===(other : Val[A]) : BoolOperand = {
+    new BoolOperand(Eq(this, other))
+  } 
+
+  def !==(other : Val[A]) : BoolOperand = {
+    new BoolOperand(Distinct(this, other))
+  } 
+}
 
 /** This class is used to bridge the gap between non-DSL Z3ASTs and DSL ASTs.
  * There are two important things to check: that the Z3Context is the correct

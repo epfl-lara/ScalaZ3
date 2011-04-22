@@ -171,8 +171,6 @@ package object dsl {
     z3.assertCnstr(constraintTree.ast(z3))
     z3.checkAndGetModel match {
       case (Some(true), m) => {
-        println("MODEL:")
-        println(m)
         val result1 = vh1.convert(m, valAST1)
         val result2 = vh2.convert(m, valAST2)
         val result3 = vh3.convert(m, valAST3)

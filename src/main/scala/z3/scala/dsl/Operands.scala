@@ -97,5 +97,17 @@ object Operands {
     def --(other : SetOperand) : SetOperand = {
       new SetOperand(SetDifference(tree, other.tree))
     }
+
+    def ===(other : SetOperand) : BoolOperand = {
+      new BoolOperand(Eq(tree, other.tree))
+    }
+
+    def !==(other : SetOperand) : BoolOperand = {
+      new BoolOperand(Distinct(tree, other.tree))
+    }
+
+    def subsetOf(other : SetOperand) : BoolOperand = {
+      new BoolOperand(SetSubset(tree, other.tree))
+    }
   }
 }

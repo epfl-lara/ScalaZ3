@@ -159,3 +159,7 @@ case class SetIntersect[+A >: BottomSort <: SetSort](args: Tree[A]*) extends Tre
 case class SetDifference[+A >: BottomSort <: SetSort](left : Tree[A], right : Tree[A]) extends Tree[SetSort] {
   private[dsl] def build(z3 : Z3Context) = z3.mkSetDifference(left.ast(z3), right.ast(z3))
 }
+
+case class SetSubset[+A >: BottomSort <: SetSort](left : Tree[A], right : Tree[A]) extends BinaryPred[SetSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkSetSubset(left.ast(z3), right.ast(z3))
+}

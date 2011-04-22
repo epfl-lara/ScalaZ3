@@ -13,6 +13,8 @@ package object dsl {
     new BoolOperand(Z3ASTWrapper[BoolSort](ast))
   }
 
+  implicit def booleanValueToBoolTree(value : Boolean) : Tree[BoolSort] = BoolConstant(value)
+
   implicit def booleanValueToBoolOperand(value : Boolean) : BoolOperand = new BoolOperand(BoolConstant(value))
 
   implicit def boolTreeToBoolOperand[T >: BottomSort <: BoolSort](tree : Tree[T]) : BoolOperand =
@@ -26,6 +28,8 @@ package object dsl {
     }
     new IntOperand(Z3ASTWrapper[IntSort](ast))
   }
+
+  implicit def intValueToIntTree(value : Int) : Tree[IntSort] = IntConstant(value)
 
   implicit def intValueToIntOperand(value : Int) : IntOperand = new IntOperand(IntConstant(value))
 

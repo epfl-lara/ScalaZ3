@@ -12,7 +12,7 @@ class Calendar extends FunSuite with ShouldMatchers {
     val originYear = 1980
 
     val (year, day) = choose((year: Val[Int], day: Val[Int]) => {
-      def leapDaysUntil(y : IntOperand) = (y - 1) / 4 - (y - 1) / 100 + (y - 1) / 400
+      def leapDaysUntil(y : Tree[IntSort]) = (y - 1) / 4 - (y - 1) / 100 + (y - 1) / 400
 
       totalDays === (year - originYear) * 365 + leapDaysUntil(year) - leapDaysUntil(originYear) + day && 
       day > 0 && day <= 366

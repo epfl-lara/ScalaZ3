@@ -86,6 +86,10 @@ case class IntVar() extends Tree[IntSort] {
   private[dsl] def build(z3 : Z3Context) = z3.mkFreshConst("I", z3.mkIntSort)
 }
 
+case class IntSetVar() extends Tree[SetSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkFreshConst("IS", z3.mkSetSort(z3.mkIntSort))
+}
+
 case class Eq[+A >: BottomSort <: TopSort](left : Tree[A], right : Tree[A]) extends BinaryPred[A] {
   private[dsl] def build(z3 : Z3Context) = z3.mkEq(left.ast(z3), right.ast(z3))
 }
@@ -172,4 +176,12 @@ case class SetDifference[+A >: BottomSort <: SetSort](left : Tree[A], right : Tr
 
 case class SetSubset[+A >: BottomSort <: SetSort](left : Tree[A], right : Tree[A]) extends BinaryPred[SetSort] {
   private[dsl] def build(z3 : Z3Context) = z3.mkSetSubset(left.ast(z3), right.ast(z3))
+}
+
+case class EmptyIntSet() extends Tree[SetSort] {
+  private [dsl] def build(z3 : Z3Context) = z3.mkEmptySet(z3.mkIntSort)
+}
+
+case class SetAdd[+A >: BottomSort <: TopSort](set : Tree[SetSort], elem : Tree[A]) extends Tree[SetSort] {
+  private [dsl] def build(z3 : Z3Context) = z3.mkSetAdd(set.ast(z3), elem.ast(z3))
 }

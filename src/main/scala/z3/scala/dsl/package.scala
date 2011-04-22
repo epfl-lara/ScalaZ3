@@ -39,8 +39,16 @@ package object dsl {
   implicit def intOperandToIntTree(operand : IntOperand) : Tree[IntSort] = operand.tree.asInstanceOf[Tree[IntSort]]
 
   implicit def z3ASTToSetOperand(ast : Z3AST) : SetOperand = {
-    // TODO how do we check the type here?
+    // TODO how do we check the type (set of any type?) here?
     new SetOperand(Z3ASTWrapper[SetSort](ast))
+  }
+
+  implicit def intSetValueToSetTree(value : Set[Int]) : Tree[SetSort] = {
+    value.foldLeft[Tree[SetSort]](EmptyIntSet())((set, elem) => SetAdd(set, IntConstant(elem)))
+  }
+
+  implicit def intSetValueToSetOperand(value : Set[Int]) : SetOperand = {
+    new SetOperand(intSetValueToSetTree(value))
   }
 
   implicit def setTreeToSetOperand[T >: BottomSort <: SetSort](tree : Tree[T]) : SetOperand =

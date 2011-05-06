@@ -18,7 +18,7 @@ class Z3AST private[z3](ptr : Long, val context : Z3Context) extends Pointer(ptr
   lazy val getSort : Z3Sort = context.getSort(this)
 
   def ===(that: Z3AST): Z3AST = context.mkEq(this, that)
-  def !==(that: Z3AST): Z3AST = context.mkDistinct(context.mkEq(this, that))
+  def !==(that: Z3AST): Z3AST = context.mkDistinct(this, that)
 
   import dsl.{Tree,TopSort,BoolSort,BottomSort,Z3ASTWrapper,Eq,Distinct}
   def ===(that: Tree[_ >: BottomSort <: TopSort]): Tree[BoolSort] = Eq(Z3ASTWrapper[BottomSort](this), that)

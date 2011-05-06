@@ -20,7 +20,7 @@ class Z3AST private[z3](ptr : Long, val context : Z3Context) extends Pointer(ptr
   def ===(that: Z3AST): Z3AST = context.mkEq(this, that)
   def !==(that: Z3AST): Z3AST = context.mkDistinct(context.mkEq(this, that))
 
-  import dsl.{Tree,BoolSort,Z3ASTWrapper,Eq,Distinct}
-  def ===(that: Tree[BoolSort]): Tree[BoolSort] = Eq(Z3ASTWrapper[BoolSort](this), that)
-  def !==(that: Tree[BoolSort]): Tree[BoolSort] = Distinct(Z3ASTWrapper[BoolSort](this), that)
+  import dsl.{Tree,TopSort,BoolSort,BottomSort,Z3ASTWrapper,Eq,Distinct}
+  def ===(that: Tree[_ >: BottomSort <: TopSort]): Tree[BoolSort] = Eq(Z3ASTWrapper[BottomSort](this), that)
+  def !==(that: Tree[_ >: BottomSort <: TopSort]): Tree[BoolSort] = Distinct(Z3ASTWrapper[BottomSort](this), that)
 }

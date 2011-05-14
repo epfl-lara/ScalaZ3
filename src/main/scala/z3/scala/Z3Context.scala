@@ -124,6 +124,7 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
     }
   }
 
+  @deprecated("use `getArrayValue' in `Z3Model' instead")
   def getArrayValue(ast: Z3AST) : Option[(Map[Z3AST, Z3AST], Z3AST)] = isArrayValue(ast) match {
     case None => None
     case Some(numEntries) => {
@@ -149,6 +150,7 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
     }
   }
 
+  @deprecated("use `getSetValue' in `Z3Model' instead")
   def getSetValue(ast: Z3AST) : Option[Set[Z3AST]] = getArrayValue(ast) match {
     case None => None
     case Some((map, elseValue)) =>
@@ -797,6 +799,11 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
 
   def getDeclName(fd: Z3FuncDecl) : Z3Symbol = {
     new Z3Symbol(Z3Wrapper.getDeclName(this.ptr, fd.ptr), this)
+  }
+
+  // TODO arity
+  def getDeclFuncDeclParameter(fd: Z3FuncDecl, idx: Int, arity: Int = 1) : Z3FuncDecl = {
+    new Z3FuncDecl(Z3Wrapper.getDeclFuncDeclParameter(this.ptr, fd.ptr, idx), arity, this)
   }
 
   def getSort(ast: Z3AST) : Z3Sort = {

@@ -1,0 +1,36 @@
+import org.scalatest.FunSuite
+import org.scalatest.matchers.ShouldMatchers
+
+class Sets extends FunSuite with ShouldMatchers {
+  import z3.scala._
+
+  test("Sets") {
+    val z3 = new Z3Context("MODEL" -> true)
+
+    val is = z3.mkIntSort
+    val iss = z3.mkSetSort(is)
+    val s1 = z3.mkFreshConst("s1", iss)
+    val s2 = z3.mkFreshConst("s2", iss)
+
+    z3.assertCnstr(z3.mkDistinct(s1, s2))
+
+    val (result, model) = z3.checkAndGetModel
+    result should equal(Some(true))
+
+    val s1eval = model.eval(s1)
+    val s2eval = model.eval(s2)
+    s1eval should be ('defined)
+    s2eval should be ('defined)
+    (s1eval,s2eval) match {
+      case (Some(se1), Some(se2)) =>
+        val s1val = model.getSetValue(se1)
+        val s2val = model.getSetValue(se2)
+        s1val should be ('defined)
+        s2val should be ('defined)
+        s1val should not equal (s2val)
+        println("Set values :" + s1val + ", " + s2val)
+      case _ =>
+    }
+  }
+}
+

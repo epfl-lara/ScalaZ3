@@ -14,15 +14,15 @@ class Arrays extends FunSuite with ShouldMatchers {
     val x = z3.mkFreshConst("x", is)
 
     // array1 = [ 42, 42, 42, ... ]
-    z3.assertCnstr(array1 === z3.mkConstArray(is, z3.mkInt(42, is)))
+    z3.assertCnstr(z3.mkEq(array1,z3.mkConstArray(is, z3.mkInt(42, is))))
     // x = array1[6]
-    z3.assertCnstr(x === z3.mkSelect(array1, z3.mkInt(6, is)))
+    z3.assertCnstr(z3.mkEq(x, z3.mkSelect(array1, z3.mkInt(6, is))))
     // array2 = array1[x - 40 -> 0]
-    z3.assertCnstr(array2 === z3.mkStore(array1, z3.mkSub(x, z3.mkInt(40, is)), z3.mkInt(0, is)))
+    z3.assertCnstr(z3.mkEq(array2, z3.mkStore(array1, z3.mkSub(x, z3.mkInt(40, is)), z3.mkInt(0, is))))
 
     // "reading" the default value of array2 (should be 42)
     val fourtyTwo = z3.mkFreshConst("ft", is)
-    z3.assertCnstr(fourtyTwo === z3.mkArrayDefault(array2))
+    z3.assertCnstr(z3.mkEq(fourtyTwo, z3.mkArrayDefault(array2)))
 
     val (result, model) = z3.checkAndGetModel
 

@@ -1068,13 +1068,27 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
     }
   }
 
+  /** Uses the SMT-LIB parser to read in a benchmark file.
+   *  @see getSMTLIBFormulas, getSMTLIBAssumptions, getSMTLIBDecls, getSMTLIBSorts, getSMTLIBError
+   */
   def parseSMTLIBFile(fileName: String) : Unit = parseSMTLIB(true, fileName)
+
+  /** Uses the SMT-LIB parser to read in a benchmark string.
+   *  @see getSMTLIBFormulas, getSMTLIBAssumptions, getSMTLIBDecls, getSMTLIBSorts, getSMTLIBError
+   */
   def parseSMTLIBString(str: String) : Unit = parseSMTLIB(false, str)
-//  def parseSMTLIBFile(fileName: String, sorts: Map[String,Z3Sort], decls: Map[String,Z3FuncDecl]) : Unit = parseSMTLIB(true, fileName, sorts, decls)
-//  def parseSMTLIBString(str: String, sorts: Map[String,Z3Sort], decls: Map[String,Z3FuncDecl]) : Unit = parseSMTLIB(false, str, sorts, decls)
+
+  /** Uses the SMT-LIB parser to read in a benchmark file. The maps are used to override symbols that would otherwise be created by the parser.
+   *  @see getSMTLIBFormulas, getSMTLIBAssumptions, getSMTLIBDecls, getSMTLIBSorts, getSMTLIBError
+   */
   def parseSMTLIBFile(fileName: String, sorts: Map[Z3Symbol,Z3Sort], decls: Map[Z3Symbol,Z3FuncDecl]) : Unit = parseSMTLIB(true, fileName, sorts, decls)
+
+  /** Uses the SMT-LIB parser to read in a benchmark string. The maps are used to override symbols that would otherwise be created by the parser.
+   *  @see getSMTLIBFormulas, getSMTLIBAssumptions, getSMTLIBDecls, getSMTLIBSorts, getSMTLIBError
+   */
   def parseSMTLIBString(str: String, sorts: Map[Z3Symbol,Z3Sort], decls: Map[Z3Symbol,Z3FuncDecl]) : Unit = parseSMTLIB(false, str, sorts, decls)
 
+  /** Returns an iterator of the formulas created by the SMT-LIB parser. */
   def getSMTLIBFormulas : Iterator[Z3AST] = {
     val ctx = this
     new Iterator[Z3AST] {
@@ -1090,6 +1104,7 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
     }
   }
 
+  /** Returns an iterator of the assumptions created by the SMT-LIB parser. */
   def getSMTLIBAssumptions : Iterator[Z3AST] = {
     val ctx = this
     new Iterator[Z3AST] {
@@ -1105,6 +1120,7 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
     }
   }
 
+  /** Returns an iterator of the function and constant declarations created by the SMT-LIB parser. */
   def getSMTLIBDecls : Iterator[Z3FuncDecl] = {
     val ctx = this
     new Iterator[Z3FuncDecl] {
@@ -1122,6 +1138,7 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
     }
   }
 
+  /** Returns an iterator of the sorts created by the SMT-LIB parser. */
   def getSMTLIBSorts : Iterator[Z3Sort] = {
     val ctx = this
     new Iterator[Z3Sort] {
@@ -1137,5 +1154,6 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
     }
   }
 
+  /** Returns the last error issued by the SMT-LIB parser. */
   def getSMTLIBError : String = Z3Wrapper.getSMTLIBError(this.ptr)
 }

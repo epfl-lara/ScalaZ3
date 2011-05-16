@@ -1013,6 +1013,10 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
         return symbolToJLong(Z3_get_decl_name(asZ3Context(contextPtr), asZ3FuncDecl(funcDeclPtr)));
     }
 
+    JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_getDeclFuncDeclParameter (JNIEnv * env, jclass cls, jlong contextPtr, jlong funcDeclPtr, jint i) {
+        return funcDeclToJLong(Z3_get_decl_func_decl_parameter(asZ3Context(contextPtr), asZ3FuncDecl(funcDeclPtr), (unsigned)i));
+    }
+
     JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_getSort (JNIEnv * env, jclass cls, jlong contextPtr, jlong astPtr) {
         return sortToJLong(Z3_get_sort(asZ3Context(contextPtr), asZ3AST(astPtr)));
     }

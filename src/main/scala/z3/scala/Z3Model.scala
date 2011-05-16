@@ -21,7 +21,7 @@ object Z3Model {
 
   implicit def ast2intSet(model: Z3Model, ast: Z3AST) : Option[Set[Int]] = model.eval(ast) match {
     case None => None
-    case Some(evaluated) => model.context.getSetValue(evaluated) match {
+    case Some(evaluated) => model.getSetValue(evaluated) match {
       case Some(astSet) =>
         Some(astSet.map(elem => model.evalAs[Int](elem)).foldLeft(Set[Int]())((acc, e) => e match {
           case Some(value) => acc + value
@@ -136,19 +136,32 @@ class Z3Model private[z3](ptr: Long, private val context: Z3Context) extends Poi
     }
   }
 
-  private lazy val funcInterpretationMap: Map[String, (Seq[(Seq[Z3AST], Z3AST)], Z3AST)] =
-    getModelFuncInterpretations.map(i => (i._1.getName.toString, (i._2, i._3))).toMap
+  private lazy val funcInterpretationMap: Map[Z3FuncDecl, (Seq[(Seq[Z3AST], Z3AST)], Z3AST)] =
+    getModelFuncInterpretations.map(i => (i._1, (i._2, i._3))).toMap
 
-  def getModelFuncInterpretation(name: String): Option[Z3Function] = {
-    // funcInterpretationMap.get(name) match {
-    //     case Some(interpretation) => Some(new Z3Function(interpretation))
-    //     case None => None
-    // }
+  def getArrayValue(ast: Z3AST) : Option[(Map[Z3AST, Z3AST], Z3AST)] = context.getASTKind(ast) match {
+    case Z3AppAST(decl, args) => funcInterpretationMap.get(context.getDeclFuncDeclParameter(decl, 0)) match {
+      case Some((entries, elseValue)) =>
+        assert(entries.forall(_._1.size == 1))
+        val asMap = entries.map {
+          case (List(arg), value) => (arg, value)
+        }.toMap
+        Some(asMap, elseValue)
+      case None => None
+    }
+    case _ => None
+  }
 
-    getModelFuncInterpretations.find(i => i._1.getName.toString == name) match {
-      case Some(i) => Some(new Z3Function((i._2, i._3)))
+  def getSetValue(ast: Z3AST) : Option[Set[Z3AST]] = this.getArrayValue(ast) match {
+    case None => None
+    case Some((map, elseValue)) =>
+      Some(map.filter(pair => context.getBoolValue(pair._2) == Some(true)).keySet.toSet)
+  }
+
+  def getModelFuncInterpretation(fd: Z3FuncDecl): Option[Z3Function] = {
+    funcInterpretationMap.find(i => i._1 == fd) match {
+      case Some(i) => Some(new Z3Function(i._2))
       case None => None
     }
   }
-
 }

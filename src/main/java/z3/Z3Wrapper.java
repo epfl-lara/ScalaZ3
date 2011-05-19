@@ -349,8 +349,8 @@ public final class Z3Wrapper {
     public static native boolean eval(long contextPtr, long modelPtr, long astPtr, Pointer ast);
     public static native int getModelNumConstants(long contextPtr, long modelPtr);
     public static native long getModelConstant(long contextPtr, long modelPtr, int i);
-    public static native boolean isArrayValue(long contextPtr, long astPtr, IntPtr numEntries);
-    public static native void getArrayValue(long contextPtr, long astPtr, int numEntries, long[] indices, long[] values, Pointer elseValue);
+    public static native boolean isArrayValue(long contextPtr, long modelPtr, long astPtr, IntPtr numEntries);
+    public static native void getArrayValue(long contextPtr, long modelPtr, long astPtr, int numEntries, long[] indices, long[] values, Pointer elseValue);
     public static native int getModelNumFuncs(long contextPtr, long modelPtr);
     public static native long getModelFuncDecl(long contextPtr, long modelPtr, int i);
     public static native int getModelFuncNumEntries(long contextPtr, long modelPtr, int i);

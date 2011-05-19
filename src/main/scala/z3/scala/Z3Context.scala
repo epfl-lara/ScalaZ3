@@ -114,6 +114,7 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
     }
   }
 
+  /*
   def isArrayValue(ast: Z3AST) : Option[Int] = {
     val numEntriesPtr = new Z3Wrapper.IntPtr()
     val result = Z3Wrapper.isArrayValue(this.ptr, ast.ptr, numEntriesPtr)
@@ -156,6 +157,7 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
     case Some((map, elseValue)) =>
       Some(map.filter(pair => getBoolValue(pair._2) == Some(true)).keySet.toSet)
   }
+  */
 
   def isEqSort(s1: Z3Sort, s2: Z3Sort) : Boolean = {
     Z3Wrapper.isEqSort(this.ptr, s1.ptr, s2.ptr)

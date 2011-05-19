@@ -139,7 +139,38 @@ class Z3Model private[z3](ptr: Long, private val context: Z3Context) extends Poi
   private lazy val funcInterpretationMap: Map[Z3FuncDecl, (Seq[(Seq[Z3AST], Z3AST)], Z3AST)] =
     getModelFuncInterpretations.map(i => (i._1, (i._2, i._3))).toMap
 
-  def getArrayValue(ast: Z3AST) : Option[(Map[Z3AST, Z3AST], Z3AST)] = context.getASTKind(ast) match {
+  def isArrayValue(ast: Z3AST) : Option[Int] = {
+    val numEntriesPtr = new Z3Wrapper.IntPtr()
+    val result = Z3Wrapper.isArrayValue(context.ptr, this.ptr, ast.ptr, numEntriesPtr)
+    if (result) {
+      Some(numEntriesPtr.value)
+    } else {
+      None
+    }
+  }
+
+  def getArrayValue(ast: Z3AST) : Option[(Map[Z3AST, Z3AST], Z3AST)] = isArrayValue(ast) match {
+    case None => None
+    case Some(numEntries) =>
+      val indArray = new Array[Long](numEntries)
+      val valArray = new Array[Long](numEntries)
+      val elseValuePtr = new Pointer(0L)
+
+      Z3Wrapper.getArrayValue(context.ptr, this.ptr, ast.ptr, numEntries, indArray, valArray, elseValuePtr)
+
+      val elseValue = new Z3AST(elseValuePtr.ptr, context)
+      val map = Map((indArray.map(new Z3AST(_, context)) zip valArray.map(new Z3AST(_, context))): _*)
+      Some((map, elseValue))
+  }
+
+  def getSetValue(ast: Z3AST) : Option[Set[Z3AST]] = this.getArrayValue(ast) match {
+    case None => None
+    case Some((map, elseValue)) =>
+      Some(map.filter(pair => context.getBoolValue(pair._2) == Some(true)).keySet.toSet)
+  }
+
+  /* FOR VERSIONS 2.X WHERE 15 <= X <= 19 */
+  def getArrayValueOld(ast: Z3AST) : Option[(Map[Z3AST, Z3AST], Z3AST)] = context.getASTKind(ast) match {
     case Z3AppAST(decl, args) => funcInterpretationMap.get(context.getDeclFuncDeclParameter(decl, 0)) match {
       case Some((entries, elseValue)) =>
         assert(entries.forall(_._1.size == 1))
@@ -150,12 +181,6 @@ class Z3Model private[z3](ptr: Long, private val context: Z3Context) extends Poi
       case None => None
     }
     case _ => None
-  }
-
-  def getSetValue(ast: Z3AST) : Option[Set[Z3AST]] = this.getArrayValue(ast) match {
-    case None => None
-    case Some((map, elseValue)) =>
-      Some(map.filter(pair => context.getBoolValue(pair._2) == Some(true)).keySet.toSet)
   }
 
   def getModelFuncInterpretation(fd: Z3FuncDecl): Option[Z3Function] = {

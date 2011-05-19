@@ -1153,16 +1153,16 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
         return funcDeclToJLong(Z3_get_model_constant(asZ3Context(contextPtr), asZ3Model(modelPtr), (unsigned)i));
     }
 
-    JNIEXPORT jboolean JNICALL Java_z3_Z3Wrapper_isArrayValue (JNIEnv * env, jclass cls, jlong contextPtr, jlong astPtr, jobject numEntries) {
+    JNIEXPORT jboolean JNICALL Java_z3_Z3Wrapper_isArrayValue (JNIEnv * env, jclass cls, jlong contextPtr, jlong modelPtr, jlong astPtr, jobject numEntries) {
         unsigned int cNumEntries;
-        Z3_bool result = Z3_is_array_value(asZ3Context(contextPtr), asZ3AST(astPtr), &cNumEntries);
+        Z3_bool result = Z3_is_array_value(asZ3Context(contextPtr), asZ3Model(modelPtr), asZ3AST(astPtr), &cNumEntries);
         jclass ac = (*env)->GetObjectClass(env, numEntries);
         jfieldID fid = (*env)->GetFieldID(env, ac, "value", "I");
         (*env)->SetIntField(env, numEntries, fid, (jint)cNumEntries);
         return (result == 0 ? JNI_FALSE : JNI_TRUE);
     }
 
-    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_getArrayValue (JNIEnv * env, jclass cls, jlong contextPtr, jlong astPtr, jint numEntries, jlongArray indices, jlongArray values, jobject elseValue) {
+    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_getArrayValue (JNIEnv * env, jclass cls, jlong contextPtr, jlong modelPtr, jlong astPtr, jint numEntries, jlongArray indices, jlongArray values, jobject elseValue) {
         Z3_ast * cIndices = (Z3_ast*)malloc(numEntries * sizeof(Z3_ast));
         Z3_ast * cValues  = (Z3_ast*)malloc(numEntries * sizeof(Z3_ast));
         Z3_ast cElseValue;
@@ -1187,7 +1187,7 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
         // }
 
         // The Z3 call...
-        Z3_get_array_value(asZ3Context(contextPtr), asZ3AST(astPtr), (unsigned)numEntries, cIndices, cValues, &cElseValue);
+        Z3_get_array_value(asZ3Context(contextPtr), asZ3Model(modelPtr), asZ3AST(astPtr), (unsigned)numEntries, cIndices, cValues, &cElseValue);
 
         // set the else value
         ac = (*env)->GetObjectClass(env, elseValue);

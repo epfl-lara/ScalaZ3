@@ -7,7 +7,7 @@ class ScalaZ3Project(info: ProjectInfo) extends DefaultProject(info) with FileTa
   // All Java classes that contain native methods.
   val nativeClasses = List("z3.Z3Wrapper")
 
-  val z3DefaultVersion = "2.19"
+  val z3DefaultVersion = "3.00"
 
   lazy val cPath : Path = "." / "src" / "c"
   lazy val cFiles : PathFinder = "." / "src" / "c" * "*.c"
@@ -91,7 +91,7 @@ class ScalaZ3Project(info: ProjectInfo) extends DefaultProject(info) with FileTa
         "-I" + jdkUnixIncludePath.absolutePath + " " +
         "-I" + z3IncludePath(z3VN).absolutePath + " " +
         "-L" + z3LibPath(z3VN).absolutePath + " " +
-        "-g -lc -lz3 -fPIC -O2 " +
+        "-g -lc -lz3 -fPIC -O2 -fopenmp " +
         cFiles.getPaths.mkString(" ")
       )
   } dependsOn(javah)

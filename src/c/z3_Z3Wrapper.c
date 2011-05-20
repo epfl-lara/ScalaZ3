@@ -989,6 +989,7 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
             case Z3_OP_SET_DIFFERENCE: return (jint)34;
             case Z3_OP_SET_COMPLEMENT: return (jint)35;
             case Z3_OP_SET_SUBSET:     return (jint)36;
+            case Z3_OP_AS_ARRAY:       return (jint)37;
             case Z3_OP_UNINTERPRETED:  return (jint)1000;
         }
         return (jint)9999;

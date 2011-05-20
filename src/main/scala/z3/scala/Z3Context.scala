@@ -779,6 +779,7 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
       case 34 => OpSetDifference 
       case 35 => OpSetComplement 
       case 36 => OpSetSubset 
+      case 37 => OpAsArray 
       case 1000 => OpUninterpreted
       case 9999 => Other 
       case other => scala.Predef.error("Unhandled int code for Z3KindDecl: " + other)

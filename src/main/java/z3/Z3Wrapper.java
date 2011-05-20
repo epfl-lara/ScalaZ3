@@ -300,6 +300,7 @@ public final class Z3Wrapper {
     // 34 - OpSetDifference 
     // 35 - OpSetComplement 
     // 36 - OpSetSubset 
+    // 37 - OpAsArray 
     
     // 1000 - OpUninterpreted
 

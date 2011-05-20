@@ -40,6 +40,7 @@ object Z3DeclKind extends Enumeration {
   val OpSetDifference = Value
   val OpSetComplement = Value
   val OpSetSubset = Value
+  val OpAsArray = Value
 
   val OpUninterpreted = Value
 

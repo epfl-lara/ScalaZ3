@@ -9,7 +9,9 @@ object Z3Context {
   case class RegularSort(sort: Z3Sort) extends ADTSortReference
 }
 
-class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config.ptr)) {
+sealed class Z3Context(val config: Z3Config) {
+  val ptr : Long = Z3Wrapper.mkContext(config.ptr)
+
   def this(params : (String,Any)*) = this(new Z3Config(params : _*))
 
   private def i2ob(value: Int) : Option[Boolean] = value match {
@@ -26,7 +28,6 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
   def delete() : Unit = {
     if(!deleted) {
       Z3Wrapper.delContext(this.ptr)
-      this.ptr = 0
       deleted = true
     }
   }
@@ -228,7 +229,7 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
     consListList = consListList.reverse
     consScalaList = consScalaList.reverse
     
-    val newSorts: Array[Long] = Z3Wrapper.mkDatatypes(this.ptr, typeCount, Z3Wrapper.toPtrArray(symbolList.toArray), consListList.toArray)
+    val newSorts: Array[Long] = Z3Wrapper.mkDatatypes(this.ptr, typeCount, toPtrArray(symbolList), consListList.toArray)
 
     consListList.foreach(cl => Z3Wrapper.delConstructorList(this.ptr, cl))
     
@@ -261,7 +262,7 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
     if(funcDecl.arity != args.size)
       throw new IllegalArgumentException("Calling mkApp with wrong number of arguments.")
 
-    new Z3AST(Z3Wrapper.mkApp(this.ptr, funcDecl.ptr, args.size, Z3Wrapper.toPtrArray(args.toArray)), this)
+    new Z3AST(Z3Wrapper.mkApp(this.ptr, funcDecl.ptr, args.size, toPtrArray(args)), this)
   }
 
   def isEqFuncDecl(fd1: Z3FuncDecl, fd2: Z3FuncDecl) : Boolean = {
@@ -281,7 +282,7 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
   }
 
   def mkFuncDecl(symbol: Z3Symbol, domainSorts: Seq[Z3Sort], rangeSort: Z3Sort) : Z3FuncDecl = {
-    new Z3FuncDecl(Z3Wrapper.mkFuncDecl(this.ptr, symbol.ptr, domainSorts.size, Z3Wrapper.toPtrArray(domainSorts.toArray), rangeSort.ptr), domainSorts.size, this)
+    new Z3FuncDecl(Z3Wrapper.mkFuncDecl(this.ptr, symbol.ptr, domainSorts.size, toPtrArray(domainSorts), rangeSort.ptr), domainSorts.size, this)
   }
 
   def mkFreshConst(prefix: String, sort: Z3Sort) : Z3AST = {
@@ -297,7 +298,7 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
   }
 
   def mkFreshFuncDecl(prefix: String, domainSorts: Seq[Z3Sort], rangeSort: Z3Sort) : Z3FuncDecl = {
-    new Z3FuncDecl(Z3Wrapper.mkFreshFuncDecl(this.ptr, prefix, domainSorts.size, Z3Wrapper.toPtrArray(domainSorts.toArray), rangeSort.ptr), domainSorts.size, this)
+    new Z3FuncDecl(Z3Wrapper.mkFreshFuncDecl(this.ptr, prefix, domainSorts.size, toPtrArray(domainSorts), rangeSort.ptr), domainSorts.size, this)
   }
 
   def mkTrue() : Z3AST = {
@@ -318,7 +319,7 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
     } else if(args.size == 1) {
       mkTrue
     } else {
-      new Z3AST(Z3Wrapper.mkDistinct(this.ptr, args.length, Z3Wrapper.toPtrArray(args.toArray)), this)
+      new Z3AST(Z3Wrapper.mkDistinct(this.ptr, args.length, toPtrArray(args)), this)
     }
   }
 
@@ -348,7 +349,7 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
     } else if(args.size == 1) {
       new Z3AST(args(0).ptr, this)
     } else {
-      new Z3AST(Z3Wrapper.mkAnd(this.ptr, args.length, Z3Wrapper.toPtrArray(args.toArray)), this)
+      new Z3AST(Z3Wrapper.mkAnd(this.ptr, args.length, toPtrArray(args)), this)
     }
   }
 
@@ -358,7 +359,7 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
     } else if(args.size == 1) {
       new Z3AST(args(0).ptr, this)
     } else {
-      new Z3AST(Z3Wrapper.mkOr(this.ptr, args.length, Z3Wrapper.toPtrArray(args.toArray)), this)
+      new Z3AST(Z3Wrapper.mkOr(this.ptr, args.length, toPtrArray(args)), this)
     }
   }
 
@@ -368,7 +369,7 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
     } else if(args.size == 1) {
       new Z3AST(args(0).ptr, this)
     } else {
-      new Z3AST(Z3Wrapper.mkAdd(this.ptr, args.length, Z3Wrapper.toPtrArray(args.toArray)), this)
+      new Z3AST(Z3Wrapper.mkAdd(this.ptr, args.length, toPtrArray(args)), this)
     }
   }
 
@@ -378,7 +379,7 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
     } else if(args.size == 1) {
       new Z3AST(args(0).ptr, this)
     } else {
-      new Z3AST(Z3Wrapper.mkMul(this.ptr, args.length, Z3Wrapper.toPtrArray(args.toArray)), this)
+      new Z3AST(Z3Wrapper.mkMul(this.ptr, args.length, toPtrArray(args)), this)
     }
   }
 
@@ -388,7 +389,7 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
     } else if(args.size == 1) {
       new Z3AST(args(0).ptr, this)
     } else {
-      new Z3AST(Z3Wrapper.mkSub(this.ptr, args.length, Z3Wrapper.toPtrArray(args.toArray)), this)
+      new Z3AST(Z3Wrapper.mkSub(this.ptr, args.length, toPtrArray(args)), this)
     }
   }
 
@@ -497,7 +498,7 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
     } else if(args.size == 1) {
       new Z3AST(args(0).ptr, this)
     } else {
-      new Z3AST(Z3Wrapper.mkSetUnion(this.ptr, args.length, Z3Wrapper.toPtrArray(args.toArray)), this)
+      new Z3AST(Z3Wrapper.mkSetUnion(this.ptr, args.length, toPtrArray(args)), this)
     }
   }
 
@@ -507,7 +508,7 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
     } else if(args.size == 1) {
       new Z3AST(args(0).ptr, this)
     } else {
-      new Z3AST(Z3Wrapper.mkSetIntersect(this.ptr, args.length, Z3Wrapper.toPtrArray(args.toArray)), this)
+      new Z3AST(Z3Wrapper.mkSetIntersect(this.ptr, args.length, toPtrArray(args)), this)
     }
   }
 
@@ -532,7 +533,7 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
   }
 
   def mkPattern(args: Z3AST*) : Z3Pattern = {
-    new Z3Pattern(Z3Wrapper.mkPattern(this.ptr, args.size, Z3Wrapper.toPtrArray(args.toArray)), this)
+    new Z3Pattern(Z3Wrapper.mkPattern(this.ptr, args.size, toPtrArray(args)), this)
   }
 
   def mkBound(index: Int, sort: Z3Sort) : Z3AST = {
@@ -551,10 +552,10 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
         isForAll,
         weight,
         patterns.size,
-        Z3Wrapper.toPtrArray(patterns.toArray),
+        toPtrArray(patterns),
         decls.size,
-        Z3Wrapper.toPtrArray(declSorts.toArray),
-        Z3Wrapper.toPtrArray(declSyms.toArray),
+        toPtrArray(declSorts),
+        toPtrArray(declSyms),
         body.ptr),
       this
     )
@@ -712,7 +713,7 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
     Z3Wrapper.getSymbolKind(this.ptr, symbol.ptr) match {
       case 0 => Z3IntSymbol(getSymbolInt(symbol))
       case 1 => Z3StringSymbol(getSymbolString(symbol))
-      case other => scala.Predef.error("Z3_get_symbol_kind returned an unknown value : " + other)
+      case other => scala.sys.error("Z3_get_symbol_kind returned an unknown value : " + other)
     }
   }
 
@@ -782,7 +783,7 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
       case 37 => OpAsArray 
       case 1000 => OpUninterpreted
       case 9999 => Other 
-      case other => scala.Predef.error("Unhandled int code for Z3KindDecl: " + other)
+      case other => scala.sys.error("Unhandled int code for Z3KindDecl: " + other)
     }
   }
 
@@ -876,7 +877,7 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
     val coreSizePtr = new Z3Wrapper.IntPtr()
     val core = new Array[Long](assumptions.size)
 
-    val res = i2ob(Z3Wrapper.checkAssumptions(this.ptr, assumptions.size, Z3Wrapper.toPtrArray(assumptions.toArray), modelPtr, assumptions.size, coreSizePtr, core))
+    val res = i2ob(Z3Wrapper.checkAssumptions(this.ptr, assumptions.size, toPtrArray(assumptions), modelPtr, assumptions.size, coreSizePtr, core))
 
     val model = new Z3Model(modelPtr.ptr, this)
 
@@ -1072,9 +1073,9 @@ class Z3Context(val config: Z3Config) extends Pointer(Z3Wrapper.mkContext(config
     val (sortNames, z3Sorts) = sorts.unzip
     val (declNames, z3Decls) = decls.unzip
     if(file) {
-      Z3Wrapper.parseSMTLIBFile(this.ptr, str, sorts.size, Z3Wrapper.toPtrArray(sortNames.toArray), Z3Wrapper.toPtrArray(z3Sorts.toArray), decls.size, Z3Wrapper.toPtrArray(declNames.toArray), Z3Wrapper.toPtrArray(z3Decls.toArray))
+      Z3Wrapper.parseSMTLIBFile(this.ptr, str, sorts.size, toPtrArray(sortNames), toPtrArray(z3Sorts), decls.size, toPtrArray(declNames), toPtrArray(z3Decls))
     } else {
-      Z3Wrapper.parseSMTLIBString(this.ptr, str, sorts.size, Z3Wrapper.toPtrArray(sortNames.toArray), Z3Wrapper.toPtrArray(z3Sorts.toArray), decls.size, Z3Wrapper.toPtrArray(declNames.toArray), Z3Wrapper.toPtrArray(z3Decls.toArray))
+      Z3Wrapper.parseSMTLIBString(this.ptr, str, sorts.size, toPtrArray(sortNames), toPtrArray(z3Sorts), decls.size, toPtrArray(declNames), toPtrArray(z3Decls))
     }
   }
 

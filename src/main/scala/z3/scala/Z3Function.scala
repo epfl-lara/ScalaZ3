@@ -1,6 +1,6 @@
 package z3.scala
 
-class Z3Function(private val interpretation: (Seq[(Seq[Z3AST], Z3AST)], Z3AST)) {
+sealed class Z3Function(private val interpretation: (Seq[(Seq[Z3AST], Z3AST)], Z3AST)) {
   private lazy val iMap = interpretation._1.toMap
 
   val arity = interpretation._1.head._1.size

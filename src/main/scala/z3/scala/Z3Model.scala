@@ -32,7 +32,7 @@ object Z3Model {
   }
 }
 
-class Z3Model private[z3](ptr: Long, private val context: Z3Context) extends Pointer(ptr) {
+sealed class Z3Model private[z3](val ptr: Long, private val context: Z3Context) {
   override def toString : String = context.modelToString(this)
 
   def delete: Unit = {
@@ -52,7 +52,7 @@ class Z3Model private[z3](ptr: Long, private val context: Z3Context) extends Poi
     }
   }
 
-  @deprecated("use `evalAs[Int]` instead")
+  @deprecated("use `evalAs[Int]` instead", "3.0.a")
   def evalAsInt(ast: Z3AST) : Option[Int] = {
     val res = this.eval(ast)
     if(res.isEmpty)
@@ -61,7 +61,7 @@ class Z3Model private[z3](ptr: Long, private val context: Z3Context) extends Poi
       context.getNumeralInt(res.get)
   }
 
-  @deprecated("use `evalAs[Boolean]` instead")
+  @deprecated("use `evalAs[Boolean]` instead", "3.0.a")
   def evalAsBool(ast: Z3AST) : Option[Boolean] = {
     val res = this.eval(ast)
     if(res.isEmpty)
@@ -175,7 +175,7 @@ class Z3Model private[z3](ptr: Long, private val context: Z3Context) extends Poi
       case Some((entries, elseValue)) =>
         assert(entries.forall(_._1.size == 1))
         val asMap = entries.map {
-          case (List(arg), value) => (arg, value)
+          case (arg :: Nil, value) => (arg, value)
         }.toMap
         Some(asMap, elseValue)
       case None => None

@@ -3,7 +3,7 @@ package z3.scala
 import z3.Pointer
 
 // We store the arity when it's known to help preventing segfaults...
-class Z3FuncDecl private[z3](ptr: Long, val arity: Int, context: Z3Context) extends Pointer(ptr) {
+sealed class Z3FuncDecl private[z3](val ptr: Long, val arity: Int, context: Z3Context) {
   def apply(args: Z3AST*) : Z3AST = context.mkApp(this, args:_*)
 
   lazy val getName: Z3Symbol = context.getDeclName(this)

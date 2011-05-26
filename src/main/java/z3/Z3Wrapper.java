@@ -34,9 +34,8 @@ public final class Z3Wrapper {
     }
 
     public static String wrapperVersionString() {
-        return " scalaZ3 1.2  (in devel. )";
-        //return "   jniZ3 1.1  (2010-12-03)";
-        //return "   jniZ3 1.0  (2010-09-16)";
+        // Version number should match smallest Z3 with which we know it to work, plus a letter for "internal" versions.
+        return "ScalaZ3 3.0.a  (in dev.)";
     }
 
     public static String z3VersionString() {
@@ -45,7 +44,7 @@ public final class Z3Wrapper {
         IntPtr buildNumber = new IntPtr();
         IntPtr revisionNumber = new IntPtr();
         getVersion(major, minor, buildNumber, revisionNumber);
-        return "      Z3 " + major.value + "." + minor.value + " (build " + buildNumber.value + ", rev. " + revisionNumber.value + ")";
+        return "Z3 " + major.value + "." + minor.value + " (build " + buildNumber.value + ", rev. " + revisionNumber.value + ")";
     }
 
     private static void loadFromJar() {

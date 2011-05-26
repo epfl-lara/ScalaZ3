@@ -12,9 +12,9 @@ import z3.Z3Wrapper
  * <code>setCallbacks</code> with the appropriate arguments at construction
  * time. For debugging purposes, the method <code>showCallbacks</code> can be
  * useful. */
-abstract class Z3Theory(context: Z3Context, val name: String) extends Pointer(0L) {
+abstract class Z3Theory(context: Z3Context, val name: String) {
   // This will immediately set the pointer.
-  this.ptr = Z3Wrapper.mkTheory(context.ptr, name)
+  val ptr : Long = Z3Wrapper.mkTheory(context.ptr, name)
   private val proxy = new TheoryProxy(context, this)
 
   /** Use this function at construction time to set which callbacks should be used. */
@@ -148,13 +148,13 @@ abstract class Z3Theory(context: Z3Context, val name: String) extends Pointer(0L
   }
 
   // The following is to be used at initialization time.
-  /*protected*/ final def mkTheorySort(symbol: Z3Symbol) : Z3Sort = new Z3Sort(Z3Wrapper.theoryMkSort(context.ptr, this.ptr, symbol.ptr), context)
-  /*protected*/ final def mkTheoryValue(symbol: Z3Symbol, sort: Z3Sort) : Z3AST = new Z3AST(Z3Wrapper.theoryMkValue(context.ptr, this.ptr, symbol.ptr, sort.ptr), context)
-  /*protected*/ final def mkTheoryConstant(symbol: Z3Symbol, sort: Z3Sort) : Z3AST = new Z3AST(Z3Wrapper.theoryMkConstant(context.ptr, this.ptr, symbol.ptr, sort.ptr), context)
-  /*protected*/ final def mkTheoryFuncDecl(symbol: Z3Symbol, domainSorts: Seq[Z3Sort], rangeSort: Z3Sort) : Z3FuncDecl = new Z3FuncDecl(Z3Wrapper.theoryMkFuncDecl(context.ptr, this.ptr, symbol.ptr, domainSorts.size, Z3Wrapper.toPtrArray(domainSorts.toArray), rangeSort.ptr), domainSorts.size, context) 
+  final def mkTheorySort(symbol: Z3Symbol) : Z3Sort = new Z3Sort(Z3Wrapper.theoryMkSort(context.ptr, this.ptr, symbol.ptr), context)
+  final def mkTheoryValue(symbol: Z3Symbol, sort: Z3Sort) : Z3AST = new Z3AST(Z3Wrapper.theoryMkValue(context.ptr, this.ptr, symbol.ptr, sort.ptr), context)
+  final def mkTheoryConstant(symbol: Z3Symbol, sort: Z3Sort) : Z3AST = new Z3AST(Z3Wrapper.theoryMkConstant(context.ptr, this.ptr, symbol.ptr, sort.ptr), context)
+  final def mkTheoryFuncDecl(symbol: Z3Symbol, domainSorts: Seq[Z3Sort], rangeSort: Z3Sort) : Z3FuncDecl = new Z3FuncDecl(Z3Wrapper.theoryMkFuncDecl(context.ptr, this.ptr, symbol.ptr, domainSorts.size, toPtrArray(domainSorts), rangeSort.ptr), domainSorts.size, context)
 
   // These functions enable the communication with the DPLL+UF engine.
-  /*protected*/ final def getContext : Z3Context = context
+  final def getContext : Z3Context = context
 
   /** Adds an axiom to the logical context. The axiom should always be a
    * tautology with respect to the theory. The axiom is guaranteed to be
@@ -171,9 +171,9 @@ abstract class Z3Theory(context: Z3Context, val name: String) extends Pointer(0L
   /** Indicates to Z3 that in the model being built by the theory, two elements are equal. */
   final def assumeEq(lhs: Z3AST, rhs: Z3AST) : Unit = Z3Wrapper.theoryAssumeEq(this.ptr, lhs.ptr, rhs.ptr)
 
-  /*protected*/ final def enableAxiomSimplification(flag: Boolean) : Unit = Z3Wrapper.theoryEnableAxiomSimplification(this.ptr, flag)
-  /*protected*/ final def getEqClassRoot(ast: Z3AST) : Z3AST = new Z3AST(Z3Wrapper.theoryGetEqCRoot(this.ptr, ast.ptr), context)
-  /*protected*/ final def getEqClassNext(ast: Z3AST) : Z3AST = new Z3AST(Z3Wrapper.theoryGetEqCNext(this.ptr, ast.ptr), context)
+  final def enableAxiomSimplification(flag: Boolean) : Unit = Z3Wrapper.theoryEnableAxiomSimplification(this.ptr, flag)
+  final def getEqClassRoot(ast: Z3AST) : Z3AST = new Z3AST(Z3Wrapper.theoryGetEqCRoot(this.ptr, ast.ptr), context)
+  final def getEqClassNext(ast: Z3AST) : Z3AST = new Z3AST(Z3Wrapper.theoryGetEqCNext(this.ptr, ast.ptr), context)
 
   /** Returns an iterator over all elements of the equivalence class of a term. */
   final def getEqClassMembers(ast: Z3AST) : Iterator[Z3AST] = {

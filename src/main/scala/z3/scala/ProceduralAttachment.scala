@@ -6,7 +6,7 @@ import z3.Z3Wrapper
 import scala.collection.mutable.{Map=>MutableMap,Set=>MutableSet}
 import scala.util.Random.nextInt
 
-class ProceduralAttachment[T](context: Z3Context) extends Z3Theory(context, "PA" + nextInt) {
+sealed class ProceduralAttachment[T](context: Z3Context) extends Z3Theory(context, "PA" + nextInt) {
   private def randomName(prefix: String) : String = prefix + nextInt
 
   private val thySort : Z3Sort = mkTheorySort(context.mkStringSymbol(randomName("ts-")))
@@ -127,7 +127,7 @@ class ProceduralAttachment[T](context: Z3Context) extends Z3Theory(context, "PA"
         val f = functions3Rev(fd)
         Some(constant(f(asElems(0), asElems(1), asElems(2))))
       } else {
-        scala.Predef.error("`interpret' was called with an unknown Z3FuncDecl: " + fd)
+        scala.sys.error("`interpret' was called with an unknown Z3FuncDecl: " + fd)
       }
     } else {
       None

@@ -2,7 +2,7 @@ package z3.scala
 
 import z3.{Z3Wrapper,Pointer}
 
-class Z3Literals private[z3](ptr: Long, context: Z3Context) extends Pointer(ptr) {
+sealed class Z3Literals private[z3](val ptr: Long, context: Z3Context) {
   def delete : Unit = {
     Z3Wrapper.delLiterals(context.ptr, this.ptr)
   }

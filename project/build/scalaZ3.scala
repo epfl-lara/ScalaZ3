@@ -2,12 +2,14 @@ import sbt._
 import Process._
 
 class ScalaZ3Project(info: ProjectInfo) extends DefaultProject(info) with FileTasks {
-  val scalatest = "org.scalatest" % "scalatest" % "1.3"
+  val scalatest = "org.scalatest" % "scalatest_2.9.0" % "1.4.1"
 
   // All Java classes that contain native methods.
   val nativeClasses = List("z3.Z3Wrapper")
 
-  val z3DefaultVersion = "3.00"
+  val z3DefaultVersion = "3.0"
+
+  override def compileOptions = super.compileOptions ++ Seq(Unchecked)
 
   lazy val cPath : Path = "." / "src" / "c"
   lazy val cFiles : PathFinder = "." / "src" / "c" * "*.c"

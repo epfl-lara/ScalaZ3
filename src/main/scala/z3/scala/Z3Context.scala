@@ -60,6 +60,10 @@ sealed class Z3Context(val config: Z3Config) {
     Z3Wrapper.modelToString(this.ptr, model.ptr)
   }
 
+  def benchmarkToSMTLIBString(name : String, logic : String, status : String, attributes : String, assumptions : Seq[Z3AST], formula : Z3AST) : String = {
+    Z3Wrapper.benchmarkToSMTLIBString(this.ptr, name, logic, status, attributes, assumptions.size, toPtrArray(assumptions), formula.ptr)
+  }
+
   def traceToFile(traceFile: String) : Boolean = {
     Z3Wrapper.traceToFile(this.ptr, traceFile)
   }
@@ -713,7 +717,7 @@ sealed class Z3Context(val config: Z3Config) {
     Z3Wrapper.getSymbolKind(this.ptr, symbol.ptr) match {
       case 0 => Z3IntSymbol(getSymbolInt(symbol))
       case 1 => Z3StringSymbol(getSymbolString(symbol))
-      case other => scala.sys.error("Z3_get_symbol_kind returned an unknown value : " + other)
+      case other => error("Z3_get_symbol_kind returned an unknown value : " + other)
     }
   }
 
@@ -783,7 +787,7 @@ sealed class Z3Context(val config: Z3Config) {
       case 37 => OpAsArray 
       case 1000 => OpUninterpreted
       case 9999 => Other 
-      case other => scala.sys.error("Unhandled int code for Z3KindDecl: " + other)
+      case other => error("Unhandled int code for Z3KindDecl: " + other)
     }
   }
 

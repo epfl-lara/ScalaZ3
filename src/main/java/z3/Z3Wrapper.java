@@ -381,6 +381,7 @@ public final class Z3Wrapper {
     public static native String patternToString(long contextPtr, long patternPtr);
     public static native String modelToString(long contextPtr, long modelPtr);
     public static native String contextToString(long contextPtr);
+    public static native String benchmarkToSMTLIBString(long contextPtr, String name, String logic, String status, String attributes, int numAssumptions, long[] assumptions, long formulaPtr);
 
     // The following is related to the theory plugins.
     private static HashMap<Long,AbstractTheoryProxy> tpmap = new HashMap<Long,AbstractTheoryProxy>();

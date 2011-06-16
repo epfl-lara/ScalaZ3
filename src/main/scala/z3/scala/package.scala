@@ -17,4 +17,9 @@ package object scala {
   protected[z3] def toPtrArray(ptrs : Iterable[{ def ptr : Long }]) : Array[Long] = {
     ptrs.map(_.ptr).toArray
   }
+
+  def error(any : Any) : Nothing = {
+    //Predef.error(any.toString)
+    sys.error(any.toString) // 2.9
+  }
 }

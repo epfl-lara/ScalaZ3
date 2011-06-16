@@ -1323,6 +1323,44 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
         return (*env)->NewStringUTF(env, str);
     }
 
+    JNIEXPORT jstring JNICALL Java_z3_Z3Wrapper_benchmarkToSMTLIBString (JNIEnv * env, jclass cls, jlong contextPtr, jstring nameStr, jstring logicStr, jstring statusStr, jstring attrStr, jint numAss, jlongArray ass, jlong formulaPtr) {
+        Z3_context cont = asZ3Context(contextPtr);
+        const jbyte *nameStrBytes, *logicStrBytes, *statusStrBytes, *attrStrBytes;
+        const char * result;
+        Z3_ast * cAss = (Z3_ast*)malloc(numAss * sizeof(Z3_ast*));
+        jlong  * jAss = (*env)->GetLongArrayElements(env, ass, NULL);
+        int i = 0;
+
+        if(jAss == NULL)
+            return NULL;
+
+        nameStrBytes   = (*env)->GetStringUTFChars(env, nameStr, NULL);
+        logicStrBytes  = (*env)->GetStringUTFChars(env, logicStr, NULL);
+        statusStrBytes = (*env)->GetStringUTFChars(env, statusStr, NULL);
+        attrStrBytes   = (*env)->GetStringUTFChars(env, attrStr, NULL);
+        if (nameStrBytes == NULL || logicStrBytes == NULL || statusStrBytes == NULL || attrStrBytes == NULL)
+            return NULL;
+
+        for(i = 0; i < numAss; ++i) {
+           cAss[i] = asZ3AST(jAss[i]);
+        }
+        (*env)->ReleaseLongArrayElements(env, ass, jAss, 0); 
+
+        result = Z3_benchmark_to_smtlib_string(
+                cont, 
+                (const char*)nameStrBytes,
+                (const char*)logicStrBytes,
+                (const char*)statusStrBytes,
+                (const char*)attrStrBytes,
+                (int)numAss,
+                cAss,
+                asZ3AST(formulaPtr)
+                );
+
+        free(cAss);
+        return (*env)->NewStringUTF(env, result);
+    }
+
     JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkTheory (JNIEnv * env, jclass cls, jlong contextPtr, jstring name) {
         const jbyte * nameStr;
         Z3_theory toReturn;

@@ -52,7 +52,7 @@ sealed class Z3Model private[z3](val ptr: Long, private val context: Z3Context) 
     }
   }
 
-  @deprecated("use `evalAs[Int]` instead", "3.0.a")
+/*  @deprecated("use `evalAs[Int]` instead", "3.0.a")
   def evalAsInt(ast: Z3AST) : Option[Int] = {
     val res = this.eval(ast)
     if(res.isEmpty)
@@ -60,8 +60,9 @@ sealed class Z3Model private[z3](val ptr: Long, private val context: Z3Context) 
     else
       context.getNumeralInt(res.get)
   }
+  */
 
-  @deprecated("use `evalAs[Boolean]` instead", "3.0.a")
+/*  @deprecated("use `evalAs[Boolean]` instead", "3.0.a")
   def evalAsBool(ast: Z3AST) : Option[Boolean] = {
     val res = this.eval(ast)
     if(res.isEmpty)
@@ -69,6 +70,7 @@ sealed class Z3Model private[z3](val ptr: Long, private val context: Z3Context) 
     else 
       context.getBoolValue(res.get)
   }
+  */
 
   def evalAs[T](input: Z3AST)(implicit converter: (Z3Model, Z3AST) => Option[T]): Option[T] = {
     converter(this, input)

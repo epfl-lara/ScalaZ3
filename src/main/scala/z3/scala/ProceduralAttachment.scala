@@ -127,7 +127,7 @@ sealed class ProceduralAttachment[T](context: Z3Context) extends Z3Theory(contex
         val f = functions3Rev(fd)
         Some(constant(f(asElems(0), asElems(1), asElems(2))))
       } else {
-        scala.sys.error("`interpret' was called with an unknown Z3FuncDecl: " + fd)
+        error("`interpret' was called with an unknown Z3FuncDecl: " + fd)
       }
     } else {
       None

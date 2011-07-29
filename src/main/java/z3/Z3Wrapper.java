@@ -86,6 +86,7 @@ public final class Z3Wrapper {
         }
     }
 
+    /** Placeholder class to ease JNI interaction. */
     public static class IntPtr {
         public int value;
     }

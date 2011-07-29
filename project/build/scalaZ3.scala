@@ -182,6 +182,7 @@ class ScalaZ3Project(info: ProjectInfo) extends DefaultProject(info) with FileTa
       fw.write("  public static final String value = \"" + md5String + "\";" + nl)
       fw.write("}" + nl)
       fw.close
+      log.info("Wrote checksum " + md5String + " as part of " + checksumFilePath.asFile + ".")
       None
     } catch {
       case e => Some("There was an error while generating the checksum file: " + e.getLocalizedMessage)

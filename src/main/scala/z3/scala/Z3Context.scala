@@ -172,6 +172,10 @@ sealed class Z3Context(val config: Z3Config) {
     new Z3Sort(Z3Wrapper.mkUninterpretedSort(this.ptr, s.ptr), this)
   }
 
+  def mkUninterpretedSort(s : String) : Z3Sort = {
+    mkUninterpretedSort(mkStringSymbol(s))
+  }
+
   def mkBoolSort() : Z3Sort = {
     new Z3Sort(Z3Wrapper.mkBoolSort(this.ptr), this)
   }
@@ -277,16 +281,40 @@ sealed class Z3Context(val config: Z3Config) {
     new Z3AST(Z3Wrapper.mkConst(this.ptr, symbol.ptr, sort.ptr), this)
   }
 
+  def mkConst(s: String, sort: Z3Sort) : Z3AST = {
+    mkConst(mkStringSymbol(s), sort)
+  }
+
   def mkIntConst(symbol: Z3Symbol) : Z3AST = {
     mkConst(symbol, mkIntSort)
+  }
+
+  def mkIntConst(s: String) : Z3AST = {
+    mkIntConst(mkStringSymbol(s))
   }
 
   def mkBoolConst(symbol: Z3Symbol) : Z3AST = {
     mkConst(symbol, mkBoolSort)
   }
 
+  def mkBoolConst(s: String) : Z3AST = {
+    mkBoolConst(mkStringSymbol(s))
+  }
+
   def mkFuncDecl(symbol: Z3Symbol, domainSorts: Seq[Z3Sort], rangeSort: Z3Sort) : Z3FuncDecl = {
     new Z3FuncDecl(Z3Wrapper.mkFuncDecl(this.ptr, symbol.ptr, domainSorts.size, toPtrArray(domainSorts), rangeSort.ptr), domainSorts.size, this)
+  }
+
+  def mkFuncDecl(symbol: Z3Symbol, domainSort: Z3Sort, rangeSort: Z3Sort) : Z3FuncDecl = {
+    mkFuncDecl(symbol, Seq(domainSort), rangeSort)
+  }
+
+  def mkFuncDecl(symbol: String, domainSorts: Seq[Z3Sort], rangeSort: Z3Sort) : Z3FuncDecl = {
+    mkFuncDecl(mkStringSymbol(symbol), domainSorts, rangeSort)
+  }
+
+  def mkFuncDecl(symbol: String, domainSort: Z3Sort, rangeSort: Z3Sort) : Z3FuncDecl = {
+    mkFuncDecl(mkStringSymbol(symbol), Seq(domainSort), rangeSort)
   }
 
   def mkFreshConst(prefix: String, sort: Z3Sort) : Z3AST = {
@@ -461,8 +489,6 @@ sealed class Z3Context(val config: Z3Config) {
     new Z3AST(Z3Wrapper.mkArrayDefault(this.ptr, array.ptr), this)
   }
 
-  def mkTupleSort(name : String, sorts : Z3Sort*) : (Z3Sort,Z3FuncDecl,Seq[Z3FuncDecl]) = mkTupleSort(mkStringSymbol(name), sorts : _*)
-
   def mkTupleSort(name : Z3Symbol, sorts : Z3Sort*) : (Z3Sort,Z3FuncDecl,Seq[Z3FuncDecl]) = {
     require(sorts.size > 0)
     val sz = sorts.size
@@ -475,6 +501,8 @@ sealed class Z3Context(val config: Z3Config) {
     val projFuncDecls = projFuns.map(ptr => new Z3FuncDecl(ptr, 1, this)).toSeq
     (newSort, consFuncDecl, projFuncDecls)
   }
+
+  def mkTupleSort(name : String, sorts : Z3Sort*) : (Z3Sort,Z3FuncDecl,Seq[Z3FuncDecl]) = mkTupleSort(mkStringSymbol(name), sorts : _*)
 
   def mkSetSort(underlying: Z3Sort) : Z3Sort = {
     new Z3Sort(Z3Wrapper.mkSetSort(this.ptr, underlying.ptr), this)

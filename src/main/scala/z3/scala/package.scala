@@ -22,4 +22,26 @@ package object scala {
     //Predef.error(any.toString)
     sys.error(any.toString) // 2.9
   }
+
+  // All default values
+
+  implicit object DefaultInt extends Default[Int] {
+    val value = 0
+  }
+
+  implicit object DefaultBoolean extends Default[Boolean] {
+    val value = true
+  }
+
+  implicit def liftDefaultToSet[A : Default] : Default[Set[A]] = {
+    new Default[Set[A]] {
+      val value = Set.empty[A]
+    }
+  }
+
+  implicit def liftDefaultToFun[A,B : Default] : Default[A=>B] = {
+    new Default[A=>B] {
+      val value = ((a : A) => implicitly[Default[B]].value)
+    }
+  }
 }

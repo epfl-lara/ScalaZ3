@@ -56,47 +56,77 @@ package object dsl {
 
   implicit def setOperandToSetTree(operand : SetOperand) : Tree[SetSort] = operand.tree.asInstanceOf[Tree[SetSort]]
 
-  // The following is for the choose magic.
-
-  sealed abstract class ValHandler[A] {
-    def construct : Val[A]
-    def convert(model : Z3Model, ast : Z3AST) : A
-  }
+  // Predefined ValHandler's
 
   implicit object BooleanValHandler extends ValHandler[Boolean] {
-    def construct : Val[Boolean] = new Val[Boolean] {
-      def build(z3 : Z3Context) = z3.mkFreshConst("B", z3.mkBoolSort)
-    }
+    def mkSort(z3 : Z3Context) : Z3Sort = z3.mkBoolSort
 
     def convert(model : Z3Model, ast : Z3AST) : Boolean =
       model.evalAs[Boolean](ast).getOrElse(false)
   }
 
   implicit object IntValHandler extends ValHandler[Int] {
-    def construct : Val[Int] = new Val[Int] {
-      def build(z3 : Z3Context) = z3.mkFreshConst("I", z3.mkIntSort)
-    }
+    def mkSort(z3 : Z3Context) : Z3Sort = z3.mkIntSort
 
     def convert(model : Z3Model, ast : Z3AST) : Int =
       model.evalAs[Int](ast).getOrElse(0)
   }
 
-  implicit object IntSetValHandler extends ValHandler[Set[Int]] {
-    def construct : Val[Set[Int]] = new Val[Set[Int]] {
-      def build(z3 : Z3Context) = z3.mkFreshConst("IS", z3.mkSetSort(z3.mkIntSort))
-    }
+  implicit def liftToSetValHander[A : Default : ValHandler] : ValHandler[Set[A]] = new ValHandler[Set[A]] {
+    private val underlying = implicitly[ValHandler[A]]
 
-    def convert(model : Z3Model, ast : Z3AST) : Set[Int] =
-      model.evalAs[Set[Int]](ast).getOrElse(Set[Int]())
+    def mkSort(z3 : Z3Context) : Z3Sort = z3.mkSetSort(underlying.mkSort(z3))
+
+    def convert(model : Z3Model, ast : Z3AST) : Set[A] = {
+      model.eval(ast) match {
+        case None => default.value // when not in model, we assume anything is OK
+        case Some(evaluated) => model.getSetValue(evaluated) match {
+          case Some(astSet) => astSet.map(a => underlying.convert(model, a)).toSet
+          case None => default.value
+        }
+      }
+    }  
   }
 
-  def choose[T](predicate : Val[T] => Tree[BoolSort])(implicit vh : ValHandler[T]) : T = find(predicate)(vh) match {
+  /** Instances of this class are used to represent models of Z3 maps, which
+   * are typically defined by a finite collection of pairs and a default
+   * value. More sophisticated representations à la functional programs that
+   * can sometimes be obtained from quantified formulas are not yet
+   * supported. PS. */
+  class PointWiseFunction[-A,+B](points: Map[A,B], default: B) extends (A=>B) {
+    def apply(a : A) : B = points.getOrElse(a, default)
+  }
+  implicit def liftToFuncHandler[A : Default : ValHandler, B : Default : ValHandler] : ValHandler[A=>B] = new ValHandler[A=>B] {
+    private val underlyingA = implicitly[ValHandler[A]]
+    private val underlyingB = implicitly[ValHandler[B]]
+
+    def mkSort(z3 : Z3Context) : Z3Sort =
+      z3.mkArraySort(underlyingA.mkSort(z3), underlyingB.mkSort(z3))
+
+    def convert(model : Z3Model, ast : Z3AST) : (A=>B) = {
+      model.eval(ast) match {
+        case None => default.value
+        case Some(evaluated) => model.getArrayValue(evaluated) match {
+          case Some((mp,dflt)) => {
+            new PointWiseFunction[A,B](
+              mp.map(kv => (underlyingA.convert(model,kv._1), underlyingB.convert(model,kv._2))),
+              underlyingB.convert(model,dflt)
+            )
+          }
+          case None => default.value
+        }
+      }
+    }
+  }
+
+  def choose[T:ValHandler](predicate : Val[T] => Tree[BoolSort]) : T = find(predicate) match {
     case Some(result) => result
     case None => throw new UnsatisfiableConstraintException
   }
 
-  def find[T](predicate : Val[T] => Tree[BoolSort])(implicit vh : ValHandler[T]) : Option[T] = {
+  def find[T:ValHandler](predicate : Val[T] => Tree[BoolSort]) : Option[T] = {
     val z3 = new Z3Context("MODEL" -> true)
+    val vh = implicitly[ValHandler[T]]
     val valTree = vh.construct
     val valAST = valTree.ast(z3)
     val constraintTree = predicate(valTree)
@@ -116,8 +146,9 @@ package object dsl {
     }
   }
 
-  def findAll[T](predicate : Val[T] => Tree[BoolSort])(implicit vh : ValHandler[T]) : Iterator[T] = {
+  def findAll[T:ValHandler](predicate : Val[T] => Tree[BoolSort]) : Iterator[T] = {
     val z3 = new Z3Context("MODEL" -> true)
+    val vh = implicitly[ValHandler[T]]
     val valTree = vh.construct
     val valAST = valTree.ast(z3)
     val constraintTree = predicate(valTree)
@@ -130,13 +161,15 @@ package object dsl {
     })
   }
 
-  def choose[T1,T2](predicate : (Val[T1],Val[T2]) => Tree[BoolSort])(implicit vh1 : ValHandler[T1], vh2 : ValHandler[T2]) : (T1,T2) = find(predicate)(vh1, vh2) match {
+  def choose[T1:ValHandler,T2:ValHandler](predicate : (Val[T1],Val[T2]) => Tree[BoolSort]) : (T1,T2) = find(predicate) match {
     case Some(p) => p
     case None => throw new UnsatisfiableConstraintException
   }
 
-  def find[T1,T2](predicate : (Val[T1],Val[T2]) => Tree[BoolSort])(implicit vh1 : ValHandler[T1], vh2 : ValHandler[T2]) : Option[(T1,T2)] = {
+  def find[T1:ValHandler,T2:ValHandler](predicate : (Val[T1],Val[T2]) => Tree[BoolSort]) : Option[(T1,T2)] = {
     val z3 = new Z3Context("MODEL" -> true)
+    val vh1 = implicitly[ValHandler[T1]]
+    val vh2 = implicitly[ValHandler[T2]]
     val valTree1 = vh1.construct
     val valTree2 = vh2.construct
     val valAST1 = valTree1.ast(z3)
@@ -159,8 +192,10 @@ package object dsl {
     }
   }
 
-  def findAll[T1,T2](predicate : (Val[T1],Val[T2]) => Tree[BoolSort])(implicit vh1 : ValHandler[T1], vh2 : ValHandler[T2]) : Iterator[(T1,T2)] = {
+  def findAll[T1:ValHandler,T2:ValHandler](predicate : (Val[T1],Val[T2]) => Tree[BoolSort]) : Iterator[(T1,T2)] = {
     val z3 = new Z3Context("MODEL" -> true)
+    val vh1 = implicitly[ValHandler[T1]]
+    val vh2 = implicitly[ValHandler[T2]]
     val valTree1 = vh1.construct
     val valTree2 = vh2.construct
     val valAST1 = valTree1.ast(z3)
@@ -175,13 +210,16 @@ package object dsl {
     })
   }
 
-  def choose[T1,T2,T3](predicate : (Val[T1],Val[T2],Val[T3]) => Tree[BoolSort])(implicit vh1 : ValHandler[T1], vh2 : ValHandler[T2], vh3 : ValHandler[T3]) : (T1,T2,T3) = find(predicate)(vh1, vh2, vh3) match {
+  def choose[T1:ValHandler,T2:ValHandler,T3:ValHandler](predicate : (Val[T1],Val[T2],Val[T3]) => Tree[BoolSort]) : (T1,T2,T3) = find(predicate) match {
     case Some(p) => p
     case None => throw new UnsatisfiableConstraintException
   }
 
-  def find[T1,T2,T3](predicate : (Val[T1],Val[T2],Val[T3]) => Tree[BoolSort])(implicit vh1 : ValHandler[T1], vh2 : ValHandler[T2], vh3 : ValHandler[T3]) : Option[(T1,T2,T3)] = {
+  def find[T1:ValHandler,T2:ValHandler,T3:ValHandler](predicate : (Val[T1],Val[T2],Val[T3]) => Tree[BoolSort]) : Option[(T1,T2,T3)] = {
     val z3 = new Z3Context("MODEL" -> true)
+    val vh1 = implicitly[ValHandler[T1]]
+    val vh2 = implicitly[ValHandler[T2]]
+    val vh3 = implicitly[ValHandler[T3]]
     val valTree1 = vh1.construct
     val valTree2 = vh2.construct
     val valTree3 = vh3.construct
@@ -207,8 +245,11 @@ package object dsl {
     }
   }
 
-  def findAll[T1,T2,T3](predicate : (Val[T1],Val[T2],Val[T3]) => Tree[BoolSort])(implicit vh1 : ValHandler[T1], vh2 : ValHandler[T2], vh3 : ValHandler[T3]) : Iterator[(T1,T2,T3)] = {
+  def findAll[T1:ValHandler,T2:ValHandler,T3:ValHandler](predicate : (Val[T1],Val[T2],Val[T3]) => Tree[BoolSort]) : Iterator[(T1,T2,T3)] = {
     val z3 = new Z3Context("MODEL" -> true)
+    val vh1 = implicitly[ValHandler[T1]]
+    val vh2 = implicitly[ValHandler[T2]]
+    val vh3 = implicitly[ValHandler[T3]]
     val valTree1 = vh1.construct
     val valTree2 = vh2.construct
     val valTree3 = vh3.construct

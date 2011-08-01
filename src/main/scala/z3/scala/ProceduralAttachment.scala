@@ -6,7 +6,7 @@ import z3.Z3Wrapper
 import scala.collection.mutable.{Map=>MutableMap,Set=>MutableSet}
 import scala.util.Random.nextInt
 
-sealed class ProceduralAttachment[T](context: Z3Context) extends Z3Theory(context, "PA" + nextInt) {
+class ProceduralAttachment[T](context: Z3Context) extends Z3Theory(context, "PA" + nextInt) {
   private def randomName(prefix: String) : String = prefix + nextInt
 
   private val thySort : Z3Sort = mkTheorySort(context.mkStringSymbol(randomName("ts-")))

@@ -32,13 +32,28 @@ sealed trait Tree[+T >: BottomSort <: TopSort] {
 abstract class Val[A] extends Tree[BottomSort] {
   import Operands._
 
-  def ===(other : Val[A]) : BoolOperand = {
-    new BoolOperand(Eq(this, other))
-  } 
+  // def ===(other : Val[A]) : BoolOperand = {
+  //   new BoolOperand(Eq(this, other))
+  // } 
 
-  def !==(other : Val[A]) : BoolOperand = {
+  //def !==(other : Val[A]) : BoolOperand = {
+  //  new BoolOperand(Distinct(this, other))
+  //} 
+
+  // This is more general.
+  def ===(other : Tree[BottomSort]) : BoolOperand = {
+    new BoolOperand(Eq(this, other))
+  }
+
+  def !==(other : Tree[BottomSort]) : BoolOperand = {
     new BoolOperand(Distinct(this, other))
   } 
+
+  // Unsafe as such. Better would be to have this in Tree itself, and restrict
+  // it to trees of array sorts.
+  def apply(t : Tree[_ >: BottomSort <: TopSort]) : Tree[BottomSort] = {
+    new MapSelect(this, t)
+  }
 }
 
 /** This class is used to bridge the gap between non-DSL Z3ASTs and DSL ASTs.
@@ -184,4 +199,9 @@ case class EmptyIntSet() extends Tree[SetSort] {
 
 case class SetAdd[+A >: BottomSort <: TopSort](set : Tree[SetSort], elem : Tree[A]) extends Tree[SetSort] {
   private [dsl] def build(z3 : Z3Context) = z3.mkSetAdd(set.ast(z3), elem.ast(z3))
+}
+
+// Unsafe.
+case class MapSelect(map : Tree[_ >: BottomSort <: TopSort], index : Tree[_ >: BottomSort <: TopSort]) extends Tree[BottomSort] {
+  private [dsl] def build(z3 : Z3Context) = z3.mkSelect(map.ast(z3), index.ast(z3))
 }

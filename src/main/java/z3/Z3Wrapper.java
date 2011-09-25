@@ -35,7 +35,8 @@ public final class Z3Wrapper {
 
     public static String wrapperVersionString() {
         // Version number should match smallest Z3 with which we know it to work, plus a letter for "internal" versions.
-        return "ScalaZ3 3.0.a  (in dev.)";
+        // return "ScalaZ3 3.2.b (in dev.)";
+        return "ScalaZ3 3.2.a";
     }
 
     public static String z3VersionString() {
@@ -409,8 +410,8 @@ public final class Z3Wrapper {
     public static native long theoryGetApp(long thyPtr, int i);
 
     // Parser interface
-    public static native void parseSMTLIBString(long ctxPtr, String str, int numSorts, long[] sortNames, long[] sorts, int numDecls, long[] declNames, long[] decls);
-    public static native void parseSMTLIBFile(long ctxPtr, String fileName, int numSorts, long[] sortNames, long[] sorts, int numDecls, long[] declNames, long[] decls);
+    public static native void parseSMTLIBString(boolean isSMTLIB2, long ctxPtr, String str, int numSorts, long[] sortNames, long[] sorts, int numDecls, long[] declNames, long[] decls);
+    public static native void parseSMTLIBFile(boolean isSMTLIB2, long ctxPtr, String fileName, int numSorts, long[] sortNames, long[] sorts, int numDecls, long[] declNames, long[] decls);
     public static native int getSMTLIBNumFormulas(long contextPtr);
     public static native long getSMTLIBFormula(long contextPtr, int i);
     public static native int getSMTLIBNumAssumptions(long contextPtr);

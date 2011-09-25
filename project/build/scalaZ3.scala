@@ -2,12 +2,12 @@ import sbt._
 import Process._
 
 class ScalaZ3Project(info: ProjectInfo) extends DefaultProject(info) with FileTasks {
-  val scalatest = "org.scalatest" % "scalatest_2.9.0" % "1.4.1"
+  val scalatest = "org.scalatest" %% "scalatest" % "1.6.1"
 
   // All Java classes that contain native methods.
   val nativeClasses = List("z3.Z3Wrapper")
 
-  val z3DefaultVersion = "3.0"
+  val z3DefaultVersion = "3.2"
 
   override def compileOptions = super.compileOptions ++ Seq(Unchecked)
 
@@ -70,7 +70,7 @@ class ScalaZ3Project(info: ProjectInfo) extends DefaultProject(info) with FileTa
     "javah -classpath " + mainCompilePath.absolutePath + " -d " + cPath.absolutePath + " " + nativeClasses.mkString(" ")
   ) dependsOn(compile)
 
-  lazy val gcc : ManagedTask = if(isUnix/* && is32bit*/) {
+  lazy val gcc : ManagedTask = if(isUnix && is32bit) {
     gccUnix32
   } else task {
     Some("Don't know how to compile the native library for your architecture.")

@@ -1494,7 +1494,7 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
         return astToJLong(Z3_theory_get_app(asZ3Theory(thyPtr), (unsigned)i)); 
     }
 
-    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_parseSMTLIBString (JNIEnv * env, jclass cls, jlong contextPtr, jstring str, jint numSorts, jlongArray sortNames, jlongArray sorts, jint numDecls, jlongArray declNames, jlongArray decls) {
+    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_parseSMTLIBString (JNIEnv * env, jclass cls, jboolean isSMTLIB2, jlong contextPtr, jstring str, jint numSorts, jlongArray sortNames, jlongArray sorts, jint numDecls, jlongArray declNames, jlongArray decls) {
         Z3_sort * nsorts       = (numSorts > 0 ? (Z3_sort*)malloc(numSorts * sizeof(Z3_sort)) : NULL);
         Z3_symbol * nsortsN    = (numSorts > 0 ? (Z3_symbol*)malloc(numSorts * sizeof(Z3_symbol)) : NULL);
         Z3_func_decl * ndecls  = (numDecls > 0 ? (Z3_func_decl*)malloc(numDecls * sizeof(Z3_func_decl)) : NULL);
@@ -1525,15 +1525,27 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
 
         z3str = (*env)->GetStringUTFChars(env, str, NULL); if (z3str == NULL) return;
 
-        Z3_parse_smtlib_string(
-                asZ3Context(contextPtr),
-                (const char*)z3str,
-                (unsigned)numSorts,
-                nsortsN,
-                nsorts,
-                (unsigned)numDecls,
-                ndeclsN,
-                ndecls);
+        if(isSMTLIB2 == JNI_TRUE) {
+          Z3_parse_smtlib2_string(
+                  asZ3Context(contextPtr),
+                  (const char*)z3str,
+                  (unsigned)numSorts,
+                  nsortsN,
+                  nsorts,
+                  (unsigned)numDecls,
+                  ndeclsN,
+                  ndecls);
+        } else {
+          Z3_parse_smtlib_string(
+                  asZ3Context(contextPtr),
+                  (const char*)z3str,
+                  (unsigned)numSorts,
+                  nsortsN,
+                  nsorts,
+                  (unsigned)numDecls,
+                  ndeclsN,
+                  ndecls);
+        }
 
         if(numSorts > 0) {
             (*env)->ReleaseLongArrayElements(env, sorts, jsorts, 0);
@@ -1549,7 +1561,7 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
         }
     }
 
-    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_parseSMTLIBFile (JNIEnv * env, jclass cls, jlong contextPtr, jstring str, jint numSorts, jlongArray sortNames, jlongArray sorts, jint numDecls, jlongArray declNames, jlongArray decls) {
+    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_parseSMTLIBFile (JNIEnv * env, jclass cls, jboolean isSMTLIB2, jlong contextPtr, jstring str, jint numSorts, jlongArray sortNames, jlongArray sorts, jint numDecls, jlongArray declNames, jlongArray decls) {
         Z3_sort * nsorts       = (numSorts > 0 ? (Z3_sort*)malloc(numSorts * sizeof(Z3_sort)) : NULL);
         Z3_symbol * nsortsN    = (numSorts > 0 ? (Z3_symbol*)malloc(numSorts * sizeof(Z3_symbol)) : NULL);
         Z3_func_decl * ndecls  = (numDecls > 0 ? (Z3_func_decl*)malloc(numDecls * sizeof(Z3_func_decl)) : NULL);
@@ -1580,15 +1592,27 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
 
         z3str = (*env)->GetStringUTFChars(env, str, NULL); if (z3str == NULL) return;
 
-        Z3_parse_smtlib_file(
-                asZ3Context(contextPtr),
-                (const char*)z3str,
-                (unsigned)numSorts,
-                nsortsN,
-                nsorts,
-                (unsigned)numDecls,
-                ndeclsN,
-                ndecls);
+        if(isSMTLIB2 == JNI_TRUE) {
+          Z3_parse_smtlib2_file(
+                  asZ3Context(contextPtr),
+                  (const char*)z3str,
+                  (unsigned)numSorts,
+                  nsortsN,
+                  nsorts,
+                  (unsigned)numDecls,
+                  ndeclsN,
+                  ndecls);
+        } else {
+          Z3_parse_smtlib_file(
+                  asZ3Context(contextPtr),
+                  (const char*)z3str,
+                  (unsigned)numSorts,
+                  nsortsN,
+                  nsorts,
+                  (unsigned)numDecls,
+                  ndeclsN,
+                  ndecls);
+        }
 
         if(numSorts > 0) {
             (*env)->ReleaseLongArrayElements(env, sorts, jsorts, 0);

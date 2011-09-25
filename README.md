@@ -23,10 +23,15 @@ target/[scalaversion]/scalaz3.jar and will contain the shared library required
 by the bindings.
 
 4) For testing, run
+
     LD_LIBRARY_PATH=z3/[z3version]/lib sbt test
+
 Alternatively, start a console by running
+
     LD_LIBRARY_PATH=z3/[z3version]/lib scala -cp target/[scalaversion]scalaz3.jar
+
 then try, e.g.,
+
     println(z3.scala.version).
 
 Setup steps, for Windows
@@ -43,6 +48,7 @@ that it compiles the Java/Scala sources and generates the JNI header files.
 D) Assuming you have copied the 'include' and 'bin' directories from the Z3
 distribution in z3/[z3version], the following command should compile the shared
 library, assuming you have installed MinGW:
+
     gcc -shared -o lib-bin\scalaz3.dll -D_JNI_IMPLEMENTATION_ -Wl,--kill-at -I "[jdkpath]\include" -I "[jdkpath]\include\win32" -I z3\[z3version]\include src\c\*.h src\c\*.c z3\[z3version]\bin\z3.lib
 
 E) You can manually create a jar with the contents of target/[scalaversion] and

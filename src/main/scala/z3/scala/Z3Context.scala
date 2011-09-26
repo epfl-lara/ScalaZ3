@@ -1093,63 +1093,74 @@ sealed class Z3Context(val config: Z3Config) {
   }
 
   // Parser interface
-  private def parseSMTLIB(isSMTLIB2: Boolean, file: Boolean, str: String) : Unit = {
+  private def parseSMTLIB(file: Boolean, str: String) : Unit = {
     if(file) {
-      Z3Wrapper.parseSMTLIBFile(isSMTLIB2, this.ptr, str, 0, null, null, 0, null, null)
+      Z3Wrapper.parseSMTLIBFile(this.ptr, str, 0, null, null, 0, null, null)
     } else {
-      Z3Wrapper.parseSMTLIBString(isSMTLIB2, this.ptr, str, 0, null, null, 0, null, null)
+      Z3Wrapper.parseSMTLIBString(this.ptr, str, 0, null, null, 0, null, null)
     }
   }
-
-  private def parseSMTLIB(isSMTLIB2: Boolean, file: Boolean, str: String, sorts: Map[Z3Symbol,Z3Sort], decls: Map[Z3Symbol,Z3FuncDecl]) : Unit = {
+  private def parseSMTLIB2(file: Boolean, str: String) : Z3AST = {
+    if(file) {
+      new Z3AST(Z3Wrapper.parseSMTLIB2File(this.ptr, str, 0, null, null, 0, null, null), this)
+    } else {
+      new Z3AST(Z3Wrapper.parseSMTLIB2String(this.ptr, str, 0, null, null, 0, null, null), this)
+    }
+  }
+  private def parseSMTLIB(file: Boolean, str: String, sorts: Map[Z3Symbol,Z3Sort], decls: Map[Z3Symbol,Z3FuncDecl]) : Unit = {
     val (sortNames, z3Sorts) = sorts.unzip
     val (declNames, z3Decls) = decls.unzip
     if(file) {
-      Z3Wrapper.parseSMTLIBFile(isSMTLIB2, this.ptr, str, sorts.size, toPtrArray(sortNames), toPtrArray(z3Sorts), decls.size, toPtrArray(declNames), toPtrArray(z3Decls))
+      Z3Wrapper.parseSMTLIBFile(this.ptr, str, sorts.size, toPtrArray(sortNames), toPtrArray(z3Sorts), decls.size, toPtrArray(declNames), toPtrArray(z3Decls))
     } else {
-      Z3Wrapper.parseSMTLIBString(isSMTLIB2, this.ptr, str, sorts.size, toPtrArray(sortNames), toPtrArray(z3Sorts), decls.size, toPtrArray(declNames), toPtrArray(z3Decls))
+      Z3Wrapper.parseSMTLIBString(this.ptr, str, sorts.size, toPtrArray(sortNames), toPtrArray(z3Sorts), decls.size, toPtrArray(declNames), toPtrArray(z3Decls))
+    }
+  }
+  private def parseSMTLIB2(file: Boolean, str: String, sorts: Map[Z3Symbol,Z3Sort], decls: Map[Z3Symbol,Z3FuncDecl]) : Z3AST = {
+    val (sortNames, z3Sorts) = sorts.unzip
+    val (declNames, z3Decls) = decls.unzip
+    if(file) {
+      new Z3AST(Z3Wrapper.parseSMTLIB2File(this.ptr, str, sorts.size, toPtrArray(sortNames), toPtrArray(z3Sorts), decls.size, toPtrArray(declNames), toPtrArray(z3Decls)), this)
+    } else {
+      new Z3AST(Z3Wrapper.parseSMTLIB2String(this.ptr, str, sorts.size, toPtrArray(sortNames), toPtrArray(z3Sorts), decls.size, toPtrArray(declNames), toPtrArray(z3Decls)), this)
     }
   }
 
   /** Uses the SMT-LIB parser to read in a benchmark file.
    *  @see getSMTLIBFormulas, getSMTLIBAssumptions, getSMTLIBDecls, getSMTLIBSorts, getSMTLIBError
    */
-  def parseSMTLIBFile(fileName: String) : Unit = parseSMTLIB(false, true, fileName)
+  def parseSMTLIBFile(fileName: String) : Unit = parseSMTLIB(true, fileName)
 
   /** Uses the SMT-LIB parser to read in a benchmark string.
    *  @see getSMTLIBFormulas, getSMTLIBAssumptions, getSMTLIBDecls, getSMTLIBSorts, getSMTLIBError
    */
-  def parseSMTLIBString(str: String) : Unit = parseSMTLIB(false, false, str)
+  def parseSMTLIBString(str: String) : Unit = parseSMTLIB(false, str)
 
   /** Uses the SMT-LIB parser to read in a benchmark file. The maps are used to override symbols that would otherwise be created by the parser.
    *  @see getSMTLIBFormulas, getSMTLIBAssumptions, getSMTLIBDecls, getSMTLIBSorts, getSMTLIBError
    */
-  def parseSMTLIBFile(fileName: String, sorts: Map[Z3Symbol,Z3Sort], decls: Map[Z3Symbol,Z3FuncDecl]) : Unit = parseSMTLIB(false, true, fileName, sorts, decls)
+  def parseSMTLIBFile(fileName: String, sorts: Map[Z3Symbol,Z3Sort], decls: Map[Z3Symbol,Z3FuncDecl]) : Unit = parseSMTLIB(true, fileName, sorts, decls)
 
   /** Uses the SMT-LIB parser to read in a benchmark string. The maps are used to override symbols that would otherwise be created by the parser.
    *  @see getSMTLIBFormulas, getSMTLIBAssumptions, getSMTLIBDecls, getSMTLIBSorts, getSMTLIBError
    */
-  def parseSMTLIBString(str: String, sorts: Map[Z3Symbol,Z3Sort], decls: Map[Z3Symbol,Z3FuncDecl]) : Unit = parseSMTLIB(false, false, str, sorts, decls)
+  def parseSMTLIBString(str: String, sorts: Map[Z3Symbol,Z3Sort], decls: Map[Z3Symbol,Z3FuncDecl]) : Unit = parseSMTLIB(false, str, sorts, decls)
 
   /** Uses the SMT-LIB 2 parser to read in a benchmark file.
-   *  @see getSMTLIBFormulas, getSMTLIBAssumptions, getSMTLIBDecls, getSMTLIBSorts, getSMTLIBError
    */
-  def parseSMTLIB2File(fileName: String) : Unit = parseSMTLIB(true, true, fileName)
+  def parseSMTLIB2File(fileName: String) : Z3AST = parseSMTLIB2(true, fileName)
 
   /** Uses the SMT-LIB 2 parser to read in a benchmark string.
-   *  @see getSMTLIBFormulas, getSMTLIBAssumptions, getSMTLIBDecls, getSMTLIBSorts, getSMTLIBError
    */
-  def parseSMTLIB2String(str: String) : Unit = parseSMTLIB(true, false, str)
+  def parseSMTLIB2String(str: String) : Z3AST = parseSMTLIB2(false, str)
 
-  /** Uses the SMT-LIB parser to read in a benchmark file. The maps are used to override symbols that would otherwise be created by the parser.
-   *  @see getSMTLIBFormulas, getSMTLIBAssumptions, getSMTLIBDecls, getSMTLIBSorts, getSMTLIBError
+  /** Uses the SMT-LIB 2 parser to read in a benchmark file. The maps are used to override symbols that would otherwise be created by the parser.
    */
-  def parseSMTLIB2File(fileName: String, sorts: Map[Z3Symbol,Z3Sort], decls: Map[Z3Symbol,Z3FuncDecl]) : Unit = parseSMTLIB(true, true, fileName, sorts, decls)
+  def parseSMTLIB2File(fileName: String, sorts: Map[Z3Symbol,Z3Sort], decls: Map[Z3Symbol,Z3FuncDecl]) : Z3AST = parseSMTLIB2(true, fileName, sorts, decls)
 
-  /** Uses the SMT-LIB parser to read in a benchmark string. The maps are used to override symbols that would otherwise be created by the parser.
-   *  @see getSMTLIBFormulas, getSMTLIBAssumptions, getSMTLIBDecls, getSMTLIBSorts, getSMTLIBError
+  /** Uses the SMT-LIB 2 parser to read in a benchmark string. The maps are used to override symbols that would otherwise be created by the parser.
    */
-  def parseSMTLIB2String(str: String, sorts: Map[Z3Symbol,Z3Sort], decls: Map[Z3Symbol,Z3FuncDecl]) : Unit = parseSMTLIB(true, false, str, sorts, decls)
+  def parseSMTLIB2String(str: String, sorts: Map[Z3Symbol,Z3Sort], decls: Map[Z3Symbol,Z3FuncDecl]) : Z3AST = parseSMTLIB2(false, str, sorts, decls)
 
   /** Returns an iterator of the formulas created by the SMT-LIB parser. */
   def getSMTLIBFormulas : Iterator[Z3AST] = {

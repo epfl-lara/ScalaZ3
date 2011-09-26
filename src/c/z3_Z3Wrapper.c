@@ -1,6 +1,7 @@
 #include "z3_Z3Wrapper.h"
 #include "z3_thycallbacks.h"
 #include "casts.h"
+#include "extra.h"
 #include <z3.h>
 
 #ifdef __cplusplus
@@ -1494,7 +1495,19 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
         return astToJLong(Z3_theory_get_app(asZ3Theory(thyPtr), (unsigned)i)); 
     }
 
-    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_parseSMTLIBString (JNIEnv * env, jclass cls, jboolean isSMTLIB2, jlong contextPtr, jstring str, jint numSorts, jlongArray sortNames, jlongArray sorts, jint numDecls, jlongArray declNames, jlongArray decls) {
+    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_parseSMTLIBString (JNIEnv * env, jclass cls, jlong contextPtr, jstring str, jint numSorts, jlongArray sortNames, jlongArray sorts, jint numDecls, jlongArray declNames, jlongArray decls) {
+        jlong result = parseSMTLIBStringCommon(env, cls, JNI_FALSE, contextPtr, str, numSorts, sortNames, sorts, numDecls, declNames, decls);
+        return;
+    }
+
+    JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_parseSMTLIB2String (JNIEnv * env, jclass cls, jlong contextPtr, jstring str, jint numSorts, jlongArray sortNames, jlongArray sorts, jint numDecls, jlongArray declNames, jlongArray decls) {
+        jlong result = parseSMTLIBStringCommon(env, cls, JNI_TRUE, contextPtr, str, numSorts, sortNames, sorts, numDecls, declNames, decls);
+        return result;
+    }
+
+#if 0
+    /* This functions is not accessible from Java, but used from two other functions here. */
+    jlong parseSMTLIBStringCommon (JNIEnv * env, jclass cls, jboolean isSMTLIB2, jlong contextPtr, jstring str, jint numSorts, jlongArray sortNames, jlongArray sorts, jint numDecls, jlongArray declNames, jlongArray decls) {
         Z3_sort * nsorts       = (numSorts > 0 ? (Z3_sort*)malloc(numSorts * sizeof(Z3_sort)) : NULL);
         Z3_symbol * nsortsN    = (numSorts > 0 ? (Z3_symbol*)malloc(numSorts * sizeof(Z3_symbol)) : NULL);
         Z3_func_decl * ndecls  = (numDecls > 0 ? (Z3_func_decl*)malloc(numDecls * sizeof(Z3_func_decl)) : NULL);
@@ -1505,6 +1518,7 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
         jlong * jdeclsN;
         int i = 0;
         const jbyte * z3str;
+        jlong resultingAST = 0;
 
         if(numSorts > 0) {
             jsorts = (*env)->GetLongArrayElements(env, sorts, NULL); if(jsorts == 0) return;
@@ -1526,7 +1540,7 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
         z3str = (*env)->GetStringUTFChars(env, str, NULL); if (z3str == NULL) return;
 
         if(isSMTLIB2 == JNI_TRUE) {
-          Z3_parse_smtlib2_string(
+          resultingAST = Z3_parse_smtlib2_string(
                   asZ3Context(contextPtr),
                   (const char*)z3str,
                   (unsigned)numSorts,
@@ -1559,9 +1573,23 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
             free(ndecls);
             free(ndeclsN);
         }
+        return resultingAST;
+    }
+#endif
+
+    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_parseSMTLIBFile (JNIEnv * env, jclass cls, jlong contextPtr, jstring str, jint numSorts, jlongArray sortNames, jlongArray sorts, jint numDecls, jlongArray declNames, jlongArray decls) {
+        jlong result = parseSMTLIBFileCommon(env, cls, JNI_FALSE, contextPtr, str, numSorts, sortNames, sorts, numDecls, declNames, decls);
+        return;
     }
 
-    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_parseSMTLIBFile (JNIEnv * env, jclass cls, jboolean isSMTLIB2, jlong contextPtr, jstring str, jint numSorts, jlongArray sortNames, jlongArray sorts, jint numDecls, jlongArray declNames, jlongArray decls) {
+    JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_parseSMTLIB2File (JNIEnv * env, jclass cls, jlong contextPtr, jstring str, jint numSorts, jlongArray sortNames, jlongArray sorts, jint numDecls, jlongArray declNames, jlongArray decls) {
+        jlong result = parseSMTLIBFileCommon(env, cls, JNI_TRUE, contextPtr, str, numSorts, sortNames, sorts, numDecls, declNames, decls);
+        return result;
+    }
+
+#if 0
+    /* This functions is not accessible from Java, but used from two other functions here. */
+    jlong parseSMTLIBFileCommon (JNIEnv * env, jclass cls, jboolean isSMTLIB2, jlong contextPtr, jstring str, jint numSorts, jlongArray sortNames, jlongArray sorts, jint numDecls, jlongArray declNames, jlongArray decls) {
         Z3_sort * nsorts       = (numSorts > 0 ? (Z3_sort*)malloc(numSorts * sizeof(Z3_sort)) : NULL);
         Z3_symbol * nsortsN    = (numSorts > 0 ? (Z3_symbol*)malloc(numSorts * sizeof(Z3_symbol)) : NULL);
         Z3_func_decl * ndecls  = (numDecls > 0 ? (Z3_func_decl*)malloc(numDecls * sizeof(Z3_func_decl)) : NULL);
@@ -1627,6 +1655,7 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
             free(ndeclsN);
         }
     }
+#endif
 
     JNIEXPORT jint JNICALL Java_z3_Z3Wrapper_getSMTLIBNumFormulas (JNIEnv * env, jclass cls, jlong contextPtr) {
         return (jint)Z3_get_smtlib_num_formulas(asZ3Context(contextPtr));

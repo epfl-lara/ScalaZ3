@@ -1,8 +1,8 @@
-#include <z3.h>
-#include <jni.h>
-
 #ifndef __SCALA_Z3_CASTS_H_
 #define __SCALA_Z3_CASTS_H_
+
+#include <z3.h>
+#include <jni.h>
 
 #ifdef __cplusplus
 extern "C" {

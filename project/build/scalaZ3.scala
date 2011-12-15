@@ -14,7 +14,7 @@ class ScalaZ3Project(info: ProjectInfo) extends DefaultProject(info) with FileTa
   lazy val cPath : Path = "." / "src" / "c"
   lazy val cFiles : PathFinder = "." / "src" / "c" * "*.c"
   lazy val generatedHeaders : PathFinder = cPath * "z3_Z3Wrapper*.h"
-  lazy val soName : String = if(!isMac) "libscalaz3.so" else "libscalaz3.jnilib" 
+  lazy val soName : String = System.mapLibraryName("scalaz3")
   lazy val libBinPath : Path = "." / "lib-bin"
   lazy val libBinFilePath : Path = libBinPath / soName
 

@@ -71,6 +71,8 @@ public final class Z3Wrapper {
                 fileOut.createNewFile();
                 //System.out.println("Looking for " + completeFileName + " in the jar file...");
                 InputStream in = Z3Wrapper.class.getResourceAsStream(completeFileName);
+		if (in==null)
+		    throw new java.io.FileNotFoundException("Could not find " + completeFileName);
                 OutputStream out = new FileOutputStream(fileOut);
                 byte buf[] = new byte[4096];
                 int len;

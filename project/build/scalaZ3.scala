@@ -14,7 +14,7 @@ class ScalaZ3Project(info: ProjectInfo) extends DefaultProject(info) with FileTa
   lazy val cPath : Path = "." / "src" / "c"
   lazy val cFiles : PathFinder = "." / "src" / "c" * "*.c"
   lazy val generatedHeaders : PathFinder = cPath * "z3_Z3Wrapper*.h"
-  lazy val soName : String = "libscalaz3.so"
+  lazy val soName : String = if(!isMac) "libscalaz3.so" else "libscalaz3.jnilib" 
   lazy val libBinPath : Path = "." / "lib-bin"
   lazy val libBinFilePath : Path = libBinPath / soName
 
@@ -72,6 +72,8 @@ class ScalaZ3Project(info: ProjectInfo) extends DefaultProject(info) with FileTa
 
   lazy val gcc : ManagedTask = if(isUnix && is32bit) {
     gccUnix32
+  } else if (isMac) {
+      gccOsx
   } else task {
     Some("Don't know how to compile the native library for your architecture.")
   }
@@ -97,6 +99,31 @@ class ScalaZ3Project(info: ProjectInfo) extends DefaultProject(info) with FileTa
         cFiles.getPaths.mkString(" ")
       )
   } dependsOn(javah)
+
+  lazy val gccOsx = { 
+    val z3VN = z3DefaultVersion
+    val zip = z3IncludePath(z3VN)
+    val zlp = z3LibPath(z3VN)
+    val frameworkPath = "/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers"
+
+    if(!zip.exists || !zip.isDirectory)
+      task { Some("Could not find the directory " + zip.absolutePath) }
+    else if(!zlp.exists || !zlp.isDirectory)
+      task { Some("Could not find the directory " + zlp.absolutePath) }
+    else
+      myExec(
+        "Compiling C library",
+        "gcc -o " + libBinFilePath.absolutePath + " " +
+	"-dynamiclib" + " " +
+        "-I" + jdkIncludePath.absolutePath + " " +
+	"-I" + frameworkPath + " " +
+        "-I" + z3IncludePath(z3VN).absolutePath + " " +
+        "-L" + z3LibPath(z3VN).absolutePath + " " +
+        "-g -lc -lz3 -fPIC -O2 -fopenmp " +
+        cFiles.getPaths.mkString(" ")
+      )
+  } dependsOn(javah)
+
 
   // Creates a task that runs a command in a separate process, and succeeds if
   // return code is 0.
@@ -128,7 +155,11 @@ class ScalaZ3Project(info: ProjectInfo) extends DefaultProject(info) with FileTa
     val scalaJars : PathFinder = (buildLibraryJar +++ buildCompilerJar)
     myExec(
       "Preloading library",
-      "java -Dscala.home=" + scalaHomeStr + " -classpath " + scalaJars.absString + " scala.tools.nsc.MainGenericRunner -classpath " + jarPath.absolutePath + " -e z3.Z3Wrapper.init"
+      "java -Dscala.home=" + scalaHomeStr +
+	" -classpath " + scalaJars.absString +
+	" scala.tools.nsc.MainGenericRunner " +
+	" -classpath " + jarPath.absolutePath + ":.:" + scalaJars.absString +
+	" -e z3.Z3Wrapper.init"
     )
   } dependsOn(`package`)
 
@@ -143,7 +174,7 @@ class ScalaZ3Project(info: ProjectInfo) extends DefaultProject(info) with FileTa
 
   private lazy val isUnix : Boolean = osInf.indexOf("nix") >= 0 || osInf.indexOf("nux") >= 0
   private lazy val isWindows : Boolean = osInf.indexOf("win") >= 0
-  private lazy val isMac : Boolean = osInf.indexOf("mac") >= 0  
+  private lazy val isMac : Boolean = osInf.indexOf("Mac") >= 0  
   private lazy val is32bit : Boolean = !is64bit
   private lazy val is64bit : Boolean = osArch.indexOf("64") >= 0
 

@@ -1,5 +1,7 @@
 lib-bin/*.dll
 lib-bin/*.so
+lib-bin/*.jnilib
+lib-bin/*dSYM
 lib_managed
 project/boot
 project/build/target
@@ -11,6 +13,7 @@ z3/**/*.a
 z3/**/*.dll
 z3/**/*.h
 z3/**/*.so
+z3/**/*.dylib
 **/*.swp
 .idea/**
 ./**/*.iml

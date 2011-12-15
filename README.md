@@ -34,6 +34,32 @@ then try, e.g.,
 
     println(z3.scala.version).
 
+Setup steps, for Mac
+----------------------
+
+1) Download Z3, and copy the include and lib files to z3/x64/[z3version]/include and
+z3/x64/[z3version]/lib respectively. (eg: z3/x64/3.2/include/z3.h and
+z3/x64/3.2/lib/libz3.so).
+
+2) Download sbt. Run 'sbt update' from the current directory. (<i>Warning:
+currently only versions of sbt older than 0.10 are supported!</i>)
+
+3) Run 'sbt package' to create the jar file. It will be in
+target/[scalaversion]/scalaz3.jar and will contain the shared library required
+by the bindings.
+
+4) For testing, run
+
+    DYLD_LIBRARY_PATH=z3/[z3version]/lib sbt test
+
+Alternatively, start a console by running
+
+    DYLD_LIBRARY_PATH=z3/[z3version]/lib scala -cp target/[scalaversion]scalaz3.jar
+
+then try, e.g.,
+
+    println(z3.scala.version).
+
 Setup steps, for Windows
 ------------------------
 

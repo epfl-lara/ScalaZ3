@@ -36,10 +36,10 @@ class Arrays extends FunSuite with ShouldMatchers {
       case Some(ae) =>
         val array1Val = model.getArrayValue(ae)
         array1Val should be ('defined)
-		println("When evaluated, array1 is: " + array1Val)
+	println("When evaluated, array1 is: " + array1Val)
         array1Val match {
-          case Some(av) =>
-            model.evalAs[Int](av._2) should equal (Some(42))
+          case Some((valueMap,default)) =>
+            model.evalAs[Int](default) should equal (Some(42))
           case None =>
         }
       case None =>
@@ -48,19 +48,25 @@ class Arrays extends FunSuite with ShouldMatchers {
     val array2Evaluated = model.eval(array2)
     array2Evaluated should be ('defined)
     array2Evaluated match {
-        case Some(ae) =>
-            val array2Val = model.getArrayValue(ae)
-            array2Val should be ('defined)
-			println("When evaluated, array2 is: " + array2Val)
-            array2Val match {
-                case Some(av) =>
-                    av._1(z3.mkInt(2, z3.mkIntSort)) should equal (z3.mkInt(0,
-                                z3.mkIntSort))
-                case None =>
-            }
-        case None =>
+      case Some(ae) => {
+        val array2Val = model.getArrayValue(ae)
+        array2Val should be ('defined)
+	println("When evaluated, array2 is: " + array2Val)
+        array2Val match {
+          case Some((valueMap,default)) => {
+            valueMap(z3.mkInt(2, z3.mkIntSort)) should equal (z3.mkInt(0, z3.mkIntSort))
+            model.evalAs[Int](default) should equal (Some(42))
+          }
+          case None =>
+        }
+      }
+      case None =>
     }
 
+    // These all seem to fail. Perhaps mkArrayDefault is not
+    // supported anymore ?
+    model.evalAs[Int](z3.mkArrayDefault(array1)) should equal (Some(42))
+    model.evalAs[Int](z3.mkArrayDefault(array2)) should equal (Some(42))
     model.evalAs[Int](fourtyTwo) should equal (Some(42))
   }
 }

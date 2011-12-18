@@ -9,9 +9,9 @@ class SatSolver extends FunSuite with ShouldMatchers {
     case class Literal(name: String, polarity: Boolean)
     type Clause = Set[Literal]
 
-    def DPLL(f : Set[Clause]) : (Boolean, Map[String,Boolean]) =
-      if(f.isEmpty) (true, Map.empty[String,Boolean])
-      else if(f.exists(clause => clause.isEmpty)) (false, Map.empty[String,Boolean])
+    def DPLL(f : Set[Clause]) : (Boolean, Map[String,Option[Boolean]]) = 
+      if(f.isEmpty) (true, Map.empty)
+      else if(f.exists(clause => clause.isEmpty)) (false, Map.empty)
       else {
         val z3 = new Z3Context((new Z3Config).setParamValue("MODEL", "true"))
         val b = z3.mkBoolSort()
@@ -48,9 +48,9 @@ class SatSolver extends FunSuite with ShouldMatchers {
         val (result, model) = z3.checkAndGetModel()
           
         result match {
-          case None => println("There was an error with Z3."); (false, Map.empty[String,Boolean])
-          case Some(false) => (false, Map.empty[String,Boolean]) // formula was unsat
-          case Some(true) => (true, Map.empty[String,Boolean] ++ litMap.map(p => (p._1, model.evalAs[Boolean](p._2).get)))
+          case None => println("There was an error with Z3."); (false, Map.empty)
+          case Some(false) => (false, Map.empty) // formula was unsat
+          case Some(true) => (true, Map.empty[String,Option[Boolean]] ++ litMap.map(p => (p._1, model.evalAs[Boolean](p._2))))
         }
       }
 
@@ -72,14 +72,33 @@ class SatSolver extends FunSuite with ShouldMatchers {
     if (clause.size != 0) form += clause
     val (rs,rm) = DPLL(form)
 
-    // s SATISFIABLE
-    // v -12 -8 -19 -4 15 -11 9 -13 -16 -5 -10 6 1 17 14 20 -2 -18 -7 -3
-    val pos = rm.filter(p => p._2).map(p => p._1.toInt).toSet
-    val neg = rm.filter(p => !p._2).map(p => p._1.toInt).toSet
-
     rs should equal(true)
-    pos should equal(Set(15, 9, 6, 1, 17, 14, 20))
-    neg should equal(Set(12, 8, 19, 4, 11, 13, 16, 5, 10, 2, 18, 7, 3))
+
+    // val pos = rm.filter(p => p._2.isDefined && p._2.get).map(p => p._1.toInt).toSet
+    // val neg = rm.filter(p => p._2.isDefined && !p._2.get).map(p => p._1.toInt).toSet
+    // val dnt = rm.filter(p => p._2.isEmpty).map(p => p._1.toInt).toSet
+
+    // println("pos: " + pos)
+    // println("neg: " + neg)
+    // println("dnt: " + dnt)
+
+    def eval(form : Set[Clause], model : Map[String,Option[Boolean]], default : Boolean) : Boolean = {
+      form.forall(clause =>
+        clause.exists(literal => literal match {
+          case Literal(lit, true) => model(lit).getOrElse(default)
+          case Literal(lit, false) => !model(lit).getOrElse(!default)
+        })
+      )
+    }
+
+    // Too restrictive:
+    // pos should equal(Set(15, 9, 6, 1, 17, 14, 20))
+    // neg should equal(Set(12, 8, 19, 4, 11, 13, 16, 5, 10, 2, 18, 7, 3))
+
+    // We evaluate the formula with the model, with don't care set to
+    // true and false.
+    eval(form, rm, true) should equal(true)
+    eval(form, rm, false) should equal(true)
   }
 
 

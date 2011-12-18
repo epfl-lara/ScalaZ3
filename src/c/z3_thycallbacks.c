@@ -21,10 +21,10 @@ extern "C" {
         unsigned thyID = registeredProxies;
         jclass pc = (*env)->GetObjectClass(env, theoryProxy);
         jobject gr = (*env)->NewGlobalRef(env, theoryProxy);
-		
-		theoryPointers[thyID] = thyPtr;
+
+        theoryPointers[thyID] = thyPtr;
         theoryProxyClasses[thyID] = (*env)->NewGlobalRef(env, pc);
-		jniEnv = env;
+        jniEnv = env;
         theoryProxies[thyID] = gr;
         lastTheoryPointer = thyPtr;
         lastTheoryID = thyID;
@@ -84,8 +84,8 @@ extern "C" {
         // we create the array
         jlongArray newArgs = (*jniEnv)->NewLongArray(jniEnv, (jsize)argc);
         jlong * newArgsE = (jlong*)malloc(argc * sizeof(jlong));
-		jobject pointer;
-		jboolean result;
+        jobject pointer;
+        jboolean result;
 
         unsigned i = 0;
         for(i = 0; i < argc; ++i) {
@@ -131,8 +131,8 @@ extern "C" {
         // we create the array
         jlongArray newArgs = (*jniEnv)->NewLongArray(jniEnv, (jsize)argc);
         jlong * newArgsE = (jlong*)malloc(argc * sizeof(jlong));
-		jobject pointer;
-		jboolean result;
+        jobject pointer;
+        jboolean result;
         unsigned i = 0;
 
         for(i = 0; i < argc; ++i) {

@@ -89,7 +89,7 @@ class ScalaZ3Project(info: ProjectInfo) extends DefaultProject(info) with FileTa
     else
       myExec(
         "Compiling C library",
-        "gcc -o " + libBinFilePath.absolutePath + " " +
+        "gcc-4.4 -o " + libBinFilePath.absolutePath + " " +
         "-shared -Wl,-soname," + soName + " " +
         "-I" + jdkIncludePath.absolutePath + " " +
         "-I" + jdkUnixIncludePath.absolutePath + " " +

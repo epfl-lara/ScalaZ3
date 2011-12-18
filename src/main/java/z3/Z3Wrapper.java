@@ -35,8 +35,7 @@ public final class Z3Wrapper {
 
     public static String wrapperVersionString() {
         // Version number should match smallest Z3 with which we know it to work, plus a letter for "internal" versions.
-        // return "ScalaZ3 3.2.c (in dev.)";
-        return "ScalaZ3 3.2.b";
+        return "ScalaZ3 3.2.c (in dev.)";
     }
 
     public static String z3VersionString() {
@@ -425,6 +424,10 @@ public final class Z3Wrapper {
     public static native int getSMTLIBNumSorts(long contextPtr);
     public static native long getSMTLIBSort(long contextPtr, int i);
     public static native String getSMTLIBError(long contextPtr);
+
+    // Error handling
+    // Yet to come...
+    // public static native void registerErrorHandler(long contextPtr, AbstractErrorHandler handler);
 
     // Miscellaneous
     public static native void getVersion(IntPtr major, IntPtr minor, IntPtr buildNumber, IntPtr revisionNumber);

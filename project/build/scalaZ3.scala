@@ -89,13 +89,13 @@ class ScalaZ3Project(info: ProjectInfo) extends DefaultProject(info) with FileTa
     else
       myExec(
         "Compiling C library",
-        "gcc-4.4 -o " + libBinFilePath.absolutePath + " " +
+        "gcc -o " + libBinFilePath.absolutePath + " " +
         "-shared -Wl,-soname," + soName + " " +
         "-I" + jdkIncludePath.absolutePath + " " +
         "-I" + jdkUnixIncludePath.absolutePath + " " +
         "-I" + z3IncludePath(z3VN).absolutePath + " " +
         "-L" + z3LibPath(z3VN).absolutePath + " " +
-        "-g -lc -lz3 -fPIC -O2 -fopenmp " +
+        "-g -lc -Wl,--no-as-needed -Wl,--copy-dt-needed -lz3 -fPIC -O2 -fopenmp " +
         cFiles.getPaths.mkString(" ")
       )
   } dependsOn(javah)

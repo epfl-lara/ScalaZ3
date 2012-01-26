@@ -29,7 +29,16 @@ public final class Z3Wrapper {
             //System.out.println("Library was loaded successfully without any effort !");
         } catch (UnsatisfiedLinkError e) {
             //System.out.println("Library could not be loaded out-of-the-box.");
-            loadFromJar();
+            final String LIB_SEPARATOR = "/";
+            final String LIB_EXT = ".dll";
+
+        	   String curDir = System.getProperty("user.dir");
+            try {
+                System.load(curDir + LIB_SEPARATOR + LIB_NAME + LIB_EXT);
+                //  System.out.println("Library " + LIB_NAME + LIB_EXT + " was found in local directory:" + curDir );
+            } catch (UnsatisfiedLinkError e2) {                
+                loadFromJar();
+            }
         }
     }
 

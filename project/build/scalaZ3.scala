@@ -70,15 +70,15 @@ class ScalaZ3Project(info: ProjectInfo) extends DefaultProject(info) with FileTa
     "javah -classpath " + mainCompilePath.absolutePath + " -d " + cPath.absolutePath + " " + nativeClasses.mkString(" ")
   ) dependsOn(compile)
 
-  lazy val gcc : ManagedTask = if(isUnix && is32bit) {
-    gccUnix32
+  lazy val gcc : ManagedTask = if(isUnix) {
+    gccUnix
   } else if (isMac) {
       gccOsx
   } else task {
     Some("Don't know how to compile the native library for your architecture.")
   }
 
-  lazy val gccUnix32 = { 
+  lazy val gccUnix = { 
     val z3VN = z3DefaultVersion
     val zip = z3IncludePath(z3VN)
     val zlp = z3LibPath(z3VN)

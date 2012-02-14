@@ -69,8 +69,8 @@ A) Download and install Z3 using the .msi installer.
 B) Download sbt (see 2 above).
 
 C) The 'package' command in the current build script does not work with
-Windows; there is no equivalent for the gcc command. Run 'package' anyway so
-that it compiles the Java/Scala sources and generates the JNI header files.
+Windows; there is no equivalent for the gcc command. Run 'javah' so that it
+compiles the Java/Scala sources and generates the JNI header files.
 
 D) Assuming you have copied the 'include' and 'bin' directories from the Z3
 distribution in z3/[z3version], the following command should compile the shared

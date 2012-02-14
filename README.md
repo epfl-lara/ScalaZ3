@@ -1,9 +1,10 @@
 Precompiled library
 ===================
 
-You can download a precompiled version of ScalaZ3, including shared libraries
-(32bit) for Linux and Windows through the GitHub "Download" menu. Unless
-otherwise mentioned, it is compiled with Scala 2.9.1.
+You can download a precompiled version of ScalaZ3, including 32bit shared
+libraries for Linux and Windows, and 64bit shared libraries for Linux through
+the GitHub "Download" menu. Unless otherwise mentioned, it is compiled with
+Scala 2.9.1.
 
 Compiling ScalaZ3
 =================

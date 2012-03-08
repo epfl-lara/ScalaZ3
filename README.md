@@ -1,9 +1,10 @@
 Precompiled library
 ===================
 
-You can download a precompiled version of ScalaZ3, including shared libraries
-(32bit) for Linux and Windows through the GitHub "Download" menu. Unless
-otherwise mentioned, it is compiled with Scala 2.9.1.
+You can download a precompiled version of ScalaZ3, including 32bit shared
+libraries for Linux and Windows, and 64bit shared libraries for Linux and Mac
+OS X through the GitHub "Download" menu. Unless otherwise mentioned, it is
+compiled with Scala 2.9.1.
 
 Compiling ScalaZ3
 =================
@@ -68,8 +69,8 @@ A) Download and install Z3 using the .msi installer.
 B) Download sbt (see 2 above).
 
 C) The 'package' command in the current build script does not work with
-Windows; there is no equivalent for the gcc command. Run 'package' anyway so
-that it compiles the Java/Scala sources and generates the JNI header files.
+Windows; there is no equivalent for the gcc command. Run 'javah' so that it
+compiles the Java/Scala sources and generates the JNI header files.
 
 D) Assuming you have copied the 'include' and 'bin' directories from the Z3
 distribution in z3/[z3version], the following command should compile the shared

@@ -30,10 +30,13 @@ class ScalaZ3Project(info: ProjectInfo) extends DefaultProject(info) with FileTa
     "." / "z3" / vn / "include"
   }
 
-  def z3LibPath(vn : String) : Path = if(is64bit) {
-    "." / "z3" / "x64" / vn / "lib"
-  } else {
-    "." / "z3" / vn / "lib"
+  def z3LibPath(vn : String) : Path = {
+    val libString = if (isWindows) "bin" else "lib"
+    if(is64bit) {
+      "." / "z3" / "x64" / vn / libString
+    } else {
+      "." / "z3" / vn / libString
+    }
   }
 
   override def cleanAction = super.cleanAction dependsOn(cleanMore)
@@ -64,21 +67,24 @@ class ScalaZ3Project(info: ProjectInfo) extends DefaultProject(info) with FileTa
   // We should make this work with MacOS / Windows too...
   lazy val jdkIncludePath : Path = Path.fromFile(new java.io.File(System.getProperty("java.home")).getParent) / "include"
   lazy val jdkUnixIncludePath : Path = jdkIncludePath / "linux"
+  lazy val jdkWinIncludePath : Path = jdkIncludePath / "win32"
 
   lazy val javah = myExec(
     "Generating JNI C headers",
     "javah -classpath " + mainCompilePath.absolutePath + " -d " + cPath.absolutePath + " " + nativeClasses.mkString(" ")
   ) dependsOn(compile)
 
-  lazy val gcc : ManagedTask = if(isUnix && is32bit) {
-    gccUnix32
+  lazy val gcc : ManagedTask = if(isUnix) {
+    gccUnix
   } else if (isMac) {
-      gccOsx
+    gccOsx
+  } else if (isWindows) {
+    gccWin
   } else task {
     Some("Don't know how to compile the native library for your architecture.")
   }
 
-  lazy val gccUnix32 = { 
+  lazy val gccUnix = { 
     val z3VN = z3DefaultVersion
     val zip = z3IncludePath(z3VN)
     val zlp = z3LibPath(z3VN)
@@ -124,6 +130,26 @@ class ScalaZ3Project(info: ProjectInfo) extends DefaultProject(info) with FileTa
       )
   } dependsOn(javah)
 
+  lazy val gccWin = {
+    val z3VN = z3DefaultVersion
+    val zip = z3IncludePath(z3VN)
+    val zlp = z3LibPath(z3VN)
+    if(!zip.exists || !zip.isDirectory)
+      task { Some("Could not find the directory " + zip.absolutePath) }
+    else if(!zlp.exists || !zlp.isDirectory)
+      task { Some("Could not find the directory " + zlp.absolutePath) }
+    else
+      myExec(
+        "Compiling C library",
+	"gcc -shared -o " + libBinFilePath.absolutePath + " " +
+	"-D_JNI_IMPLEMENTATION_ -Wl,--kill-at " +
+	"-I " + "\"" + jdkIncludePath.absolutePath + "\"" + " " +
+	"-I " + "\"" + jdkWinIncludePath.absolutePath + "\"" + " " +
+	"-I " + z3IncludePath(z3VN).absolutePath + " " +
+	cFiles.getPaths.mkString(" ") + " " +
+	z3LibPath(z3VN).absolutePath
+      )
+  } dependsOn(javah)
 
   // Creates a task that runs a command in a separate process, and succeeds if
   // return code is 0.
@@ -173,7 +199,7 @@ class ScalaZ3Project(info: ProjectInfo) extends DefaultProject(info) with FileTa
   }
 
   private lazy val isUnix : Boolean = osInf.indexOf("nix") >= 0 || osInf.indexOf("nux") >= 0
-  private lazy val isWindows : Boolean = osInf.indexOf("win") >= 0
+  private lazy val isWindows : Boolean = osInf.indexOf("Win") >= 0
   private lazy val isMac : Boolean = osInf.indexOf("Mac") >= 0  
   private lazy val is32bit : Boolean = !is64bit
   private lazy val is64bit : Boolean = osArch.indexOf("64") >= 0

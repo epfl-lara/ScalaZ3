@@ -14,8 +14,9 @@ import java.util.HashMap;
  * mostly through the other classes, though. */
 public final class Z3Wrapper {
     // related to the path in the jar file
-    private static final String LIB_BIN = "/lib-bin/";
-    // the name of the library file. lib....so in Linux, ....dll in Windows, etc.
+	private static final String LIB_SEPARATOR = System.getProperty("file.separator");
+    private static final String LIB_BIN = LIB_SEPARATOR + "lib-bin" + LIB_SEPARATOR;
+    // the root name of the library file. lib....so in Linux, lib....jnilib in MacOS, ....dll in Windows, etc.
     private static final String LIB_NAME = "scalaz3";
 
     private static final String versionString = LibraryChecksum.value;
@@ -25,11 +26,20 @@ public final class Z3Wrapper {
 
     static {
         try {
+            //System.out.println("Looking for Library " + LIB_NAME + " in System path" );
             System.loadLibrary(LIB_NAME);
-            //System.out.println("Library was loaded successfully without any effort !");
         } catch (UnsatisfiedLinkError e) {
-            //System.out.println("Library could not be loaded out-of-the-box.");
-            loadFromJar();
+        	// convert root to: lib....so in Linux, lib....jnilib in MacOS, ....dll in Windows, etc.
+            String name = System.mapLibraryName(LIB_NAME);
+            
+            try {
+                String curDir = System.getProperty("user.dir");
+                //System.out.println("Looking for Library " + name + " in directory:" + curDir );
+                System.load(curDir + LIB_SEPARATOR + name );
+            } catch (UnsatisfiedLinkError e2) {                
+                //System.out.println("Looking for Library " + name + " in jarFile" );
+                loadFromJar();
+            }
         }
     }
 

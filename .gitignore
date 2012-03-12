@@ -18,11 +18,7 @@ src/c/z3_Z3Wrapper_IntPtr.h
 src/main/java/z3/LibraryChecksum.java
 
 # Z3 distributions
-z3/*/*.a
-z3/*/*.dll
-z3/*/*.h
-z3/*/*.so
-z3/*/*.dylib
+z3/*
 
 # Vim and more
 *.swp

@@ -26,17 +26,17 @@ public final class Z3Wrapper {
 
     static {
         try {
-            //System.out.println("Looking for Library " + LIB_NAME + " in System path" );
+            // System.out.println("Looking for Library " + LIB_NAME + " in System path" );
             System.loadLibrary(LIB_NAME);
         } catch (UnsatisfiedLinkError e) {
-        	// convert root to: lib....so in Linux, lib....jnilib in MacOS, ....dll in Windows, etc.
+            // Convert root to: lib....so in Linux, lib....jnilib in MacOS, ....dll in Windows, etc.
             String name = System.mapLibraryName(LIB_NAME);
-            
+
             try {
                 String curDir = System.getProperty("user.dir");
                 //System.out.println("Looking for Library " + name + " in directory:" + curDir );
                 System.load(curDir + LIB_SEPARATOR + name );
-            } catch (UnsatisfiedLinkError e2) {                
+            } catch (UnsatisfiedLinkError e2) {
                 //System.out.println("Looking for Library " + name + " in jarFile" );
                 loadFromJar();
             }

@@ -193,6 +193,10 @@ public class Z3Context extends Pointer {
     public Z3AST mkInt(int value, Z3Sort sort) {
         return new Z3AST(Z3Wrapper.mkInt(this.ptr, value, sort.ptr));
     }
+    
+    public Z3AST mkReal(double value, Z3Sort sort) {
+        return new Z3AST(Z3Wrapper.mkReal(this.ptr, value, sort.ptr));
+    }
 
     public Integer getNumeralInt(Z3AST ast) {
         Z3Wrapper.IntPtr ip = new Z3Wrapper.IntPtr();

@@ -200,6 +200,7 @@ public final class Z3Wrapper {
     public static native long mkSetSubset(long contextPtr, long setPtr1, long setPtr2);
     // ...
     public static native long mkInt(long contextPtr, int v, long sortPtr);
+    public static native long mkReal(long contextPtr, double v, long sortPtr);
     // ...
     public static native long mkPattern(long contextPtr, int numPatterns, long[] terms);
     public static native long mkBound(long contextPtr, int index, long sortPtr);

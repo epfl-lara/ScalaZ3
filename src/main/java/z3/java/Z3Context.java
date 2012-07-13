@@ -194,8 +194,8 @@ public class Z3Context extends Pointer {
         return new Z3AST(Z3Wrapper.mkInt(this.ptr, value, sort.ptr));
     }
     
-    public Z3AST mkReal(double value, Z3Sort sort) {
-        return new Z3AST(Z3Wrapper.mkReal(this.ptr, value, sort.ptr));
+    public Z3AST mkReal(double value, int numerator, int denominator) {
+        return new Z3AST(Z3Wrapper.mkReal(this.ptr, numerator, denominator));
     }
 
     public Integer getNumeralInt(Z3AST ast) {

@@ -642,6 +642,10 @@ extern "C" {
         return astToJLong(Z3_mk_int(asZ3Context(contextPtr), (int)v, asZ3Sort(sortPtr)));
     }
 
+    JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkReal (JNIEnv * env, jclass cls, jlong contextPtr, jint n, jint d) {
+        return astToJLong(Z3_mk_real(asZ3Context(contextPtr), (int)n, (int)d));
+    }
+
     JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkPattern (JNIEnv * env, jclass cls, jlong contextPtr, jint numPatterns, jlongArray args) {
         Z3_ast * nargs = (Z3_ast*)malloc(numPatterns * sizeof(Z3_ast));
         jlong * jargs = (*env)->GetLongArrayElements(env, args, NULL);

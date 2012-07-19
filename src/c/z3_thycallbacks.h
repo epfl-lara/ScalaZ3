@@ -6,6 +6,14 @@
 #ifndef _Z3_THYCALLBACKS_H_
 #define _Z3_THYCALLBACKS_H_
 
+#ifndef __in
+#define __in
+#endif
+
+#ifndef __out
+#define __out
+#endif
+
 #define MAXSUPPORTEDZ3THEORIES 128
 
 #ifdef __cplusplus

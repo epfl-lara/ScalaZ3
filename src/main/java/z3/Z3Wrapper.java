@@ -45,7 +45,7 @@ public final class Z3Wrapper {
 
     public static String wrapperVersionString() {
         // Version number should match smallest Z3 with which we know it to work, plus a letter for "internal" versions.
-        return "ScalaZ3 3.2.c (in dev.)";
+        return "ScalaZ3 4.0.a (in dev.)";
     }
 
     public static String z3VersionString() {

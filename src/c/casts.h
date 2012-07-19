@@ -16,7 +16,7 @@ extern "C" {
     inline Z3_app asZ3App(jlong app);
     inline Z3_pattern asZ3Pattern(jlong pat);
     inline Z3_symbol asZ3Symbol(jlong sym);
-    inline Z3_parameter asZ3Parameter(jlong param);
+    inline Z3_parameter_kind asZ3Parameter(jlong param);
     inline Z3_model asZ3Model(jlong model);
     inline Z3_literals asZ3Literals(jlong lits);
     inline Z3_constructor asZ3Constructor(jlong cons);
@@ -33,7 +33,7 @@ extern "C" {
     inline jlong appToJLong(Z3_app app);
     inline jlong patternToJLong(Z3_pattern p);
     inline jlong symbolToJLong(Z3_symbol sym);
-    inline jlong parameterToJLong(Z3_parameter param);
+    inline jlong parameterToJLong(Z3_parameter_kind param);
     inline jlong modelToJLong(Z3_model model);
     inline jlong literalsToJLong(Z3_literals literals);
     inline jlong constructorToJLong(Z3_constructor constructor);

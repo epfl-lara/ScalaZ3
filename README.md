@@ -6,6 +6,13 @@ libraries for Linux and Windows, and 64bit shared libraries for Linux and Mac
 OS X through the GitHub "Download" menu. Unless otherwise mentioned, it is
 compiled with Scala 2.9.1.
 
+
+Downloading Z3
+=================
+
+Z3 can be downloaded from the [Z3 download site](http://research.microsoft.com/en-us/um/redmond/projects/z3/download.html)
+
+
 Compiling ScalaZ3
 =================
 

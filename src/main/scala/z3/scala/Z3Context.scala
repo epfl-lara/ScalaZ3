@@ -563,6 +563,10 @@ sealed class Z3Context(val config: Z3Config) {
   def mkInt(value: Int, sort: Z3Sort) : Z3AST = {
     new Z3AST(Z3Wrapper.mkInt(this.ptr, value, sort.ptr), this)
   }
+  
+  def mkReal(numerator: Int, denominator: Int) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkReal(this.ptr, numerator, denominator), this)
+  }
 
   def mkPattern(args: Z3AST*) : Z3Pattern = {
     new Z3Pattern(Z3Wrapper.mkPattern(this.ptr, args.size, toPtrArray(args)), this)

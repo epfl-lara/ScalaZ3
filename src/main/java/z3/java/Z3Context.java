@@ -22,22 +22,6 @@ public class Z3Context extends Pointer {
         this.ptr = 0;
     }
 
-    public boolean traceToFile(String traceFile) {
-        return Z3Wrapper.traceToFile(this.ptr, traceFile);
-    }
-
-    public void traceToStderr() {
-        Z3Wrapper.traceToStderr(this.ptr);
-    }
-
-    public void traceToStdout() {
-        Z3Wrapper.traceToStdout(this.ptr);
-    }
-
-    public void traceOff() {
-        Z3Wrapper.traceOff(this.ptr);
-    }
-
     public void updateParamValue(String paramID, String paramValue) {
         Z3Wrapper.updateParamValue(this.ptr, paramID, paramValue);
     }

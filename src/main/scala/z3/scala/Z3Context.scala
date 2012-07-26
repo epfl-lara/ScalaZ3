@@ -64,22 +64,6 @@ sealed class Z3Context(val config: Z3Config) {
     Z3Wrapper.benchmarkToSMTLIBString(this.ptr, name, logic, status, attributes, assumptions.size, toPtrArray(assumptions), formula.ptr)
   }
 
-  def traceToFile(traceFile: String) : Boolean = {
-    Z3Wrapper.traceToFile(this.ptr, traceFile)
-  }
-
-  def traceToStderr() : Unit = {
-    Z3Wrapper.traceToStderr(this.ptr)
-  }
-
-  def traceToStdout() : Unit = {
-    Z3Wrapper.traceToStdout(this.ptr)
-  }
-
-  def traceOff() : Unit = {
-    Z3Wrapper.traceOff(this.ptr)
-  }
-
   def updateParamValue(paramID: String, paramValue: String) : Unit = {
     Z3Wrapper.updateParamValue(this.ptr, paramID, paramValue)
   }

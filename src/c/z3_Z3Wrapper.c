@@ -45,26 +45,6 @@ extern "C" {
         return;
     }
 
-    JNIEXPORT jboolean JNICALL Java_z3_Z3Wrapper_traceToFile (JNIEnv * env, jclass cls, jlong contextPtr, jstring traceFile) {
-        Z3_context cont = asZ3Context(contextPtr);
-        const jbyte * str;
-        str = (*env)->GetStringUTFChars(env, traceFile, NULL);
-        if (str == NULL) return JLONG_MY_NULL;
-        return (jboolean)(Z3_trace_to_file(cont, (const char*)str));
-    }
-
-    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_traceToStderr (JNIEnv * env, jclass cls, jlong contextPtr) {
-        Z3_trace_to_stderr(asZ3Context(contextPtr));
-    }
-
-    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_traceToStdout (JNIEnv * env, jclass cls, jlong contextPtr) {
-        Z3_trace_to_stdout(asZ3Context(contextPtr));
-    }
-
-    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_traceOff (JNIEnv * env, jclass cls, jlong contextPtr) {
-        Z3_trace_off(asZ3Context(contextPtr));
-    }
-
     JNIEXPORT void JNICALL Java_z3_Z3Wrapper_toggleWarningMessages (JNIEnv * env, jclass cls, jboolean enabled) {
         Z3_toggle_warning_messages((Z3_bool)enabled);
     }

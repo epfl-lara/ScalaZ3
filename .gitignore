@@ -26,3 +26,7 @@ z3/*
 # IDEA project files
 .idea/*
 *.iml
+
+
+#sbt
+sbt*

@@ -1216,6 +1216,12 @@ sealed class Z3Context(val config: Z3Config) {
     }
   }
 
+  def substitute(ast : Z3AST, from : Array[Z3AST], to : Array[Z3AST]) : Z3AST = {
+    if (from.length != to.length)
+      throw new IllegalArgumentException("from and to must have the same length");
+    return new Z3AST(Z3Wrapper.substitute(this.ptr, ast.ptr, from.length, from.map(_.ptr), to.map(_.ptr)), this);
+  }
+
   /** Returns the last error issued by the SMT-LIB parser. */
   def getSMTLIBError : String = Z3Wrapper.getSMTLIBError(this.ptr)
 }

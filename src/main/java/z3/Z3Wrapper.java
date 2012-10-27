@@ -14,7 +14,7 @@ import java.util.HashMap;
  * mostly through the other classes, though. */
 public final class Z3Wrapper {
     // related to the path in the jar file
-	private static final String LIB_SEPARATOR = System.getProperty("file.separator");
+	private static final String LIB_SEPARATOR = "/";
     private static final String LIB_BIN = LIB_SEPARATOR + "lib-bin" + LIB_SEPARATOR;
     // the root name of the library file. lib....so in Linux, lib....jnilib in MacOS, ....dll in Windows, etc.
     private static final String LIB_NAME = "scalaz3";
@@ -398,7 +398,7 @@ public final class Z3Wrapper {
 
     public static native long mkTheory(long ctxPtr, String name);
     // This is not a call to a Z3 function...
-    public static native void setTheoryCallbacks(long thyPtr, AbstractTheoryProxy atp, boolean setDelete, boolean setReduceEq, boolean setReduceApp, boolean setReduceDistinct, boolean setNewApp, boolean setNewElem, boolean setInitSearch, boolean setPush, boolean setPop, boolean setRestart, boolean setReset, boolean setFinalCheck, boolean setNewEq, boolean setNewDiseq, boolean setNewAssignment, boolean setNewRelevant); 
+    public static native void setTheoryCallbacks(long thyPtr, AbstractTheoryProxy atp, boolean setDelete, boolean setReduceEq, boolean setReduceApp, boolean setReduceDistinct, boolean setNewApp, boolean setNewElem, boolean setInitSearch, boolean setPush, boolean setPop, boolean setRestart, boolean setReset, boolean setFinalCheck, boolean setNewEq, boolean setNewDiseq, boolean setNewAssignment, boolean setNewRelevant);
     public static native long theoryMkSort(long ctxPtr, long thyPtr, long symPtr);
     public static native long theoryMkValue(long ctxPtr, long thyPtr, long symPtr, long sortPtr);
     public static native long theoryMkConstant(long ctxPtr, long thyPtr, long symPtr, long sortPtr);
@@ -431,6 +431,9 @@ public final class Z3Wrapper {
     public static native int getSMTLIBNumSorts(long contextPtr);
     public static native long getSMTLIBSort(long contextPtr, int i);
     public static native String getSMTLIBError(long contextPtr);
+
+    // substitute
+    public static native long substitute(long contextPtr, long astPtr, int numExprs, long[] from, long[] to);
 
     // Error handling
     // Yet to come...

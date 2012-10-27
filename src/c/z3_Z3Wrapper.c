@@ -1703,6 +1703,30 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
         Z3_reset_memory();
     }
 
+    JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_substitute
+      (JNIEnv * env, jclass cls, jlong contextPtr, jlong astPtr, jint numExprs, jlongArray fromPtr, jlongArray toPtr) {
+          int i = 0;
+          jlong * fromst = (*env)->GetLongArrayElements(env, fromPtr, NULL);
+          jlong * tost = (*env)->GetLongArrayElements(env, toPtr, NULL);
+          Z3_context ctx = asZ3Context(contextPtr);
+          Z3_ast ast = asZ3AST(astPtr);
+          Z3_ast * from = (Z3_ast*)malloc(numExprs * sizeof(Z3_ast));
+          Z3_ast * to = (Z3_ast*)malloc(numExprs * sizeof(Z3_ast));
+          for(i = 0; i < numExprs; ++i) {
+            from[i] = asZ3AST(fromst[i]);
+            to[i] = asZ3AST(tost[i]);
+
+          }
+
+          jlong res = astToJLong(Z3_substitute(ctx, ast, (unsigned)numExprs, from, to));
+
+          (*env)->ReleaseLongArrayElements(env, fromPtr, fromst, JNI_ABORT);
+          (*env)->ReleaseLongArrayElements(env, toPtr, tost, JNI_ABORT);
+          free(from);
+          free(to);
+          return res;
+    }
+
 #ifdef __cplusplus
 }
 #endif

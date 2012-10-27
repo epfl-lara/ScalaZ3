@@ -1727,6 +1727,13 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
           return res;
     }
 
+    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_setAstPrintMode(JNIEnv * env, jclass cls, jlong contextPtr, jint mode)
+    {
+        Z3_context ctx = asZ3Context(contextPtr);
+        Z3_ast_print_mode modeCast = (Z3_ast_print_mode)mode;
+        Z3_set_ast_print_mode(ctx, modeCast);
+    }
+
 #ifdef __cplusplus
 }
 #endif

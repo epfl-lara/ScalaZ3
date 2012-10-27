@@ -18,6 +18,7 @@ public final class Z3Wrapper {
     private static final String LIB_BIN = LIB_SEPARATOR + "lib-bin" + LIB_SEPARATOR;
     // the root name of the library file. lib....so in Linux, lib....jnilib in MacOS, ....dll in Windows, etc.
     private static final String LIB_NAME = "scalaz3";
+    private static final String Z3_LIB_NAME = "z3";
 
     private static final String versionString = LibraryChecksum.value;
 
@@ -59,10 +60,11 @@ public final class Z3Wrapper {
 
     private static void loadFromJar() {
         String path = "SCALAZ3_" + versionString;
-        loadLib(path, LIB_NAME);
+        loadLib(path, Z3_LIB_NAME, true);
+        loadLib(path, LIB_NAME, false);
     }
 
-    private static void loadLib(String path, String name) {
+    private static void loadLib(String path, String name, boolean optional) {
         name = System.mapLibraryName(name);
         String completeFileName = LIB_BIN + name;
         File fileOut = new File(System.getProperty("java.io.tmpdir") + "/" + path + completeFileName);
@@ -80,8 +82,10 @@ public final class Z3Wrapper {
                 fileOut.createNewFile();
                 //System.out.println("Looking for " + completeFileName + " in the jar file...");
                 InputStream in = Z3Wrapper.class.getResourceAsStream(completeFileName);
-		if (in==null)
-		    throw new java.io.FileNotFoundException("Could not find " + completeFileName);
+                if (in==null && optional)
+                    return; // we ignore this
+                if (in==null)
+                    throw new java.io.FileNotFoundException("Could not find " + completeFileName);
                 OutputStream out = new FileOutputStream(fileOut);
                 byte buf[] = new byte[4096];
                 int len;
@@ -434,6 +438,7 @@ public final class Z3Wrapper {
 
     // substitute
     public static native long substitute(long contextPtr, long astPtr, int numExprs, long[] from, long[] to);
+    public static native void setAstPrintMode(long contextPtr, int mode);
 
     // Error handling
     // Yet to come...

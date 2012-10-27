@@ -1,5 +1,6 @@
 package z3.scala
 
+import dsl.Z3ASTWrapper
 import z3.{Z3Wrapper,Pointer}
 import scala.collection.mutable.{Set=>MutableSet}
 
@@ -7,6 +8,12 @@ object Z3Context {
   sealed abstract class ADTSortReference
   case class RecursiveType(index: Int) extends ADTSortReference
   case class RegularSort(sort: Z3Sort) extends ADTSortReference
+
+  object AstPrintMode extends Enumeration {
+    type AstPrintMode = Value
+    val Z3_PRINT_SMTLIB_FULL, Z3_PRINT_LOW_LEVEL, Z3_PRINT_SMTLIB_COMPLIANT, Z3_PRINT_SMTLIB2_COMPLIANT = Value
+  }
+  import AstPrintMode._
 }
 
 sealed class Z3Context(val config: Z3Config) {
@@ -1221,6 +1228,18 @@ sealed class Z3Context(val config: Z3Config) {
       throw new IllegalArgumentException("from and to must have the same length");
     return new Z3AST(Z3Wrapper.substitute(this.ptr, ast.ptr, from.length, from.map(_.ptr), to.map(_.ptr)), this);
   }
+
+  def setAstPrintMode(printMode : Z3Context.AstPrintMode.AstPrintMode) = {
+    var mode : Int = 0
+    printMode match {
+      case Z3Context.AstPrintMode.Z3_PRINT_SMTLIB_FULL => mode = 0
+      case Z3Context.AstPrintMode.Z3_PRINT_LOW_LEVEL => mode = 1
+      case Z3Context.AstPrintMode.Z3_PRINT_SMTLIB_COMPLIANT => mode = 2
+      case Z3Context.AstPrintMode.Z3_PRINT_SMTLIB2_COMPLIANT => mode = 3
+    }
+    Z3Wrapper.setAstPrintMode(this.ptr, mode);
+  }
+
 
   /** Returns the last error issued by the SMT-LIB parser. */
   def getSMTLIBError : String = Z3Wrapper.getSMTLIBError(this.ptr)

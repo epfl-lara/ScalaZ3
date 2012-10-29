@@ -1734,6 +1734,15 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
         Z3_set_ast_print_mode(ctx, modeCast);
     }
 
+    JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_simplify
+      (JNIEnv * env, jclass cls, jlong contextPtr, jlong astPtr)
+    {
+        Z3_context ctx = asZ3Context(contextPtr);
+        Z3_ast ast = asZ3AST(astPtr);
+        jlong res = astToJLong(Z3_simplify(ctx, ast));
+        return res;
+    }
+
 #ifdef __cplusplus
 }
 #endif

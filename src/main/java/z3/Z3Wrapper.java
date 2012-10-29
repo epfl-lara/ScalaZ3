@@ -436,9 +436,10 @@ public final class Z3Wrapper {
     public static native long getSMTLIBSort(long contextPtr, int i);
     public static native String getSMTLIBError(long contextPtr);
 
-    // substitute
+    // various
     public static native long substitute(long contextPtr, long astPtr, int numExprs, long[] from, long[] to);
     public static native void setAstPrintMode(long contextPtr, int mode);
+    public static native long simplify(long contextPtr, long astPtr);
 
     // Error handling
     // Yet to come...

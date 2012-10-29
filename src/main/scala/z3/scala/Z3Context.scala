@@ -1240,6 +1240,10 @@ sealed class Z3Context(val config: Z3Config) {
     Z3Wrapper.setAstPrintMode(this.ptr, mode);
   }
 
+  def simplifyAst(ast : Z3AST) : Z3AST = {
+    return new Z3AST(Z3Wrapper.simplify(this.ptr, ast.ptr), this);
+  }
+
 
   /** Returns the last error issued by the SMT-LIB parser. */
   def getSMTLIBError : String = Z3Wrapper.getSMTLIBError(this.ptr)

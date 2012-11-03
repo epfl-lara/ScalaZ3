@@ -22,6 +22,8 @@ extern "C" {
     inline Z3_constructor asZ3Constructor(jlong cons);
     inline Z3_constructor_list asZ3ConstructorList(jlong consList);
     inline Z3_theory asZ3Theory(jlong thy);
+    inline Z3_tactic asZ3Tactic(jlong tactic);
+    inline Z3_solver asZ3Solver(jlong solver);
 
     // Casts from Z3 types to jlong pointer-wrappers
     #define JLONG_MY_NULL (jlong)0
@@ -39,6 +41,8 @@ extern "C" {
     inline jlong constructorToJLong(Z3_constructor constructor);
     inline jlong constructorListToJLong(Z3_constructor_list constructorList);
     inline jlong theoryToJLong(Z3_theory theory);
+    inline jlong tacticToJLong(Z3_tactic tactic);
+    inline jlong solverToJLong(Z3_solver solver);
 
 #ifdef __cplusplus
 }

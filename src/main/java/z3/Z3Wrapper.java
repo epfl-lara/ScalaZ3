@@ -205,6 +205,7 @@ public final class Z3Wrapper {
     public static native long mkPattern(long contextPtr, int numPatterns, long[] terms);
     public static native long mkBound(long contextPtr, int index, long sortPtr);
     public static native long mkQuantifier(long contextPtr, boolean isForAll, int weight, int numPatterns, long[] patterns, int numDecls, long[] declSorts, long[] declNames, long body);
+    public static native long mkQuantifierConst(long contextPtr, boolean isForAll, int weight, int numBounds, long[] bounds, int numPatterns, long[] patterns, long body);
     // ...
 
     // Bit vector fun
@@ -381,6 +382,13 @@ public final class Z3Wrapper {
     public static native int  getNumLiterals(long contextPtr, long lbls);
     public static native long getLabelSymbol(long contextPtr, long lbls, int idx);
     public static native long getLiteral(long contextPtr, long lbls, int idx);
+
+    public static native boolean isQuantifierForall(long contextPtr, long astPtr);
+    public static native long getQuantifierBody(long contextPtr, long astPtr);
+    public static native long getQuantifierBoundName(long contextPtr, long astPtr, int i);
+    public static native int getQuantifierNumBound(long contextPtr, long astPtr);
+    public static native int getIndexValue(long contextPtr, long astPtr);
+
     public static native void disableLiteral(long contextPtr, long lbls, int idx);
     public static native void blockLiterals(long contextPtr, long lbls);
 
@@ -440,6 +448,20 @@ public final class Z3Wrapper {
     public static native long substitute(long contextPtr, long astPtr, int numExprs, long[] from, long[] to);
     public static native void setAstPrintMode(long contextPtr, int mode);
     public static native long simplify(long contextPtr, long astPtr);
+
+    // tactics and solvers
+    public static native long mkTactic(long contextPtr, String name);
+    public static native long tacticAndThen(long contextPtr, long tactic1Ptr, long tactic2Ptr);
+    public static native long mkSolverFromTactic(long contextPtr, long tacticPtr);
+    public static native void tacticDelete(long contextPtr, long tacticPtr);
+
+    public static native void solverPush(long contextPtr, long solverPtr);
+    public static native void solverPop(long contextPtr, long solverPtr, int numScopes);
+    public static native void solverAssertCnstr(long contextPtr, long solverPtr, long astPtr);
+    public static native void solverReset(long contextPtr, long solverPtr);
+    public static native int solverCheck(long contextPtr, long solverPtr);
+    public static native long solverGetModel(long contextPtr, long solverPtr);
+    public static native void solverDelete(long contextPtr, long solverPtr);
 
     // Error handling
     // Yet to come...

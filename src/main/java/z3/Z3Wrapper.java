@@ -14,7 +14,7 @@ import java.util.HashMap;
  * mostly through the other classes, though. */
 public final class Z3Wrapper {
     // related to the path in the jar file
-	private static final String LIB_SEPARATOR = "/";
+    private static final String LIB_SEPARATOR = System.getProperty("file.separator");
     private static final String LIB_BIN = LIB_SEPARATOR + "lib-bin" + LIB_SEPARATOR;
     // the root name of the library file. lib....so in Linux, lib....jnilib in MacOS, ....dll in Windows, etc.
     private static final String LIB_NAME = "scalaz3";
@@ -67,7 +67,7 @@ public final class Z3Wrapper {
     private static void loadLib(String path, String name, boolean optional) {
         name = System.mapLibraryName(name);
         String completeFileName = LIB_BIN + name;
-        File fileOut = new File(System.getProperty("java.io.tmpdir") + "/" + path + completeFileName);
+        File fileOut = new File(System.getProperty("java.io.tmpdir") + LIB_SEPARATOR + path + completeFileName);
         //System.out.println("I'll be looking for the library as: " + fileOut);
 
         if(fileOut.isFile() && fileOut.canRead()) {

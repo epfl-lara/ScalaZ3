@@ -218,4 +218,23 @@ public class Z3Context extends Pointer {
     public Boolean checkAndGetModel(Z3Model model) {
         return lbool2Boolean(Z3Wrapper.checkAndGetModel(this.ptr, model));
     }
+
+    public Boolean checkAssumptions(Z3AST assumptions[], Z3Model model, Z3AST core[]) {
+	return checkAssumptionsImpl(assumptions, model, core);
+    }
+    
+    public Boolean checkAssumptionsNoModel(Z3AST ... assumptions) {
+	Pointer[] core = new Pointer[assumptions.length];
+	// create C null pointer array
+	for (int i = 0; i < assumptions.length; i++) {
+	    core[i] = new Pointer(0L);
+	}
+	return checkAssumptionsImpl(assumptions, new Z3Model(this), core);
+    }
+    
+    private Boolean checkAssumptionsImpl(Z3AST assumptions[], Z3Model model, Pointer core[]) {
+	Z3Wrapper.IntPtr ip = new Z3Wrapper.IntPtr();
+	return lbool2Boolean(Z3Wrapper.checkAssumptions(this.ptr, assumptions.length, Z3Wrapper.toPtrArray(assumptions), model, core.length, ip, Z3Wrapper.toPtrArray(core)));
+    }
+
 }

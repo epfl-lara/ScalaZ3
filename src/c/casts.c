@@ -67,6 +67,14 @@ extern "C" {
         return (Z3_theory)(INTPTR)thy;
     }
 
+    inline Z3_tactic asZ3Tactic(jlong tactic) {
+        return (Z3_tactic)(INTPTR)tactic;
+    }
+
+    inline Z3_solver asZ3Solver(jlong solver) {
+        return (Z3_solver)(INTPTR)solver;
+    }
+
     // Casts from Z3 types to jlong pointer-wrappers
     #define JLONG_MY_NULL (jlong)0
     inline jlong configToJLong(Z3_config cfg) {
@@ -123,6 +131,14 @@ extern "C" {
 
     inline jlong theoryToJLong(Z3_theory theory) {
         return (jlong)(INTPTR)theory;
+    }
+
+    inline jlong tacticToJLong(Z3_tactic tactic) {
+        return (jlong)(INTPTR)tactic;
+    }
+
+    inline jlong solverToJLong(Z3_solver solver) {
+        return (jlong)(INTPTR)solver;
     }
 
 #ifdef __cplusplus

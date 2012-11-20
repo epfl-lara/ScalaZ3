@@ -1,5 +1,6 @@
 package z3.scala
 
+import dsl.Z3ASTWrapper
 import z3.{Z3Wrapper,Pointer}
 import scala.collection.mutable.{Set=>MutableSet}
 
@@ -7,6 +8,12 @@ object Z3Context {
   sealed abstract class ADTSortReference
   case class RecursiveType(index: Int) extends ADTSortReference
   case class RegularSort(sort: Z3Sort) extends ADTSortReference
+
+  object AstPrintMode extends Enumeration {
+    type AstPrintMode = Value
+    val Z3_PRINT_SMTLIB_FULL, Z3_PRINT_LOW_LEVEL, Z3_PRINT_SMTLIB_COMPLIANT, Z3_PRINT_SMTLIB2_COMPLIANT = Value
+  }
+  import AstPrintMode._
 }
 
 sealed class Z3Context(val config: Z3Config) {
@@ -753,10 +760,40 @@ sealed class Z3Context(val config: Z3Config) {
         val args = (Seq.tabulate(numArgs)){ i => getAppArg(ast, i) }
         Z3AppAST(getAppDecl(ast, numArgs), args)
       }
-      case 2 => Z3VarAST
-      case 3 => Z3QuantifierAST
+      case 2 => {
+        val index = getIndexValue(ast)
+        Z3VarAST(index)
+      }
+      case 3 => {
+        val body = getQuantifierBody(ast)
+        val forall = isQuantifierForall(ast)
+        val numVars = getQuantifierNumBound(ast)
+        val varSymbols = (0 to numVars-1).map(getQuantifierBoundName(ast, _))
+        val varNames = varSymbols.map(x => getSymbolKind(x) match { case Z3IntSymbol(x) => "#" + x.toString(); case Z3StringSymbol(s) => s})
+        Z3QuantifierAST(forall, varNames, body)
+      }
       case _ => Z3UnknownAST
     }
+  }
+
+  def getIndexValue(ast: Z3AST) : Int = {
+    return Z3Wrapper.getIndexValue(this.ptr, ast.ptr)
+  }
+
+  def isQuantifierForall(ast: Z3AST) : Boolean = {
+    return Z3Wrapper.isQuantifierForall(this.ptr, ast.ptr)
+  }
+
+  def getQuantifierBody(ast: Z3AST) : Z3AST = {
+    return new Z3AST(Z3Wrapper.getQuantifierBody(this.ptr, ast.ptr), this)
+  }
+
+  def getQuantifierBoundName(ast: Z3AST, i: Int) : Z3Symbol = {
+    return new Z3Symbol(Z3Wrapper.getQuantifierBoundName(this.ptr, ast.ptr, i), this)
+  }
+
+  def getQuantifierNumBound(ast: Z3AST) : Int = {
+    return Z3Wrapper.getQuantifierNumBound(this.ptr, ast.ptr)
   }
 
   def getDeclKind(funcDecl: Z3FuncDecl) : Z3DeclKind.Value = {
@@ -1214,6 +1251,86 @@ sealed class Z3Context(val config: Z3Config) {
         toReturn
       }
     }
+  }
+
+  def substitute(ast : Z3AST, from : Array[Z3AST], to : Array[Z3AST]) : Z3AST = {
+    if (from.length != to.length)
+      throw new IllegalArgumentException("from and to must have the same length");
+    return new Z3AST(Z3Wrapper.substitute(this.ptr, ast.ptr, from.length, from.map(_.ptr), to.map(_.ptr)), this);
+  }
+
+  def setAstPrintMode(printMode : Z3Context.AstPrintMode.AstPrintMode) = {
+    var mode : Int = 0
+    printMode match {
+      case Z3Context.AstPrintMode.Z3_PRINT_SMTLIB_FULL => mode = 0
+      case Z3Context.AstPrintMode.Z3_PRINT_LOW_LEVEL => mode = 1
+      case Z3Context.AstPrintMode.Z3_PRINT_SMTLIB_COMPLIANT => mode = 2
+      case Z3Context.AstPrintMode.Z3_PRINT_SMTLIB2_COMPLIANT => mode = 3
+    }
+    Z3Wrapper.setAstPrintMode(this.ptr, mode);
+  }
+
+  def simplifyAst(ast : Z3AST) : Z3AST = {
+    return new Z3AST(Z3Wrapper.simplify(this.ptr, ast.ptr), this);
+  }
+
+  def mkForAllConst(weight: Int, patterns: Seq[Z3Pattern], bounds: Seq[Z3AST], body: Z3AST) : Z3AST = mkQuantifierConst(true, weight, patterns, bounds, body)
+
+  def mkExistsConst(weight: Int, patterns: Seq[Z3Pattern], bounds: Seq[Z3AST], body: Z3AST) : Z3AST = mkQuantifierConst(false, weight, patterns, bounds, body)
+
+  def mkQuantifierConst(isForAll: Boolean, weight: Int, patterns: Seq[Z3Pattern], bounds: Seq[Z3AST], body: Z3AST) : Z3AST = {
+    new Z3AST(
+      Z3Wrapper.mkQuantifierConst(
+        this.ptr,
+        isForAll,
+        weight,
+        bounds.size,
+        toPtrArray(bounds),
+        patterns.size,
+        toPtrArray(patterns),
+        body.ptr),
+      this
+    )
+  }
+
+  def mkTactic(name: String) : Z3Tactic = {
+    return new Z3Tactic(Z3Wrapper.mkTactic(this.ptr, name), this)
+  }
+
+  def mkTacticAndThen(tactic1: Z3Tactic, tactic2: Z3Tactic) : Z3Tactic = {
+    return new Z3Tactic(Z3Wrapper.tacticAndThen(this.ptr, tactic1.ptr, tactic2.ptr), this)
+  }
+
+  def mkSolverFromTactic(tactic: Z3Tactic) : Z3Solver = {
+    return new Z3Solver(Z3Wrapper.mkSolverFromTactic(this.ptr, tactic.ptr), this)
+  }
+
+  def solverPush(solver: Z3Solver) = {
+    Z3Wrapper.solverPush(this.ptr, solver.ptr)
+  }
+
+  def solverPop(solver: Z3Solver, numScopes: Int) = {
+    Z3Wrapper.solverPop(this.ptr, solver.ptr, numScopes)
+  }
+
+  def solverAssertCnstr(solver: Z3Solver, ast: Z3AST) = {
+    Z3Wrapper.solverAssertCnstr(this.ptr, solver.ptr, ast.ptr)
+  }
+
+  def solverReset(solver: Z3Solver) = {
+    Z3Wrapper.solverReset(this.ptr, solver.ptr)
+  }
+
+  def solverCheck(solver: Z3Solver) : Option[Boolean] = {
+    i2ob(Z3Wrapper.solverCheck(this.ptr, solver.ptr))
+  }
+
+  def tacticDelete(tactic: Z3Tactic) = Z3Wrapper.tacticDelete(this.ptr, tactic.ptr)
+
+  def solverDelete(solver: Z3Solver) = Z3Wrapper.solverDelete(this.ptr, solver.ptr)
+
+  def solverGetModel(solver: Z3Solver) : Z3Model = {
+    return new Z3Model(Z3Wrapper.solverGetModel(this.ptr, solver.ptr), this)
   }
 
   /** Returns the last error issued by the SMT-LIB parser. */

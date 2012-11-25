@@ -45,26 +45,6 @@ extern "C" {
         return;
     }
 
-    JNIEXPORT jboolean JNICALL Java_z3_Z3Wrapper_traceToFile (JNIEnv * env, jclass cls, jlong contextPtr, jstring traceFile) {
-        Z3_context cont = asZ3Context(contextPtr);
-        const jbyte * str;
-        str = (*env)->GetStringUTFChars(env, traceFile, NULL);
-        if (str == NULL) return JLONG_MY_NULL;
-        return (jboolean)(Z3_trace_to_file(cont, (const char*)str));
-    }
-
-    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_traceToStderr (JNIEnv * env, jclass cls, jlong contextPtr) {
-        Z3_trace_to_stderr(asZ3Context(contextPtr));
-    }
-
-    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_traceToStdout (JNIEnv * env, jclass cls, jlong contextPtr) {
-        Z3_trace_to_stdout(asZ3Context(contextPtr));
-    }
-
-    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_traceOff (JNIEnv * env, jclass cls, jlong contextPtr) {
-        Z3_trace_off(asZ3Context(contextPtr));
-    }
-
     JNIEXPORT void JNICALL Java_z3_Z3Wrapper_toggleWarningMessages (JNIEnv * env, jclass cls, jboolean enabled) {
         Z3_toggle_warning_messages((Z3_bool)enabled);
     }
@@ -642,6 +622,10 @@ extern "C" {
         return astToJLong(Z3_mk_int(asZ3Context(contextPtr), (int)v, asZ3Sort(sortPtr)));
     }
 
+    JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkReal (JNIEnv * env, jclass cls, jlong contextPtr, jint n, jint d) {
+        return astToJLong(Z3_mk_real(asZ3Context(contextPtr), (int)n, (int)d));
+    }
+
     JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkPattern (JNIEnv * env, jclass cls, jlong contextPtr, jint numPatterns, jlongArray args) {
         Z3_ast * nargs = (Z3_ast*)malloc(numPatterns * sizeof(Z3_ast));
         jlong * jargs = (*env)->GetLongArrayElements(env, args, NULL);
@@ -705,6 +689,7 @@ extern "C" {
         free(nnames);
         return result;
     }
+
 
     ///////////////////////////////////////////////////////////////////
 
@@ -1718,6 +1703,211 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
     JNIEXPORT void JNICALL Java_z3_Z3Wrapper_resetMemory (JNIEnv * env, jclass cls) {
         Z3_reset_memory();
     }
+
+    JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_substitute
+      (JNIEnv * env, jclass cls, jlong contextPtr, jlong astPtr, jint numExprs, jlongArray fromPtr, jlongArray toPtr) {
+          int i = 0;
+          jlong * fromst = (*env)->GetLongArrayElements(env, fromPtr, NULL);
+          jlong * tost = (*env)->GetLongArrayElements(env, toPtr, NULL);
+          Z3_context ctx = asZ3Context(contextPtr);
+          Z3_ast ast = asZ3AST(astPtr);
+          Z3_ast * from = (Z3_ast*)malloc(numExprs * sizeof(Z3_ast));
+          Z3_ast * to = (Z3_ast*)malloc(numExprs * sizeof(Z3_ast));
+          for(i = 0; i < numExprs; ++i) {
+            from[i] = asZ3AST(fromst[i]);
+            to[i] = asZ3AST(tost[i]);
+
+          }
+
+          jlong res = astToJLong(Z3_substitute(ctx, ast, (unsigned)numExprs, from, to));
+
+          (*env)->ReleaseLongArrayElements(env, fromPtr, fromst, JNI_ABORT);
+          (*env)->ReleaseLongArrayElements(env, toPtr, tost, JNI_ABORT);
+          free(from);
+          free(to);
+          return res;
+    }
+
+    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_setAstPrintMode(JNIEnv * env, jclass cls, jlong contextPtr, jint mode)
+    {
+        Z3_context ctx = asZ3Context(contextPtr);
+        Z3_ast_print_mode modeCast = (Z3_ast_print_mode)mode;
+        Z3_set_ast_print_mode(ctx, modeCast);
+    }
+
+    JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_simplify
+      (JNIEnv * env, jclass cls, jlong contextPtr, jlong astPtr)
+    {
+        Z3_context ctx = asZ3Context(contextPtr);
+        Z3_ast ast = asZ3AST(astPtr);
+        jlong res = astToJLong(Z3_simplify(ctx, ast));
+        return res;
+    }
+
+
+    JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_getQuantifierBody
+      (JNIEnv * env, jclass cls, jlong contextPtr, jlong astPtr){
+        Z3_context ctx = asZ3Context(contextPtr);
+        Z3_ast ast = asZ3AST(astPtr);
+        jlong res = astToJLong(Z3_get_quantifier_body(ctx, ast));
+        return res;
+      }
+
+    JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_getQuantifierBoundName
+      (JNIEnv * env, jclass cls, jlong contextPtr, jlong astPtr, jint n){
+        Z3_context ctx = asZ3Context(contextPtr);
+        Z3_ast ast = asZ3AST(astPtr);
+        jlong res = symbolToJLong(Z3_get_quantifier_bound_name(ctx, ast, (unsigned)n));
+        return res;
+      }
+
+    JNIEXPORT jint JNICALL Java_z3_Z3Wrapper_getQuantifierNumBound
+      (JNIEnv * env, jclass cls, jlong contextPtr, jlong astPtr){
+          Z3_context ctx = asZ3Context(contextPtr);
+          Z3_ast ast = asZ3AST(astPtr);
+          unsigned res = Z3_get_quantifier_num_bound(ctx, ast);
+          return (jint)res;
+        }
+
+    JNIEXPORT jboolean JNICALL Java_z3_Z3Wrapper_isQuantifierForall
+      (JNIEnv * env, jclass cls, jlong contextPtr, jlong astPtr){
+        Z3_context ctx = asZ3Context(contextPtr);
+        Z3_ast ast = asZ3AST(astPtr);
+        Z3_bool res = Z3_is_quantifier_forall(ctx, ast);
+        return (jboolean)res;
+      }
+
+    JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkQuantifierConst
+      (JNIEnv * env, jclass cls, jlong contextPtr, jboolean isForAll, jint weight, jint numBounds, jlongArray bounds, jint numPatterns, jlongArray patterns, jlong bodyPtr) {
+            Z3_pattern * npatterns = (Z3_pattern*)malloc(numPatterns * sizeof(Z3_pattern));
+            Z3_app * nbounds       = (Z3_app*)malloc(numBounds * sizeof(Z3_app));
+
+            jlong * jpatterns = (*env)->GetLongArrayElements(env, patterns, NULL);
+            jlong * jbounds    = (*env)->GetLongArrayElements(env, bounds, NULL);
+
+            Z3_context ctx = asZ3Context(contextPtr);
+            Z3_ast body = asZ3AST(bodyPtr);
+
+            int i = 0;
+            Z3_bool ifa;
+            jlong result;
+
+            if(jpatterns == 0 || jbounds == 0) return 0;
+
+            for(i = 0; i < numPatterns; ++i) {
+                npatterns[i] = asZ3Pattern(jpatterns[i]);
+            }
+            for(i = 0; i < numBounds; ++i) {
+                nbounds[i] = Z3_to_app(ctx, asZ3AST(jbounds[i]));
+            }
+            (*env)->ReleaseLongArrayElements(env, patterns, jpatterns, 0);
+            (*env)->ReleaseLongArrayElements(env, bounds, jbounds, 0);
+
+            ifa = (isForAll == JNI_TRUE ? Z3_TRUE : Z3_FALSE);
+            result = astToJLong(Z3_mk_quantifier_const(
+                    ctx,
+                    ifa,
+                    (unsigned)weight,
+                    (unsigned)numBounds,
+                    nbounds,
+                    (unsigned)numPatterns,
+                    npatterns,
+                    body));
+
+            free(npatterns);
+            free(nbounds);
+            return result;
+        }
+
+    JNIEXPORT jint JNICALL Java_z3_Z3Wrapper_getIndexValue
+      (JNIEnv * env, jclass cls, jlong contextPtr, jlong astPtr) {
+      Z3_context ctx = asZ3Context(contextPtr);
+      Z3_ast ast = asZ3AST(astPtr);
+
+      return (int)Z3_get_index_value(ctx, ast);
+      }
+
+    JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkTactic
+      (JNIEnv * env, jclass cls, jlong contextPtr, jstring name){
+        Z3_context ctx = asZ3Context(contextPtr);
+        const jbyte * str;
+        str = (*env)->GetStringUTFChars(env, name, NULL);
+        if (str == NULL) return JLONG_MY_NULL;
+        Z3_tactic tactic = Z3_mk_tactic(ctx, (const char *)str);
+        Z3_tactic_inc_ref(ctx, tactic);
+        return tacticToJLong(tactic);
+      }
+
+    JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_tacticAndThen
+      (JNIEnv * env, jclass cls, jlong contextPtr, jlong tactic1Ptr, jlong tactic2Ptr)
+      {
+        Z3_context ctx = asZ3Context(contextPtr);
+        Z3_tactic tactic = Z3_tactic_and_then(ctx, asZ3Tactic(tactic1Ptr), asZ3Tactic(tactic2Ptr));
+        Z3_tactic_inc_ref(ctx, tactic);
+        return tacticToJLong(tactic);
+      }
+
+    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_tacticDelete
+      (JNIEnv * env, jclass cls, jlong contextPtr, jlong tacticPtr)
+      {
+        Z3_tactic_dec_ref(asZ3Context(contextPtr), asZ3Tactic(tacticPtr));
+      }
+
+    JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkSolverFromTactic
+      (JNIEnv * env, jclass cls, jlong contextPtr, jlong tacticPtr)
+      {
+        Z3_context ctx = asZ3Context(contextPtr);
+        Z3_solver solver = Z3_mk_solver_from_tactic(ctx, asZ3Tactic(tacticPtr));
+        Z3_solver_inc_ref(ctx, solver);
+        return solverToJLong(solver);
+      }
+
+    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_solverPush
+      (JNIEnv * env, jclass cls, jlong contextPtr, jlong solverPtr)
+      {
+        Z3_context ctx = asZ3Context(contextPtr);
+        Z3_solver_push(ctx, asZ3Solver(solverPtr));
+      }
+
+    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_solverPop
+      (JNIEnv * env, jclass cls, jlong contextPtr, jlong solverPtr, jint num)
+      {
+        Z3_context ctx = asZ3Context(contextPtr);
+        Z3_solver_pop(ctx, asZ3Solver(solverPtr), (unsigned)num);
+      }
+
+    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_solverAssertCnstr
+      (JNIEnv * env, jclass cls, jlong contextPtr, jlong solverPtr, jlong astPtr)
+      {
+        Z3_context ctx = asZ3Context(contextPtr);
+        Z3_solver_assert(ctx, asZ3Solver(solverPtr), asZ3AST(astPtr));
+      }
+
+    JNIEXPORT jint JNICALL Java_z3_Z3Wrapper_solverCheck
+      (JNIEnv * env, jclass cls, jlong contextPtr, jlong solverPtr)
+      {
+        Z3_context ctx = asZ3Context(contextPtr);
+        return (int)Z3_solver_check(ctx, asZ3Solver(solverPtr));
+      }
+
+    JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_solverGetModel
+      (JNIEnv * env, jclass cls, jlong contextPtr, jlong solverPtr)
+      {
+        Z3_context ctx = asZ3Context(contextPtr);
+        return modelToJLong(Z3_solver_get_model(ctx, asZ3Solver(solverPtr)));
+      }
+
+    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_solverReset
+      (JNIEnv * env, jclass cls, jlong contextPtr, jlong solverPtr)
+      {
+        Z3_solver_reset(asZ3Context(contextPtr), asZ3Solver(solverPtr));
+      }
+
+    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_solverDelete
+      (JNIEnv * env, jclass cls, jlong contextPtr, jlong solverPtr)
+      {
+        Z3_solver_dec_ref(asZ3Context(contextPtr), asZ3Solver(solverPtr));
+      }
 
 #ifdef __cplusplus
 }

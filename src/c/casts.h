@@ -16,12 +16,14 @@ extern "C" {
     inline Z3_app asZ3App(jlong app);
     inline Z3_pattern asZ3Pattern(jlong pat);
     inline Z3_symbol asZ3Symbol(jlong sym);
-    inline Z3_parameter asZ3Parameter(jlong param);
+    inline Z3_parameter_kind asZ3Parameter(jlong param);
     inline Z3_model asZ3Model(jlong model);
     inline Z3_literals asZ3Literals(jlong lits);
     inline Z3_constructor asZ3Constructor(jlong cons);
     inline Z3_constructor_list asZ3ConstructorList(jlong consList);
     inline Z3_theory asZ3Theory(jlong thy);
+    inline Z3_tactic asZ3Tactic(jlong tactic);
+    inline Z3_solver asZ3Solver(jlong solver);
 
     // Casts from Z3 types to jlong pointer-wrappers
     #define JLONG_MY_NULL (jlong)0
@@ -33,12 +35,14 @@ extern "C" {
     inline jlong appToJLong(Z3_app app);
     inline jlong patternToJLong(Z3_pattern p);
     inline jlong symbolToJLong(Z3_symbol sym);
-    inline jlong parameterToJLong(Z3_parameter param);
+    inline jlong parameterToJLong(Z3_parameter_kind param);
     inline jlong modelToJLong(Z3_model model);
     inline jlong literalsToJLong(Z3_literals literals);
     inline jlong constructorToJLong(Z3_constructor constructor);
     inline jlong constructorListToJLong(Z3_constructor_list constructorList);
     inline jlong theoryToJLong(Z3_theory theory);
+    inline jlong tacticToJLong(Z3_tactic tactic);
+    inline jlong solverToJLong(Z3_solver solver);
 
 #ifdef __cplusplus
 }

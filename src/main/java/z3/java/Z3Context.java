@@ -22,22 +22,6 @@ public class Z3Context extends Pointer {
         this.ptr = 0;
     }
 
-    public boolean traceToFile(String traceFile) {
-        return Z3Wrapper.traceToFile(this.ptr, traceFile);
-    }
-
-    public void traceToStderr() {
-        Z3Wrapper.traceToStderr(this.ptr);
-    }
-
-    public void traceToStdout() {
-        Z3Wrapper.traceToStdout(this.ptr);
-    }
-
-    public void traceOff() {
-        Z3Wrapper.traceOff(this.ptr);
-    }
-
     public void updateParamValue(String paramID, String paramValue) {
         Z3Wrapper.updateParamValue(this.ptr, paramID, paramValue);
     }
@@ -193,6 +177,10 @@ public class Z3Context extends Pointer {
     public Z3AST mkInt(int value, Z3Sort sort) {
         return new Z3AST(Z3Wrapper.mkInt(this.ptr, value, sort.ptr));
     }
+    
+    public Z3AST mkReal(double value, int numerator, int denominator) {
+        return new Z3AST(Z3Wrapper.mkReal(this.ptr, numerator, denominator));
+    }
 
     public Integer getNumeralInt(Z3AST ast) {
         Z3Wrapper.IntPtr ip = new Z3Wrapper.IntPtr();
@@ -230,4 +218,23 @@ public class Z3Context extends Pointer {
     public Boolean checkAndGetModel(Z3Model model) {
         return lbool2Boolean(Z3Wrapper.checkAndGetModel(this.ptr, model));
     }
+
+    public Boolean checkAssumptions(Z3AST assumptions[], Z3Model model, Z3AST core[]) {
+	return checkAssumptionsImpl(assumptions, model, core);
+    }
+    
+    public Boolean checkAssumptionsNoModel(Z3AST ... assumptions) {
+	Pointer[] core = new Pointer[assumptions.length];
+	// create C null pointer array
+	for (int i = 0; i < assumptions.length; i++) {
+	    core[i] = new Pointer(0L);
+	}
+	return checkAssumptionsImpl(assumptions, new Z3Model(this), core);
+    }
+    
+    private Boolean checkAssumptionsImpl(Z3AST assumptions[], Z3Model model, Pointer core[]) {
+	Z3Wrapper.IntPtr ip = new Z3Wrapper.IntPtr();
+	return lbool2Boolean(Z3Wrapper.checkAssumptions(this.ptr, assumptions.length, Z3Wrapper.toPtrArray(assumptions), model, core.length, ip, Z3Wrapper.toPtrArray(core)));
+    }
+
 }

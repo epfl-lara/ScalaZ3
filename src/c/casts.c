@@ -43,8 +43,8 @@ extern "C" {
         return (Z3_symbol)(INTPTR)sym;
     }
 
-    inline Z3_parameter asZ3Parameter(jlong param) {
-        return (Z3_parameter)(INTPTR)param;
+    inline Z3_parameter_kind asZ3Parameter(jlong param) {
+        return (Z3_parameter_kind)(INTPTR)param;
     }
 
     inline Z3_model asZ3Model(jlong model) {
@@ -65,6 +65,14 @@ extern "C" {
 
     inline Z3_theory asZ3Theory(jlong thy) {
         return (Z3_theory)(INTPTR)thy;
+    }
+
+    inline Z3_tactic asZ3Tactic(jlong tactic) {
+        return (Z3_tactic)(INTPTR)tactic;
+    }
+
+    inline Z3_solver asZ3Solver(jlong solver) {
+        return (Z3_solver)(INTPTR)solver;
     }
 
     // Casts from Z3 types to jlong pointer-wrappers
@@ -101,7 +109,7 @@ extern "C" {
         return (jlong)(INTPTR)sym;
     }
 
-    inline jlong parameterToJLong(Z3_parameter param) {
+    inline jlong parameterToJLong(Z3_parameter_kind param) {
         return (jlong)(INTPTR)param;
     }
 
@@ -123,6 +131,14 @@ extern "C" {
 
     inline jlong theoryToJLong(Z3_theory theory) {
         return (jlong)(INTPTR)theory;
+    }
+
+    inline jlong tacticToJLong(Z3_tactic tactic) {
+        return (jlong)(INTPTR)tactic;
+    }
+
+    inline jlong solverToJLong(Z3_solver solver) {
+        return (jlong)(INTPTR)solver;
     }
 
 #ifdef __cplusplus

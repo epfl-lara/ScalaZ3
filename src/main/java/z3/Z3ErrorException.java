@@ -1,13 +1,14 @@
 package z3;
 
 public final class Z3ErrorException extends RuntimeException {
-    private final String msg;
-    private final int errCode;
+
+	private static final long serialVersionUID = 3382203884603330972L;
+
+	private final int errCode;
 
     public Z3ErrorException(int errorCode, String message) {
         super(message);
         errCode = errorCode;
-        msg = message;
     }
 
     public int getErrorCode() {

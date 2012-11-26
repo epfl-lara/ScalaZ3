@@ -78,14 +78,15 @@ public final class Z3Wrapper {
             // Couldn't find the library, so we can copy before we can load it.
             try {
                 //System.out.println("Oh no, I have to extract it from the jar file !");
-                fileOut.getParentFile().mkdirs();
-                fileOut.createNewFile();
                 //System.out.println("Looking for " + completeFileName + " in the jar file...");
                 InputStream in = Z3Wrapper.class.getResourceAsStream(completeFileName);
                 if (in==null && optional)
                     return; // we ignore this
                 if (in==null)
                     throw new java.io.FileNotFoundException("Could not find " + completeFileName);
+
+                fileOut.getParentFile().mkdirs();
+                fileOut.createNewFile();
                 OutputStream out = new FileOutputStream(fileOut);
                 byte buf[] = new byte[4096];
                 int len;

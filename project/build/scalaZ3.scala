@@ -178,18 +178,15 @@ class ScalaZ3Project(info: ProjectInfo) extends DefaultProject(info) with FileTa
     val libStr = (buildLibraryJar.absolutePath).toString
     val scalaHomeStr = libStr.substring(0, libStr.length - 21)
 
-      println(scalaHomeStr)
-      println(libStr)
     //log.info("PATH : " + this.jarPath.absolutePath)
     val scalaJars : PathFinder = (buildLibraryJar +++ buildCompilerJar)
     myExec(
       "Preloading library",
-      "java -Dscala.usejavacp=true" +
-    " -Dscala.home=" + scalaHomeStr +
-	" -classpath " + scalaJars.absString +
-	" scala.tools.nsc.MainGenericRunner " +
-	" -classpath " + jarPath.absolutePath + ":.:" + scalaJars.absString +
-	" -e z3.Z3Wrapper.init"
+      " -Dscala.home=" + scalaHomeStr +
+      " -classpath " + scalaJars.absString +
+      " scala.tools.nsc.MainGenericRunner " +
+      " -classpath " + jarPath.absolutePath + ":.:" + scalaJars.absString +
+      " -e z3.Z3Wrapper.init"
     )
   } dependsOn(`package`)
 

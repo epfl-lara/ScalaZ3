@@ -19,11 +19,6 @@ class Z3Tactic private[z3](val ptr : Long, val context : Z3Context) extends Z3Ob
     Z3Wrapper.tacticDecRef(context.ptr, this.ptr)
   }
 
-  @deprecated("Delete should not be needed explicitly anymore", "")
-  def delete() {
-    decRef()
-  }
-
   locally {
     context.tacticQueue.incRef(this)
   }

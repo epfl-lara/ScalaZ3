@@ -20,6 +20,8 @@ public final class Z3Wrapper {
     private static final String LIB_NAME = "scalaz3";
     private static final String Z3_LIB_NAME = "z3";
 
+    public static Object gc_lock = new Object();
+
     private static final String versionString = LibraryChecksum.value;
 
     // this is just to force class loading, and therefore library loading.
@@ -120,6 +122,10 @@ public final class Z3Wrapper {
     public static native void delConfig(long configPtr);
     public static native void setParamValue(long configPtr, String paramID, String paramValue);
     public static native long mkContext(long configPtr);
+    public static native long mkContextRC(long configPtr);
+    public static native void incRef(long contextPtr, long ptr);
+    public static native void decRef(long contextPtr, long ptr);
+    public static native void interrupt(long contextPtr);
     public static native void delContext(long contextPtr);
     public static native void softCheckCancel(long contextPtr);
     public static native void toggleWarningMessages(boolean enabled);
@@ -169,6 +175,7 @@ public final class Z3Wrapper {
     public static native long mkSub(long contextPtr, int numArgs, long[] args);
     public static native long mkUnaryMinus(long contextPtr, long astPtr);
     public static native long mkDiv(long contextPtr, long astPtr1, long astPtr2); 
+    public static native long mkDiv2(long contextPtr, long astPtr1, long astPtr2); 
     public static native long mkMod(long contextPtr, long astPtr1, long astPtr2); 
     public static native long mkRem(long contextPtr, long astPtr1, long astPtr2); 
     public static native long mkLT(long contextPtr, long astPtr1, long astPtr2);
@@ -339,15 +346,6 @@ public final class Z3Wrapper {
     // ...
     public static native int getBoolValue(long contextPtr, long astPtr);
 
-    public static native void push(long contextPtr);
-    public static native void pop(long contextPtr, int numScopes);
-    public static native int getNumScopes(long contextPtr);
-
-    public static native void assertCnstr(long contextPtr, long astPtr);
-
-    public static native int check(long contextPtr);
-    public static native int checkAndGetModel(long contextPtr, Pointer model);
-    public static native int checkAssumptions(long contextPtr, int numAssumptions, long[] assumptions, Pointer model, int coreSizeIn, IntPtr coreSizeOut, long[] core);
 
     // Returns one of the following values:
     // 0 - Z3_NO_FAILURE       The last search was successful
@@ -362,6 +360,8 @@ public final class Z3Wrapper {
     public static native int getSearchFailure(long contextPtr);
 
     public static native void delModel(long contextPtr, long modelPtr);
+    public static native void modelIncRef(long contextPtr, long modelPtr);
+    public static native void modelDecRef(long contextPtr, long modelPtr);
     public static native boolean eval(long contextPtr, long modelPtr, long astPtr, Pointer ast);
     public static native int getModelNumConstants(long contextPtr, long modelPtr);
     public static native long getModelConstant(long contextPtr, long modelPtr, int i);
@@ -453,8 +453,10 @@ public final class Z3Wrapper {
     // tactics and solvers
     public static native long mkTactic(long contextPtr, String name);
     public static native long tacticAndThen(long contextPtr, long tactic1Ptr, long tactic2Ptr);
+    public static native long mkSolver(long contextPtr);
     public static native long mkSolverFromTactic(long contextPtr, long tacticPtr);
-    public static native void tacticDelete(long contextPtr, long tacticPtr);
+    public static native void tacticIncRef(long contextPtr, long tacticPtr);
+    public static native void tacticDecRef(long contextPtr, long tacticPtr);
 
     public static native void solverPush(long contextPtr, long solverPtr);
     public static native void solverPop(long contextPtr, long solverPtr, int numScopes);
@@ -462,7 +464,19 @@ public final class Z3Wrapper {
     public static native void solverReset(long contextPtr, long solverPtr);
     public static native int solverCheck(long contextPtr, long solverPtr);
     public static native long solverGetModel(long contextPtr, long solverPtr);
-    public static native void solverDelete(long contextPtr, long solverPtr);
+    public static native void solverIncRef(long contextPtr, long solverPtr);
+    public static native void solverDecRef(long contextPtr, long solverPtr);
+    public static native long solverGetAssertions(long contextPtr, long solverPtr);
+    public static native long solverGetUnsatCore(long contextPtr, long solverPtr);
+    public static native int solverGetNumScopes(long contextPtr, long solverPtr);
+    public static native int solverCheckAssumptions(long contextPtr, long solverPtr, int numAssumptions, long[] assumptions);
+
+    // AST Vector
+    public static native void astvectorIncRef(long contextPtr, long vectorPtr);
+    public static native void astvectorDecRef(long contextPtr, long vectorPtr);
+    public static native int astvectorSize(long contextPtr, long vectorPtr);
+    public static native long astvectorGet(long contextPtr, long vectorPtr, int i);
+    public static native void astvectorSet(long contextPtr, long vectorPtr, int i, long astPtr);
 
     // Error handling
     // Yet to come...
@@ -471,4 +485,13 @@ public final class Z3Wrapper {
     // Miscellaneous
     public static native void getVersion(IntPtr major, IntPtr minor, IntPtr buildNumber, IntPtr revisionNumber);
     public static native void resetMemory();
+
+    // DEPRECATED API
+    public static native void push(long contextPtr);
+    public static native void pop(long contextPtr, int numScopes);
+    public static native int getNumScopes(long contextPtr);
+    public static native void assertCnstr(long contextPtr, long astPtr);
+    public static native int check(long contextPtr);
+    public static native int checkAndGetModel(long contextPtr, Pointer model);
+    public static native int checkAssumptions(long contextPtr, int numAssumptions, long[] assumptions, Pointer model, int coreSizeIn, IntPtr coreSizeOut, long[] core);
 }

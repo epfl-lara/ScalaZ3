@@ -1,3 +1,5 @@
+package z3
+
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
@@ -27,11 +29,12 @@ import z3.scala.dsl._
            (columns(i) - columns(j) !== j - i))
 
     /* We assert all of the above */
-    ctx assertCnstr diffCnstr
-    boundsCnstr map (ctx.assertCnstr(_))
-    diagonalsCnstr map (ctx.assertCnstr(_))
+    val solver = ctx.mkSolver
+    solver.assertCnstr(diffCnstr)
+    boundsCnstr map (solver.assertCnstr(_))
+    diagonalsCnstr map (solver.assertCnstr(_))
 
-    val nbModels = ctx.checkAndGetAllModels.size
+    val nbModels = solver.checkAndGetAllModels.size
 
     println("Total number of models: " + nbModels)
     nbModels should equal (92)

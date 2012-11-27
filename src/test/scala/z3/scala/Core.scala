@@ -1,3 +1,5 @@
+package z3
+
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
@@ -16,11 +18,12 @@ class Core extends FunSuite with ShouldMatchers {
   
     val zero = z3.mkInt(0, z3.mkIntSort)
 
-    z3.assertCnstr(p1 --> !(!(x === zero)))
-    z3.assertCnstr(p2 --> !(y === zero))
-    z3.assertCnstr(p3 --> !(x === zero))
+    val solver = z3.mkSolver
+    solver.assertCnstr(p1 --> !(!(x === zero)))
+    solver.assertCnstr(p2 --> !(y === zero))
+    solver.assertCnstr(p3 --> !(x === zero))
 
-    val (result, model, core) = z3.checkAssumptions(p1, p2, p3)
+    val (result, model, core) = solver.checkAssumptionsGetModelOrCore(p1, p2, p3)
 
     result should equal (Some(false))
     core.toSet should equal (Set(p1, p3))

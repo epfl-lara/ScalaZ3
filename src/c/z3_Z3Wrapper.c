@@ -34,6 +34,25 @@ extern "C" {
         return contextToJLong(Z3_mk_context(conf));
     }
 
+    JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkContextRC (JNIEnv * env, jclass cls, jlong configPtr) {
+        Z3_config conf = asZ3Config(configPtr);
+        return contextToJLong(Z3_mk_context_rc(conf));
+    }
+
+
+    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_incRef (JNIEnv * env, jclass cls, jlong contextPtr, jlong ptr) {
+        Z3_inc_ref(asZ3Context(contextPtr), asZ3AST(ptr));
+    }
+
+    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_decRef (JNIEnv * env, jclass cls, jlong contextPtr, jlong ptr) {
+        Z3_dec_ref(asZ3Context(contextPtr), asZ3AST(ptr));
+    }
+
+    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_interrupt (JNIEnv * env, jclass cls, jlong contextPtr) {
+        Z3_interrupt(asZ3Context(contextPtr));
+    }
+
+
     JNIEXPORT void JNICALL Java_z3_Z3Wrapper_delContext (JNIEnv * env, jclass cls, jlong contextPtr) {
         Z3_context cont = asZ3Context(contextPtr);
         Z3_del_context(cont);
@@ -1123,6 +1142,14 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
         Z3_del_model(asZ3Context(contextPtr), asZ3Model(modelPtr));
     }
 
+    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_modelIncRef (JNIEnv *env, jclass cls, jlong contextPtr, jlong modelPtr) {
+        Z3_model_inc_ref(asZ3Context(contextPtr), asZ3Model(modelPtr));
+    }
+
+    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_modelDecRef (JNIEnv *env, jclass cls, jlong contextPtr, jlong modelPtr) {
+        Z3_model_dec_ref(asZ3Context(contextPtr), asZ3Model(modelPtr));
+    }
+
     JNIEXPORT jboolean JNICALL Java_z3_Z3Wrapper_eval (JNIEnv * env, jclass cls, jlong contextPtr, jlong modelPtr, jlong astPtr, jobject ast) {
         Z3_ast newAST;
         Z3_bool result = Z3_eval(asZ3Context(contextPtr), asZ3Model(modelPtr), asZ3AST(astPtr), &newAST);
@@ -1824,7 +1851,7 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
       Z3_context ctx = asZ3Context(contextPtr);
       Z3_ast ast = asZ3AST(astPtr);
 
-      return (int)Z3_get_index_value(ctx, ast);
+      return (jint)Z3_get_index_value(ctx, ast);
       }
 
     JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkTactic
@@ -1834,7 +1861,6 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
         str = (*env)->GetStringUTFChars(env, name, NULL);
         if (str == NULL) return JLONG_MY_NULL;
         Z3_tactic tactic = Z3_mk_tactic(ctx, (const char *)str);
-        Z3_tactic_inc_ref(ctx, tactic);
         return tacticToJLong(tactic);
       }
 
@@ -1847,10 +1873,22 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
         return tacticToJLong(tactic);
       }
 
-    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_tacticDelete
+    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_tacticDecRef
       (JNIEnv * env, jclass cls, jlong contextPtr, jlong tacticPtr)
       {
         Z3_tactic_dec_ref(asZ3Context(contextPtr), asZ3Tactic(tacticPtr));
+      }
+
+    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_tacticIncRef
+      (JNIEnv * env, jclass cls, jlong contextPtr, jlong tacticPtr)
+      {
+        Z3_tactic_inc_ref(asZ3Context(contextPtr), asZ3Tactic(tacticPtr));
+      }
+
+    JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkSolver
+      (JNIEnv * env, jclass cls, jlong contextPtr)
+      {
+        return solverToJLong(Z3_mk_solver(asZ3Context(contextPtr)));
       }
 
     JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkSolverFromTactic
@@ -1858,7 +1896,6 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
       {
         Z3_context ctx = asZ3Context(contextPtr);
         Z3_solver solver = Z3_mk_solver_from_tactic(ctx, asZ3Tactic(tacticPtr));
-        Z3_solver_inc_ref(ctx, solver);
         return solverToJLong(solver);
       }
 
@@ -1887,14 +1924,13 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
       (JNIEnv * env, jclass cls, jlong contextPtr, jlong solverPtr)
       {
         Z3_context ctx = asZ3Context(contextPtr);
-        return (int)Z3_solver_check(ctx, asZ3Solver(solverPtr));
+        return (jint)Z3_solver_check(ctx, asZ3Solver(solverPtr));
       }
 
     JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_solverGetModel
       (JNIEnv * env, jclass cls, jlong contextPtr, jlong solverPtr)
       {
-        Z3_context ctx = asZ3Context(contextPtr);
-        return modelToJLong(Z3_solver_get_model(ctx, asZ3Solver(solverPtr)));
+        return modelToJLong(Z3_solver_get_model(asZ3Context(contextPtr), asZ3Solver(solverPtr)));
       }
 
     JNIEXPORT void JNICALL Java_z3_Z3Wrapper_solverReset
@@ -1903,11 +1939,85 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
         Z3_solver_reset(asZ3Context(contextPtr), asZ3Solver(solverPtr));
       }
 
-    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_solverDelete
-      (JNIEnv * env, jclass cls, jlong contextPtr, jlong solverPtr)
-      {
+    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_solverIncRef
+      (JNIEnv *env, jclass cls, jlong contextPtr, jlong solverPtr) {
+        Z3_solver_inc_ref(asZ3Context(contextPtr), asZ3Solver(solverPtr));
+
+    }
+
+    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_solverDecRef
+      (JNIEnv *env, jclass cls, jlong contextPtr, jlong solverPtr) {
         Z3_solver_dec_ref(asZ3Context(contextPtr), asZ3Solver(solverPtr));
-      }
+
+    }
+
+    JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_solverGetAssertions
+      (JNIEnv *env, jclass cls, jlong contextPtr, jlong solverPtr) {
+        return astvectorToJLong(Z3_solver_get_assertions(asZ3Context(contextPtr), asZ3Solver(solverPtr)));
+    }
+
+    JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_solverGetUnsatCore
+      (JNIEnv *env, jclass cls, jlong contextPtr, jlong solverPtr) {
+        return astvectorToJLong(Z3_solver_get_unsat_core(asZ3Context(contextPtr), asZ3Solver(solverPtr)));
+    }
+
+    JNIEXPORT jint JNICALL Java_z3_Z3Wrapper_solverGetNumScopes
+      (JNIEnv *env, jclass cls, jlong contextPtr, jlong solverPtr) {
+        return (jint)Z3_solver_get_num_scopes(asZ3Context(contextPtr), asZ3Solver(solverPtr));
+    }
+
+    JNIEXPORT jint JNICALL Java_z3_Z3Wrapper_solverCheckAssumptions
+      (JNIEnv *env, jclass cls, jlong contextPtr, jlong solverPtr, jint numAssumptions, jlongArray assumptions) {
+
+        jlong * j_assumptions = (*env)->GetLongArrayElements(env, assumptions, NULL);
+
+        Z3_lbool result;
+
+        Z3_ast * c_assumptions = malloc((unsigned)numAssumptions * sizeof(Z3_ast));
+        unsigned i = 0;
+        for (i = 0; i < (unsigned)numAssumptions; ++i) {
+            c_assumptions[i] = asZ3AST(j_assumptions[i]);
+        }
+
+        (*env)->ReleaseLongArrayElements(env, assumptions, j_assumptions, 0);
+
+        result = Z3_solver_check_assumptions(asZ3Context(contextPtr), asZ3Solver(solverPtr), (unsigned)numAssumptions, c_assumptions);
+
+        free(c_assumptions);
+        return (jint)result;
+    }
+
+    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_astvectorIncRef
+      (JNIEnv *env, jclass cls, jlong contextPtr, jlong vectorPtr) {
+
+        Z3_ast_vector_inc_ref(asZ3Context(contextPtr), asZ3Astvector(vectorPtr));
+    }
+
+    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_astvectorDecRef
+      (JNIEnv *env, jclass cls, jlong contextPtr, jlong vectorPtr) {
+
+        Z3_ast_vector_dec_ref(asZ3Context(contextPtr), asZ3Astvector(vectorPtr));
+    }
+
+    JNIEXPORT jint JNICALL Java_z3_Z3Wrapper_astvectorSize
+      (JNIEnv *env, jclass cls, jlong contextPtr, jlong vectorPtr) {
+
+        return (jint)Z3_ast_vector_size(asZ3Context(contextPtr), asZ3Astvector(vectorPtr));
+    }
+
+    JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_astvectorGet
+      (JNIEnv *env, jclass cls, jlong contextPtr, jlong vectorPtr, jint i) {
+
+        return astToJLong(Z3_ast_vector_get(asZ3Context(contextPtr), asZ3Astvector(vectorPtr), (unsigned)i));
+
+    }
+
+    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_astvectorSet
+      (JNIEnv *env, jclass cls, jlong contextPtr, jlong vectorPtr, jint i, jlong astPtr) {
+
+      Z3_ast_vector_set(asZ3Context(contextPtr), asZ3Astvector(vectorPtr), (unsigned)i, asZ3AST(astPtr));
+
+    }
 
 #ifdef __cplusplus
 }

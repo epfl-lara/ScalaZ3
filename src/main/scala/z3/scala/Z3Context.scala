@@ -17,15 +17,15 @@ object Z3Context {
 }
 
 sealed class Z3Context(val config: Z3Config) {
-  val ptr : Long = Z3Wrapper.mkContext(config.ptr)
+  val ptr : Long = Z3Wrapper.mkContextRC(config.ptr)
+
+  val astQueue       = new Z3RefCountQueue[Z3ASTLike]()
+  val astvectorQueue = new Z3RefCountQueue[Z3ASTVector]()
+  val modelQueue     = new Z3RefCountQueue[Z3Model]()
+  val solverQueue    = new Z3RefCountQueue[Z3Solver]()
+  val tacticQueue    = new Z3RefCountQueue[Z3Tactic]()
 
   def this(params : (String,Any)*) = this(new Z3Config(params : _*))
-
-  private def i2ob(value: Int) : Option[Boolean] = value match {
-    case -1 => Some(false)
-    case 0 => None
-    case _ => Some(true)
-  }
 
   private var deleted : Boolean = false
   override def finalize() : Unit = {
@@ -34,6 +34,12 @@ sealed class Z3Context(val config: Z3Config) {
 
   def delete() : Unit = {
     if(!deleted) {
+      astQueue.clearQueue()
+      modelQueue.clearQueue()
+      solverQueue.clearQueue()
+      astvectorQueue.clearQueue()
+      tacticQueue.clearQueue()
+
       Z3Wrapper.delContext(this.ptr)
       deleted = true
     }
@@ -898,170 +904,66 @@ sealed class Z3Context(val config: Z3Config) {
     res
   }
 
+  // This is deprecated, we don't want to go directly through Contexts for
+  // this, but via Solver
+
+  private lazy val globalSolver = mkSolver()
+
+  @deprecated("You should go through Z3Solver via mkSolver first", "")
   def push() : Unit = {
-    Z3Wrapper.push(this.ptr)
+    globalSolver.push()
   }
 
+  @deprecated("You should go through Z3Solver via mkSolver first", "")
   def pop(numScopes : Int = 1) : Unit = {
-    Z3Wrapper.pop(this.ptr, numScopes)
+    globalSolver.pop(numScopes)
   }
 
+  @deprecated("You should go through Z3Solver via mkSolver first", "")
   def getNumScopes() : Int = {
-    Z3Wrapper.getNumScopes(this.ptr)
+    globalSolver.getNumScopes()
   }
 
+  @deprecated("You should go through Z3Solver via mkSolver first", "")
   def assertCnstr(ast: Z3AST) : Unit = {
-    Z3Wrapper.assertCnstr(this.ptr, ast.ptr)
+    globalSolver.assertCnstr(ast)
   }
 
+  @deprecated("You should go through Z3Solver via mkSolver first", "")
   def assertCnstr(tree : dsl.Tree[dsl.BoolSort]) : Unit = {
-    Z3Wrapper.assertCnstr(this.ptr, tree.ast(this).ptr)
+    globalSolver.assertCnstr(tree.ast(this))
   }
 
+  @deprecated("You should go through Z3Solver via mkSolver first", "")
   def check() : Option[Boolean] = {
-    i2ob(Z3Wrapper.check(this.ptr))
+    globalSolver.check()
   }
 
+  @deprecated("You should go through Z3Solver via mkSolver first", "")
   def checkAndGetModel() : (Option[Boolean],Z3Model) = {
-    val out = new Pointer(0L)
-    val res = i2ob(Z3Wrapper.checkAndGetModel(this.ptr, out))
-    val model = new Z3Model(out.ptr, this)
-    (res, model)
+    globalSolver.checkAndGetModel()
   }
 
+  @deprecated("You should go through Z3Solver via mkSolver first", "")
   def checkAssumptions(assumptions: Z3AST*) : (Option[Boolean],Z3Model,Seq[Z3AST]) = {
-    val modelPtr = new Pointer(0L)
-    val coreSizePtr = new Z3Wrapper.IntPtr()
-    val core = new Array[Long](assumptions.size)
+    val res   = globalSolver.checkAssumptions(assumptions : _*)
+    val model = if (res != Some(false)) globalSolver.getModel() else null
+    val core  = if (res != Some(true)) globalSolver.getUnsatCore().toSeq else Seq()
 
-    val res = i2ob(Z3Wrapper.checkAssumptions(this.ptr, assumptions.size, toPtrArray(assumptions), modelPtr, assumptions.size, coreSizePtr, core))
-
-    val model = new Z3Model(modelPtr.ptr, this)
-
-    val coreSeq = if(coreSizePtr.value > 0) {
-      core.take(coreSizePtr.value).toSeq.map(p => new Z3AST(p, this))
-    } else {
-      Seq.empty[Z3AST]
-    }
-
-    (res, model, coreSeq)
+    (res, model, core)
   }
 
+  @deprecated("You should go through Z3Solver via mkSolver first", "")
   def checkAndGetAllModels(): Iterator[Z3Model] = {
-    val context = this
-    new Iterator[Z3Model] {
-      var constraints: Z3AST = context.mkTrue
-      var nextModel: Option[Option[Z3Model]] = None
-      
-      override def hasNext: Boolean =  nextModel match {
-        case None =>
-          // Check whether there are any more models
-          context.push()
-          context.assertCnstr(constraints)
-          val result = context.checkAndGetModel()
-          context.pop(1)
-          val toReturn = (result match {
-            case (Some(true), m) =>
-              nextModel = Some(Some(m))
-              val newConstraints = m.getModelConstantInterpretations.foldLeft(context.mkTrue){
-                (acc, s) => context.mkAnd(acc, context.mkEq(s._1(), s._2))
-              }
-              constraints = context.mkAnd(constraints, context.mkNot(newConstraints))
-              true
-            case (Some(false), _) =>
-              nextModel = Some(None)
-              false
-            case (None, _) =>
-              nextModel = Some(None)
-              false
-          })
-          toReturn
-        case Some(None) => false
-        case Some(Some(m)) => true
-      }
-
-      override def next(): Z3Model = nextModel match {
-        case None =>
-          // Compute next model
-          context.push()
-          context.assertCnstr(constraints)
-          val result = context.checkAndGetModel()
-          context.pop(1)
-          val toReturn = (result match {
-            case (Some(true), m) =>
-              val newConstraints = m.getModelConstantInterpretations.foldLeft(context.mkTrue){
-                (acc, s) => context.mkAnd(acc, context.mkEq(s._1(), s._2))
-              }
-              constraints = context.mkAnd(constraints, context.mkNot(newConstraints))
-              m
-            case _ =>
-              throw new Exception("Requesting a new model while there are no more models.")
-          })
-          toReturn
-        case Some(Some(m)) => 
-          nextModel = None
-          m
-        case Some(None) => throw new Exception("Requesting a new model while there are no more models.")
-      }
-    }
+    globalSolver.checkAndGetAllModels()
   }
 
+  @deprecated("You should go through Z3Solver via mkSolver first", "")
   def checkAndGetAllEventualModels(): Iterator[(Option[Boolean], Z3Model)] = {
-    val context = this
-    new Iterator[(Option[Boolean], Z3Model)] {
-      var constraints: Z3AST = context.mkTrue
-      var nextModel: Option[Option[(Option[Boolean],Z3Model)]] = None
-      
-      override def hasNext: Boolean =  nextModel match {
-        case None =>
-          // Check whether there are any more models
-          context.push()
-          context.assertCnstr(constraints)
-          val result = context.checkAndGetModel()
-          context.pop(1)
-          val toReturn = (result match {
-            case (Some(false), _) =>
-              nextModel = Some(None)
-              false
-            case (outcome, m) =>
-              nextModel = Some(Some((outcome, m)))
-              val newConstraints = m.getModelConstantInterpretations.foldLeft(context.mkTrue){
-                (acc, s) => context.mkAnd(acc, context.mkEq(s._1(), s._2))
-              }
-              constraints = context.mkAnd(constraints, context.mkNot(newConstraints))
-              true
-          })
-          toReturn
-        case Some(None) => false
-        case Some(Some(_)) => true
-      }
-
-      override def next(): (Option[Boolean], Z3Model) = nextModel match {
-        case None =>
-          // Compute next model
-          context.push()
-          context.assertCnstr(constraints)
-          val result = context.checkAndGetModel()
-          context.pop(1)
-          val toReturn = (result match {
-            case (Some(false), _) =>
-              throw new Exception("Requesting a new model while there are no more models.")
-            case (outcome, m) =>
-              val newConstraints = m.getModelConstantInterpretations.foldLeft(context.mkTrue){
-                (acc, s) => context.mkAnd(acc, context.mkEq(s._1(), s._2))
-              }
-              constraints = context.mkAnd(constraints, context.mkNot(newConstraints))
-              (outcome, m)
-          })
-          toReturn
-        case Some(Some((outcome, m))) => 
-          nextModel = None
-          (outcome, m)
-        case Some(None) => throw new Exception("Requesting a new model while there are no more models.")
-      }
-    }
+    globalSolver.checkAndGetAllEventualModels()
   }
 
+  @deprecated("You should use Z3Solver.getReasonUnknown", "")
   def getSearchFailure : Z3SearchFailure = {
     Z3Wrapper.getSearchFailure(this.ptr) match {
       case 0 => Z3NoFailure
@@ -1073,7 +975,7 @@ sealed class Z3Context(val config: Z3Config) {
       case 6 => Z3IncompleteTheory
       case 7 => Z3Quantifiers
       case _ => Z3Timeout
-    }    
+    }
   }
 
   def mkLabel(symbol: Z3Symbol, polarity: Boolean, ast: Z3AST) : Z3AST = {
@@ -1301,36 +1203,16 @@ sealed class Z3Context(val config: Z3Config) {
     return new Z3Tactic(Z3Wrapper.tacticAndThen(this.ptr, tactic1.ptr, tactic2.ptr), this)
   }
 
+  def mkSolver() : Z3Solver = {
+    new Z3Solver(Z3Wrapper.mkSolver(this.ptr), this)
+  }
+
   def mkSolverFromTactic(tactic: Z3Tactic) : Z3Solver = {
-    return new Z3Solver(Z3Wrapper.mkSolverFromTactic(this.ptr, tactic.ptr), this)
+    new Z3Solver(Z3Wrapper.mkSolverFromTactic(this.ptr, tactic.ptr), this)
   }
 
-  def solverPush(solver: Z3Solver) = {
-    Z3Wrapper.solverPush(this.ptr, solver.ptr)
-  }
-
-  def solverPop(solver: Z3Solver, numScopes: Int) = {
-    Z3Wrapper.solverPop(this.ptr, solver.ptr, numScopes)
-  }
-
-  def solverAssertCnstr(solver: Z3Solver, ast: Z3AST) = {
-    Z3Wrapper.solverAssertCnstr(this.ptr, solver.ptr, ast.ptr)
-  }
-
-  def solverReset(solver: Z3Solver) = {
-    Z3Wrapper.solverReset(this.ptr, solver.ptr)
-  }
-
-  def solverCheck(solver: Z3Solver) : Option[Boolean] = {
-    i2ob(Z3Wrapper.solverCheck(this.ptr, solver.ptr))
-  }
-
-  def tacticDelete(tactic: Z3Tactic) = Z3Wrapper.tacticDelete(this.ptr, tactic.ptr)
-
-  def solverDelete(solver: Z3Solver) = Z3Wrapper.solverDelete(this.ptr, solver.ptr)
-
-  def solverGetModel(solver: Z3Solver) : Z3Model = {
-    return new Z3Model(Z3Wrapper.solverGetModel(this.ptr, solver.ptr), this)
+  def interrupt() = {
+    Z3Wrapper.interrupt(this.ptr)
   }
 
   /** Returns the last error issued by the SMT-LIB parser. */

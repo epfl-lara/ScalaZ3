@@ -1,3 +1,5 @@
+package z3
+
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
@@ -12,9 +14,10 @@ class Sets extends FunSuite with ShouldMatchers {
     val s1 = z3.mkFreshConst("s1", iss)
     val s2 = z3.mkFreshConst("s2", iss)
 
-    z3.assertCnstr(z3.mkDistinct(s1, s2))
+    val solver = z3.mkSolver
+    solver.assertCnstr(z3.mkDistinct(s1, s2))
 
-    val (result, model) = z3.checkAndGetModel
+    val (result, model) = solver.checkAndGetModel
     result should equal(Some(true))
 
     val s1eval = model.eval(s1)

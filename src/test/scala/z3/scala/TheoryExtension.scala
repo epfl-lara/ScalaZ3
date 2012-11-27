@@ -49,36 +49,38 @@ class TheoryExtension extends FunSuite with ShouldMatchers {
     toggleWarningMessages(true)
     val thy = new PartialOrderTheory(z3)
 
+    val solver = z3.mkSolver
+
     val thySort = thy.tSort
     val thyLT = thy.lessThan
     val thyLE = thy.lessEqThan
 
     {
-      z3.push
+      solver.push
       println("Problem 0, should be solved by simplifying only (no model).")
       val a = z3.mkFreshConst("a", thySort)
-      z3.assertCnstr(thyLE(a, a))
-      z3.assertCnstr(z3.mkNot(thyLT(a, a)))
-      val (res1, _) = z3.checkAndGetModel
+      solver.assertCnstr(thyLE(a, a))
+      solver.assertCnstr(z3.mkNot(thyLT(a, a)))
+      val (res1, _) = solver.checkAndGetModel
       res1 should equal(Some(true))
-      z3.pop(1)
+      solver.pop(1)
     }
 
     {
-      z3.push
+      solver.push
       println("Problem 1.")
       
       val a = z3.mkFreshConst("a", thySort)
       val b = z3.mkFreshConst("b", thySort)
       val c = z3.mkFreshConst("c", thySort)
 
-      z3.assertCnstr(thyLE(a, b))
-      z3.assertCnstr(thyLE(b, c))
-      z3.assertCnstr(thyLT(c, c))
+      solver.assertCnstr(thyLE(a, b))
+      solver.assertCnstr(thyLE(b, c))
+      solver.assertCnstr(thyLT(c, c))
 
-      val (res2, _) = z3.checkAndGetModel
+      val (res2, _) = solver.checkAndGetModel
       res2 should equal(Some(false))
-      z3.pop(1)
+      solver.pop(1)
     }
 
   }

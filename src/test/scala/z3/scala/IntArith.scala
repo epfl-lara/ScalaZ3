@@ -27,10 +27,11 @@ class IntArith extends FunSuite with ShouldMatchers {
     val cs3 = z3.mkAnd(z3.mkGE(m, z), z3.mkLT(m, sx))
     val cs4 = z3.mkAnd(z3.mkGE(s, z), z3.mkLT(s, sx))
 
-    z3.assertCnstr(z3.mkAnd(cs1, cs2, cs3, cs4))
+    val solver = z3.mkSolver
+    solver.assertCnstr(z3.mkAnd(cs1, cs2, cs3, cs4))
 
     // attempting to solve the constraints
-    val (sol, model) = z3.checkAndGetModel
+    val (sol, model) = solver.checkAndGetModel
 
     sol should equal(Some(true))
     model.evalAs[Int](h) should equal(Some(0))

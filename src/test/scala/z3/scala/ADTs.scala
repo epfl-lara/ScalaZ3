@@ -87,8 +87,9 @@ class ADTs extends FunSuite with ShouldMatchers {
     //// x > 4
     //ctx.assertCnstr(ctx.mkGT(x, ctx.mkInt(4, intSort)))
 
-    ctx.assertCnstr(t1 === leafCons())
-    ctx.assertCnstr(nodeValueSelector(t1) === ctx.mkInt(4, intSort))
+    val solver = ctx.mkSolver
+    solver.assertCnstr(t1 === leafCons())
+    solver.assertCnstr(nodeValueSelector(t1) === ctx.mkInt(4, intSort))
 
     // t1 != Leaf
     //ctx.assertCnstr(ctx.mkNot(isLeaf(t1)))
@@ -100,7 +101,7 @@ class ADTs extends FunSuite with ShouldMatchers {
 
     //println(ctx.mkImplies(isNode(t2), nodeValueSelector(t2) === ctx.mkInt(12, intSort)))
 
-    val (sol, model) = ctx.checkAndGetModel
+    val (sol, model) = solver.checkAndGetModel
 
     sol should equal(Some(true))
     model.eval(t1) should equal(Some(leafCons()))

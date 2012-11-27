@@ -38,9 +38,10 @@ class Quantifiers extends FunSuite with ShouldMatchers {
     println("fib1 ::: " + fib1)
     println("fibN ::: " + fibN)
 
-    z3.assertCnstr(fib0)
-    z3.assertCnstr(fib1)
-    z3.assertCnstr(fibN)
+    val solver = z3.mkSolver
+    solver.assertCnstr(fib0)
+    solver.assertCnstr(fib1)
+    solver.assertCnstr(fibN)
 
     // z3.push
     // z3.assertCnstr(z3.mkEq(fibonacci(z3.mkInt(4, intSort)), z3.mkInt(4, intSort)))
@@ -59,7 +60,7 @@ class Quantifiers extends FunSuite with ShouldMatchers {
     val x = z3.mkConst(z3.mkStringSymbol("v"), intSort)
     val query = z3.mkEq(x, fibonacci(z3.mkInt(5, intSort)))
     // println("Query ::: " + query)
-    z3.assertCnstr(query)
+    solver.assertCnstr(query)
     
     // val (answer2, model2) = z3.checkAndGetModel
 

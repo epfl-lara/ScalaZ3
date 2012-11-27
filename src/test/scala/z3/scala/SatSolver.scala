@@ -27,6 +27,8 @@ class SatSolver extends FunSuite with ShouldMatchers {
           }
         })
 
+        val solver = z3.mkSolver
+
         f.foreach(clause => {
           if (clause.size > 1) {
             val nc: Array[Z3AST] = new Array[Z3AST](clause.size) 
@@ -35,17 +37,17 @@ class SatSolver extends FunSuite with ShouldMatchers {
               nc(c) = if(lit.polarity) litMap(lit.name) else z3.mkNot(litMap(lit.name))
               c = c + 1
             })
-            z3.assertCnstr(nc.reduceLeft(z3.mkOr(_, _)))
+            solver.assertCnstr(nc.reduceLeft(z3.mkOr(_, _)))
           } else {
             val singleLit = clause.head
             if(singleLit.polarity)
-              z3.assertCnstr(litMap(singleLit.name))
+              solver.assertCnstr(litMap(singleLit.name))
             else
-              z3.assertCnstr(z3.mkNot(litMap(singleLit.name))) 
+              solver.assertCnstr(z3.mkNot(litMap(singleLit.name))) 
           }
         })
 
-        val (result, model) = z3.checkAndGetModel()
+        val (result, model) = solver.checkAndGetModel()
           
         result match {
           case None => println("There was an error with Z3."); (false, Map.empty)

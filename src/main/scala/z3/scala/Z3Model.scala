@@ -32,11 +32,19 @@ object Z3Model {
   }
 }
 
-sealed class Z3Model private[z3](val ptr: Long, private val context: Z3Context) {
+sealed class Z3Model private[z3](val ptr: Long, val context: Z3Context) extends Z3Object {
   override def toString : String = context.modelToString(this)
 
   def delete: Unit = {
     Z3Wrapper.delModel(context.ptr, this.ptr)
+  }
+
+  def incRef() {
+    Z3Wrapper.modelIncRef(context.ptr, this.ptr)
+  }
+
+  def decRef() {
+    Z3Wrapper.modelDecRef(context.ptr, this.ptr)
   }
 
   def eval(ast: Z3AST) : Option[Z3AST] = {
@@ -170,5 +178,13 @@ sealed class Z3Model private[z3](val ptr: Long, private val context: Z3Context) 
       case Some(i) => Some(new Z3Function(i._2))
       case None => None
     }
+  }
+
+  locally {
+    context.modelQueue.incRef(this)
+  }
+
+  override def finalize() {
+    context.modelQueue.decRef(this)
   }
 }

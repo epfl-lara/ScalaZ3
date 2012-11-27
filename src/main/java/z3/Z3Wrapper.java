@@ -125,6 +125,7 @@ public final class Z3Wrapper {
     public static native long mkContextRC(long configPtr);
     public static native void incRef(long contextPtr, long ptr);
     public static native void decRef(long contextPtr, long ptr);
+    public static native void interrupt(long contextPtr);
     public static native void delContext(long contextPtr);
     public static native void softCheckCancel(long contextPtr);
     public static native void toggleWarningMessages(boolean enabled);
@@ -368,6 +369,8 @@ public final class Z3Wrapper {
     public static native int getSearchFailure(long contextPtr);
 
     public static native void delModel(long contextPtr, long modelPtr);
+    public static native void modelIncRef(long contextPtr, long modelPtr);
+    public static native void modelDecRef(long contextPtr, long modelPtr);
     public static native boolean eval(long contextPtr, long modelPtr, long astPtr, Pointer ast);
     public static native int getModelNumConstants(long contextPtr, long modelPtr);
     public static native long getModelConstant(long contextPtr, long modelPtr, int i);
@@ -468,7 +471,16 @@ public final class Z3Wrapper {
     public static native void solverReset(long contextPtr, long solverPtr);
     public static native int solverCheck(long contextPtr, long solverPtr);
     public static native long solverGetModel(long contextPtr, long solverPtr);
-    public static native void solverDelete(long contextPtr, long solverPtr);
+    public static native void solverIncRef(long contextPtr, long solverPtr);
+    public static native void solverDecRef(long contextPtr, long solverPtr);
+    public static native long solverGetUnsatCore(long contextPtr, long solverPtr);
+
+    // AST Vector
+    public static native void astvectorIncRef(long contextPtr, long vectorPtr);
+    public static native void astvectorDecRef(long contextPtr, long vectorPtr);
+    public static native int astvectorSize(long contextPtr, long vectorPtr);
+    public static native long astvectorGet(long contextPtr, long vectorPtr, int i);
+    public static native long astvectorSet(long contextPtr, long vectorPtr, int i, long astPtr);
 
     // Error handling
     // Yet to come...

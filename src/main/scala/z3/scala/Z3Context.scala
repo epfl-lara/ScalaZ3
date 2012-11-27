@@ -19,7 +19,10 @@ object Z3Context {
 sealed class Z3Context(val config: Z3Config) {
   val ptr : Long = Z3Wrapper.mkContextRC(config.ptr)
 
-  val astQueue = new Z3RefCountQueue[Z3ASTLike]()
+  val astQueue       = new Z3RefCountQueue[Z3ASTLike]()
+  val astvectorQueue = new Z3RefCountQueue[Z3ASTVector]()
+  val modelQueue     = new Z3RefCountQueue[Z3Model]()
+  val solverQueue    = new Z3RefCountQueue[Z3Solver]()
 
   def this(params : (String,Any)*) = this(new Z3Config(params : _*))
 
@@ -37,6 +40,10 @@ sealed class Z3Context(val config: Z3Config) {
   def delete() : Unit = {
     if(!deleted) {
       astQueue.clearQueue()
+      modelQueue.clearQueue()
+      solverQueue.clearQueue()
+      astvectorQueue.clearQueue()
+
       Z3Wrapper.delContext(this.ptr)
       deleted = true
     }
@@ -1324,13 +1331,15 @@ sealed class Z3Context(val config: Z3Config) {
     Z3Wrapper.solverReset(this.ptr, solver.ptr)
   }
 
+  def interrupt() = {
+    Z3Wrapper.interrupt(this.ptr)
+  }
+
   def solverCheck(solver: Z3Solver) : Option[Boolean] = {
     i2ob(Z3Wrapper.solverCheck(this.ptr, solver.ptr))
   }
 
   def tacticDelete(tactic: Z3Tactic) = Z3Wrapper.tacticDelete(this.ptr, tactic.ptr)
-
-  def solverDelete(solver: Z3Solver) = Z3Wrapper.solverDelete(this.ptr, solver.ptr)
 
   def solverGetModel(solver: Z3Solver) : Z3Model = {
     return new Z3Model(Z3Wrapper.solverGetModel(this.ptr, solver.ptr), this)

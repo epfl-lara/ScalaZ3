@@ -474,7 +474,7 @@ public final class Z3Wrapper {
     public static native void astvectorDecRef(long contextPtr, long vectorPtr);
     public static native int astvectorSize(long contextPtr, long vectorPtr);
     public static native long astvectorGet(long contextPtr, long vectorPtr, int i);
-    public static native long astvectorSet(long contextPtr, long vectorPtr, int i, long astPtr);
+    public static native void astvectorSet(long contextPtr, long vectorPtr, int i, long astPtr);
 
     // Error handling
     // Yet to come...

@@ -945,10 +945,10 @@ sealed class Z3Context(val config: Z3Config) {
   @deprecated("You should go through Z3Solver via mkSolver first", "")
   def checkAssumptions(assumptions: Z3AST*) : (Option[Boolean],Z3Model,Seq[Z3AST]) = {
     val res   = globalSolver.checkAssumptions(assumptions : _*)
-    val model = globalSolver.getModel()
-    val core  = globalSolver.getUnsatCore()
+    val model = if (res != Some(false)) globalSolver.getModel() else null
+    val core  = if (res != Some(true)) globalSolver.getUnsatCore().toSeq else Seq()
 
-    (res, model, core.toSeq)
+    (res, model, core)
   }
 
   @deprecated("You should go through Z3Solver via mkSolver first", "")

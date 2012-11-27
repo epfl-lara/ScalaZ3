@@ -19,16 +19,24 @@ class Z3Solver private[z3](val ptr : Long, val context : Z3Context) extends Z3Ob
     Z3Wrapper.solverPush(context.ptr, this.ptr)
   }
 
+  var isModelAvailable = false
+
   def assertCnstr(ast: Z3AST) = {
     Z3Wrapper.solverAssertCnstr(context.ptr, this.ptr, ast.ptr)
   }
 
   def check() : Option[Boolean] = {
-    i2ob(Z3Wrapper.solverCheck(context.ptr, this.ptr))
+    val res = i2ob(Z3Wrapper.solverCheck(context.ptr, this.ptr))
+    isModelAvailable = res != Some(false)
+    res
   }
 
   def getModel() : Z3Model = {
-    new Z3Model(Z3Wrapper.solverGetModel(context.ptr, this.ptr), context)
+    if (isModelAvailable) {
+      new Z3Model(Z3Wrapper.solverGetModel(context.ptr, this.ptr), context)
+    } else {
+      throw new Exception("Cannot get model if check failed")
+    }
   }
 
   def getUnsatCore() : Z3ASTVector = {
@@ -57,12 +65,14 @@ class Z3Solver private[z3](val ptr : Long, val context : Z3Context) extends Z3Ob
   }
 
   def checkAssumptions(assumptions: Z3AST*) : Option[Boolean] = {
-    i2ob(Z3Wrapper.solverCheckAssumptions(context.ptr, this.ptr, assumptions.size, toPtrArray(assumptions)))
+    val res = i2ob(Z3Wrapper.solverCheckAssumptions(context.ptr, this.ptr, assumptions.size, toPtrArray(assumptions)))
+    isModelAvailable = res != Some(false)
+    res
   }
 
   // Utility functions
   def checkAndGetModel() = {
-    (check(), getModel())
+    (check(), if (isModelAvailable) getModel() else null)
   }
 
   def checkAndGetAllModels(): Iterator[Z3Model] = {

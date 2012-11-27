@@ -69,7 +69,15 @@ class Z3Solver private[z3](val ptr : Long, val context : Z3Context) extends Z3Ob
   }
 
   def checkAssumptions(assumptions: Z3AST*) : Option[Boolean] = {
-    val res = i2ob(Z3Wrapper.solverCheckAssumptions(context.ptr, this.ptr, assumptions.size, toPtrArray(assumptions)))
+    val res = i2ob(
+      Z3Wrapper.solverCheckAssumptions(
+        context.ptr,
+        this.ptr,
+        assumptions.size,
+        toPtrArray(assumptions)
+      )
+    )
+
     isModelAvailable = res != Some(false)
     res
   }
@@ -80,7 +88,7 @@ class Z3Solver private[z3](val ptr : Long, val context : Z3Context) extends Z3Ob
   }
 
   def checkAssumptionsGetModelCore(assumptions: Z3AST*) = {
-    (check(), if (isModelAvailable) getModel() else null, getUnsatCore())
+    (checkAssumptions(assumptions : _*), if (isModelAvailable) getModel() else null, getUnsatCore())
   }
 
   def assertCnstr(tree : dsl.Tree[dsl.BoolSort]) : Unit = {

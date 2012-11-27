@@ -1851,7 +1851,7 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
       Z3_context ctx = asZ3Context(contextPtr);
       Z3_ast ast = asZ3AST(astPtr);
 
-      return (int)Z3_get_index_value(ctx, ast);
+      return (jint)Z3_get_index_value(ctx, ast);
       }
 
     JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkTactic
@@ -1924,7 +1924,7 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
       (JNIEnv * env, jclass cls, jlong contextPtr, jlong solverPtr)
       {
         Z3_context ctx = asZ3Context(contextPtr);
-        return (int)Z3_solver_check(ctx, asZ3Solver(solverPtr));
+        return (jint)Z3_solver_check(ctx, asZ3Solver(solverPtr));
       }
 
     JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_solverGetModel

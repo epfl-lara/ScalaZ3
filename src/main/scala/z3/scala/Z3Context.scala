@@ -17,7 +17,9 @@ object Z3Context {
 }
 
 sealed class Z3Context(val config: Z3Config) {
-  val ptr : Long = Z3Wrapper.mkContext(config.ptr)
+  val ptr : Long = Z3Wrapper.mkContextRC(config.ptr)
+
+  val astQueue = new Z3RefCountQueue[Z3ASTLike]()
 
   def this(params : (String,Any)*) = this(new Z3Config(params : _*))
 
@@ -34,6 +36,7 @@ sealed class Z3Context(val config: Z3Config) {
 
   def delete() : Unit = {
     if(!deleted) {
+      astQueue.clearQueue()
       Z3Wrapper.delContext(this.ptr)
       deleted = true
     }

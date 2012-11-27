@@ -34,6 +34,21 @@ extern "C" {
         return contextToJLong(Z3_mk_context(conf));
     }
 
+    JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkContextRC (JNIEnv * env, jclass cls, jlong configPtr) {
+        Z3_config conf = asZ3Config(configPtr);
+        return contextToJLong(Z3_mk_context_rc(conf));
+    }
+
+
+    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_incRef (JNIEnv * env, jclass cls, jlong contextPtr, jlong ptr) {
+        Z3_inc_ref(asZ3Context(contextPtr), asZ3AST(ptr));
+    }
+
+    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_decRef (JNIEnv * env, jclass cls, jlong contextPtr, jlong ptr) {
+        Z3_dec_ref(asZ3Context(contextPtr), asZ3AST(ptr));
+    }
+
+
     JNIEXPORT void JNICALL Java_z3_Z3Wrapper_delContext (JNIEnv * env, jclass cls, jlong contextPtr) {
         Z3_context cont = asZ3Context(contextPtr);
         Z3_del_context(cont);

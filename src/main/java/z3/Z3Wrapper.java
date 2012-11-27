@@ -20,6 +20,8 @@ public final class Z3Wrapper {
     private static final String LIB_NAME = "scalaz3";
     private static final String Z3_LIB_NAME = "z3";
 
+    public static Object gc_lock = new Object();
+
     private static final String versionString = LibraryChecksum.value;
 
     // this is just to force class loading, and therefore library loading.
@@ -120,6 +122,9 @@ public final class Z3Wrapper {
     public static native void delConfig(long configPtr);
     public static native void setParamValue(long configPtr, String paramID, String paramValue);
     public static native long mkContext(long configPtr);
+    public static native long mkContextRC(long configPtr);
+    public static native void incRef(long contextPtr, long ptr);
+    public static native void decRef(long contextPtr, long ptr);
     public static native void delContext(long contextPtr);
     public static native void softCheckCancel(long contextPtr);
     public static native void toggleWarningMessages(boolean enabled);
@@ -169,6 +174,7 @@ public final class Z3Wrapper {
     public static native long mkSub(long contextPtr, int numArgs, long[] args);
     public static native long mkUnaryMinus(long contextPtr, long astPtr);
     public static native long mkDiv(long contextPtr, long astPtr1, long astPtr2); 
+    public static native long mkDiv2(long contextPtr, long astPtr1, long astPtr2); 
     public static native long mkMod(long contextPtr, long astPtr1, long astPtr2); 
     public static native long mkRem(long contextPtr, long astPtr1, long astPtr2); 
     public static native long mkLT(long contextPtr, long astPtr1, long astPtr2);

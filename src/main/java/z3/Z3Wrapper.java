@@ -455,7 +455,8 @@ public final class Z3Wrapper {
     public static native long tacticAndThen(long contextPtr, long tactic1Ptr, long tactic2Ptr);
     public static native long mkSolver(long contextPtr);
     public static native long mkSolverFromTactic(long contextPtr, long tacticPtr);
-    public static native void tacticDelete(long contextPtr, long tacticPtr);
+    public static native void tacticIncRef(long contextPtr, long tacticPtr);
+    public static native void tacticDecRef(long contextPtr, long tacticPtr);
 
     public static native void solverPush(long contextPtr, long solverPtr);
     public static native void solverPop(long contextPtr, long solverPtr, int numScopes);

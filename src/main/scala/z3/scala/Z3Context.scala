@@ -23,6 +23,7 @@ sealed class Z3Context(val config: Z3Config) {
   val astvectorQueue = new Z3RefCountQueue[Z3ASTVector]()
   val modelQueue     = new Z3RefCountQueue[Z3Model]()
   val solverQueue    = new Z3RefCountQueue[Z3Solver]()
+  val tacticQueue    = new Z3RefCountQueue[Z3Tactic]()
 
   def this(params : (String,Any)*) = this(new Z3Config(params : _*))
 
@@ -37,6 +38,7 @@ sealed class Z3Context(val config: Z3Config) {
       modelQueue.clearQueue()
       solverQueue.clearQueue()
       astvectorQueue.clearQueue()
+      tacticQueue.clearQueue()
 
       Z3Wrapper.delContext(this.ptr)
       deleted = true
@@ -1212,8 +1214,6 @@ sealed class Z3Context(val config: Z3Config) {
   def interrupt() = {
     Z3Wrapper.interrupt(this.ptr)
   }
-
-  def tacticDelete(tactic: Z3Tactic) = Z3Wrapper.tacticDelete(this.ptr, tactic.ptr)
 
   /** Returns the last error issued by the SMT-LIB parser. */
   def getSMTLIBError : String = Z3Wrapper.getSMTLIBError(this.ptr)

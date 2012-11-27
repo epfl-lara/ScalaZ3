@@ -1861,7 +1861,6 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
         str = (*env)->GetStringUTFChars(env, name, NULL);
         if (str == NULL) return JLONG_MY_NULL;
         Z3_tactic tactic = Z3_mk_tactic(ctx, (const char *)str);
-        Z3_tactic_inc_ref(ctx, tactic);
         return tacticToJLong(tactic);
       }
 
@@ -1874,10 +1873,16 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
         return tacticToJLong(tactic);
       }
 
-    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_tacticDelete
+    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_tacticDecRef
       (JNIEnv * env, jclass cls, jlong contextPtr, jlong tacticPtr)
       {
         Z3_tactic_dec_ref(asZ3Context(contextPtr), asZ3Tactic(tacticPtr));
+      }
+
+    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_tacticIncRef
+      (JNIEnv * env, jclass cls, jlong contextPtr, jlong tacticPtr)
+      {
+        Z3_tactic_inc_ref(asZ3Context(contextPtr), asZ3Tactic(tacticPtr));
       }
 
     JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkSolver
@@ -2003,7 +2008,7 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
     JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_astvectorGet
       (JNIEnv *env, jclass cls, jlong contextPtr, jlong vectorPtr, jint i) {
 
-        return (jlong)Z3_ast_vector_get(asZ3Context(contextPtr), asZ3Astvector(vectorPtr), (unsigned)i);
+        return astToJLong(Z3_ast_vector_get(asZ3Context(contextPtr), asZ3Astvector(vectorPtr), (unsigned)i));
 
     }
 

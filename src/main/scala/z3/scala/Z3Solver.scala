@@ -79,6 +79,14 @@ class Z3Solver private[z3](val ptr : Long, val context : Z3Context) extends Z3Ob
     (check(), if (isModelAvailable) getModel() else null)
   }
 
+  def checkAssumptionsGetModelCore(assumptions: Z3AST*) = {
+    (check(), if (isModelAvailable) getModel() else null, getUnsatCore())
+  }
+
+  def assertCnstr(tree : dsl.Tree[dsl.BoolSort]) : Unit = {
+    assertCnstr(tree.ast(context))
+  }
+
   def checkAndGetAllModels(): Iterator[Z3Model] = {
     new Iterator[Z3Model] {
       var constraints: Z3AST = context.mkTrue

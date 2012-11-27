@@ -1,6 +1,7 @@
 package z3.scala
 
 import z3.Z3Wrapper
+import scala.collection.SeqLike
 
 final class Z3ASTVector private[z3](val ptr : Long, val context : Z3Context) extends Z3Object {
 
@@ -47,4 +48,3 @@ final class Z3ASTVector private[z3](val ptr : Long, val context : Z3Context) ext
     context.astvectorQueue.decRef(this)
   }
 }
-

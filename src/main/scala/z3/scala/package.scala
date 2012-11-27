@@ -51,4 +51,6 @@ package object scala {
       val value = ((a : A) => implicitly[Default[B]].value)
     }
   }
+
+  implicit def astvectorToSeq(v: Z3ASTVector): Seq[Z3AST] = v.toSeq
 }

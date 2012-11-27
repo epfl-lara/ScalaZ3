@@ -1946,6 +1946,11 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
 
     }
 
+    JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_solverGetAssertions
+      (JNIEnv *env, jclass cls, jlong contextPtr, jlong solverPtr) {
+        return astvectorToJLong(Z3_solver_get_assertions(asZ3Context(contextPtr), asZ3Solver(solverPtr)));
+    }
+
     JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_solverGetUnsatCore
       (JNIEnv *env, jclass cls, jlong contextPtr, jlong solverPtr) {
         return astvectorToJLong(Z3_solver_get_unsat_core(asZ3Context(contextPtr), asZ3Solver(solverPtr)));

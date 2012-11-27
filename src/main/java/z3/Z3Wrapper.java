@@ -465,6 +465,7 @@ public final class Z3Wrapper {
     public static native long solverGetModel(long contextPtr, long solverPtr);
     public static native void solverIncRef(long contextPtr, long solverPtr);
     public static native void solverDecRef(long contextPtr, long solverPtr);
+    public static native long solverGetAssertions(long contextPtr, long solverPtr);
     public static native long solverGetUnsatCore(long contextPtr, long solverPtr);
     public static native int solverGetNumScopes(long contextPtr, long solverPtr);
     public static native int solverCheckAssumptions(long contextPtr, long solverPtr, int numAssumptions, long[] assumptions);

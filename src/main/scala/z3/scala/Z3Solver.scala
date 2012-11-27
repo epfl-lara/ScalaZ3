@@ -31,6 +31,10 @@ class Z3Solver private[z3](val ptr : Long, val context : Z3Context) extends Z3Ob
     res
   }
 
+  def getAssertions(): Z3ASTVector = {
+    new Z3ASTVector(Z3Wrapper.solverGetAssertions(context.ptr, this.ptr), context)
+  }
+
   def getModel() : Z3Model = {
     if (isModelAvailable) {
       new Z3Model(Z3Wrapper.solverGetModel(context.ptr, this.ptr), context)

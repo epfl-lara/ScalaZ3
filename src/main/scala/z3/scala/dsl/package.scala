@@ -135,12 +135,10 @@ package object dsl {
     solver.checkAndGetModel match {
       case (Some(true), m) => {
         val result = vh.convert(m, valAST)
-        m.delete
         z3.delete
         Some(result)
       }
       case (_, m) => {
-        m.delete
         z3.delete
         None
       }
@@ -158,7 +156,6 @@ package object dsl {
     solver.assertCnstr(constraintTree.ast(z3))
     solver.checkAndGetAllModels.map(m => {
       val result = vh.convert(m, valAST)
-      m.delete
       result
     })
   }
@@ -183,12 +180,10 @@ package object dsl {
       case (Some(true), m) => {
         val result1 = vh1.convert(m, valAST1)
         val result2 = vh2.convert(m, valAST2)
-        m.delete
         z3.delete
         Some((result1,result2))
       }
       case (_, m) => {
-        m.delete
         z3.delete
         None
       }
@@ -238,12 +233,10 @@ package object dsl {
         val result1 = vh1.convert(m, valAST1)
         val result2 = vh2.convert(m, valAST2)
         val result3 = vh3.convert(m, valAST3)
-        m.delete
         z3.delete
         Some((result1,result2,result3))
       }
       case (_, m) => {
-        m.delete
         z3.delete
         None
       }

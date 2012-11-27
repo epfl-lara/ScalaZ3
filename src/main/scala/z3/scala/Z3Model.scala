@@ -35,8 +35,8 @@ object Z3Model {
 sealed class Z3Model private[z3](val ptr: Long, val context: Z3Context) extends Z3Object {
   override def toString : String = context.modelToString(this)
 
+  @deprecated("Z3Model.delete() not be used, use incref/decref instead", "")
   def delete: Unit = {
-    Z3Wrapper.delModel(context.ptr, this.ptr)
   }
 
   def incRef() {

@@ -7,7 +7,7 @@ class ScalaZ3Project(info: ProjectInfo) extends DefaultProject(info) with FileTa
   // All Java classes that contain native methods.
   val nativeClasses = List("z3.Z3Wrapper")
 
-  val z3DefaultVersion = "4.0"
+  val z3DefaultVersion = "4.3"
 
   override def compileOptions = super.compileOptions ++ Seq(Unchecked)
 
@@ -177,15 +177,16 @@ class ScalaZ3Project(info: ProjectInfo) extends DefaultProject(info) with FileTa
   lazy val loadLib = {
     val libStr = (buildLibraryJar.absolutePath).toString
     val scalaHomeStr = libStr.substring(0, libStr.length - 21)
+
     //log.info("PATH : " + this.jarPath.absolutePath)
     val scalaJars : PathFinder = (buildLibraryJar +++ buildCompilerJar)
     myExec(
       "Preloading library",
-      "java -Dscala.home=" + scalaHomeStr +
-	" -classpath " + scalaJars.absString +
-	" scala.tools.nsc.MainGenericRunner " +
-	" -classpath " + jarPath.absolutePath + ":.:" + scalaJars.absString +
-	" -e z3.Z3Wrapper.init"
+      " -Dscala.home=" + scalaHomeStr +
+      " -classpath " + scalaJars.absString +
+      " scala.tools.nsc.MainGenericRunner " +
+      " -classpath " + jarPath.absolutePath + ":.:" + scalaJars.absString +
+      " -e z3.Z3Wrapper.init"
     )
   } dependsOn(`package`)
 

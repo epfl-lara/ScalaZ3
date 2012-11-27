@@ -1,3 +1,5 @@
+package z3
+
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
@@ -75,14 +77,15 @@ class TwoTheories extends FunSuite with ShouldMatchers {
     val a2 = z3.mkFreshConst("a", s2)
     val b2 = z3.mkFreshConst("b", s2)
 
-    z3.assertCnstr(f12(a1) === a2)
-    z3.assertCnstr(f12(b1) === b2)
-    z3.assertCnstr(f21(a2) === a1)
-    z3.assertCnstr(f21(b2) === b1)
-    z3.assertCnstr(p1(a1,b1))
-    z3.assertCnstr(p2(a2,b2))
+    val solver = z3.mkSolver
+    solver.assertCnstr(f12(a1) === a2)
+    solver.assertCnstr(f12(b1) === b2)
+    solver.assertCnstr(f21(a2) === a1)
+    solver.assertCnstr(f21(b2) === b1)
+    solver.assertCnstr(p1(a1,b1))
+    solver.assertCnstr(p2(a2,b2))
 
-    val (result, model) = z3.checkAndGetModel()
+    val (result, model) = solver.checkAndGetModel()
     result should equal(Some(false))
   }
 }

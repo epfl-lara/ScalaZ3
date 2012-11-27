@@ -75,6 +75,11 @@ extern "C" {
         return (Z3_solver)(INTPTR)solver;
     }
 
+    inline Z3_ast_vector asZ3Astvector(jlong vector) {
+        return (Z3_ast_vector)(INTPTR)vector;
+    }
+
+
     // Casts from Z3 types to jlong pointer-wrappers
     #define JLONG_MY_NULL (jlong)0
     inline jlong configToJLong(Z3_config cfg) {
@@ -139,6 +144,10 @@ extern "C" {
 
     inline jlong solverToJLong(Z3_solver solver) {
         return (jlong)(INTPTR)solver;
+    }
+
+    inline jlong astvectorToJLong(Z3_ast_vector vector) {
+        return (jlong)(INTPTR)vector;
     }
 
 #ifdef __cplusplus

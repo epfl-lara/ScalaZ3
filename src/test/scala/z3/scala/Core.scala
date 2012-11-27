@@ -1,3 +1,5 @@
+package z3
+
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
@@ -21,7 +23,7 @@ class Core extends FunSuite with ShouldMatchers {
     solver.assertCnstr(p2 --> !(y === zero))
     solver.assertCnstr(p3 --> !(x === zero))
 
-    val (result, model, core) = solver.checkAssumptionsGetModelCore(p1, p2, p3)
+    val (result, model, core) = solver.checkAssumptionsGetModelOrCore(p1, p2, p3)
 
     result should equal (Some(false))
     core.toSet should equal (Set(p1, p3))

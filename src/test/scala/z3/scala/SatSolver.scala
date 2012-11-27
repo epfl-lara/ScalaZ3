@@ -1,3 +1,5 @@
+package z3
+
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
@@ -17,8 +19,8 @@ class SatSolver extends FunSuite with ShouldMatchers {
         val b = z3.mkBoolSort()
 
         val literals = f.reduceLeft((a,b) => a ++ b)
-        val litMap: scala.collection.mutable.Map[String,Z3AST] =
-          scala.collection.mutable.Map.empty[String,Z3AST]
+        val litMap: _root_.scala.collection.mutable.Map[String,Z3AST] =
+          _root_.scala.collection.mutable.Map.empty[String,Z3AST]
         
         literals.foreach(lit => {
           if(!litMap.keySet.contains(lit.name)) {
@@ -60,9 +62,9 @@ class SatSolver extends FunSuite with ShouldMatchers {
     var form = Set.empty[Clause]
     var clause = Set.empty[Literal]
     var tok:String = ""
-    scala.io.Source.fromString(Benchmark.str).getLines().foreach {
+    io.Source.fromString(Benchmark.str).getLines().foreach {
       line => if( !line.startsWith("c") && !line.startsWith("p")) {
-        val scanner = new java.util.Scanner(line)
+        val scanner = new _root_.java.util.Scanner(line)
           while(scanner.hasNext) {
           tok = scanner.next
           if (tok != "0") 

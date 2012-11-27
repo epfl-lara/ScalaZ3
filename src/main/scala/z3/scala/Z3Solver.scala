@@ -82,20 +82,20 @@ class Z3Solver private[z3](val ptr : Long, val context : Z3Context) extends Z3Ob
     res
   }
 
-  // Utility functions
-  def checkAndGetModel() = {
+  // Utility functions that should no longer be exposed
+  private[z3] def checkAndGetModel() = {
     (check(), if (isModelAvailable) getModel() else null)
   }
 
-  def checkAssumptionsGetModelCore(assumptions: Z3AST*) = {
+  private[z3] def checkAssumptionsGetModelOrCore(assumptions: Z3AST*) = {
     (checkAssumptions(assumptions : _*), if (isModelAvailable) getModel() else null, getUnsatCore())
   }
 
-  def assertCnstr(tree : dsl.Tree[dsl.BoolSort]) : Unit = {
+  private[z3] def assertCnstr(tree : dsl.Tree[dsl.BoolSort]) : Unit = {
     assertCnstr(tree.ast(context))
   }
 
-  def checkAndGetAllModels(): Iterator[Z3Model] = {
+  private[z3] def checkAndGetAllModels(): Iterator[Z3Model] = {
     new Iterator[Z3Model] {
       var constraints: Z3AST = context.mkTrue
       var nextModel: Option[Option[Z3Model]] = None
@@ -153,7 +153,7 @@ class Z3Solver private[z3](val ptr : Long, val context : Z3Context) extends Z3Ob
     }
   }
 
-  def checkAndGetAllEventualModels(): Iterator[(Option[Boolean], Z3Model)] = {
+  private[z3] def checkAndGetAllEventualModels(): Iterator[(Option[Boolean], Z3Model)] = {
     new Iterator[(Option[Boolean], Z3Model)] {
       var constraints: Z3AST = context.mkTrue
       var nextModel: Option[Option[(Option[Boolean],Z3Model)]] = None

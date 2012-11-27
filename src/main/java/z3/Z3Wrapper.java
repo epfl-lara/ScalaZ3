@@ -346,15 +346,6 @@ public final class Z3Wrapper {
     // ...
     public static native int getBoolValue(long contextPtr, long astPtr);
 
-    public static native void push(long contextPtr);
-    public static native void pop(long contextPtr, int numScopes);
-    public static native int getNumScopes(long contextPtr);
-
-    public static native void assertCnstr(long contextPtr, long astPtr);
-
-    public static native int check(long contextPtr);
-    public static native int checkAndGetModel(long contextPtr, Pointer model);
-    public static native int checkAssumptions(long contextPtr, int numAssumptions, long[] assumptions, Pointer model, int coreSizeIn, IntPtr coreSizeOut, long[] core);
 
     // Returns one of the following values:
     // 0 - Z3_NO_FAILURE       The last search was successful
@@ -462,6 +453,7 @@ public final class Z3Wrapper {
     // tactics and solvers
     public static native long mkTactic(long contextPtr, String name);
     public static native long tacticAndThen(long contextPtr, long tactic1Ptr, long tactic2Ptr);
+    public static native long mkSolver(long contextPtr);
     public static native long mkSolverFromTactic(long contextPtr, long tacticPtr);
     public static native void tacticDelete(long contextPtr, long tacticPtr);
 
@@ -474,6 +466,8 @@ public final class Z3Wrapper {
     public static native void solverIncRef(long contextPtr, long solverPtr);
     public static native void solverDecRef(long contextPtr, long solverPtr);
     public static native long solverGetUnsatCore(long contextPtr, long solverPtr);
+    public static native int solverGetNumScopes(long contextPtr, long solverPtr);
+    public static native int solverCheckAssumptions(long contextPtr, long solverPtr, int numAssumptions, long[] assumptions);
 
     // AST Vector
     public static native void astvectorIncRef(long contextPtr, long vectorPtr);
@@ -489,4 +483,13 @@ public final class Z3Wrapper {
     // Miscellaneous
     public static native void getVersion(IntPtr major, IntPtr minor, IntPtr buildNumber, IntPtr revisionNumber);
     public static native void resetMemory();
+
+    // DEPRECATED API
+    public static native void push(long contextPtr);
+    public static native void pop(long contextPtr, int numScopes);
+    public static native int getNumScopes(long contextPtr);
+    public static native void assertCnstr(long contextPtr, long astPtr);
+    public static native int check(long contextPtr);
+    public static native int checkAndGetModel(long contextPtr, Pointer model);
+    public static native int checkAssumptions(long contextPtr, int numAssumptions, long[] assumptions, Pointer model, int coreSizeIn, IntPtr coreSizeOut, long[] core);
 }

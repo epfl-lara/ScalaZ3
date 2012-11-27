@@ -1880,6 +1880,12 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
         Z3_tactic_dec_ref(asZ3Context(contextPtr), asZ3Tactic(tacticPtr));
       }
 
+    JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkSolver
+      (JNIEnv * env, jclass cls, jlong contextPtr)
+      {
+        return solverToJLong(Z3_mk_solver(asZ3Context(contextPtr)));
+      }
+
     JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkSolverFromTactic
       (JNIEnv * env, jclass cls, jlong contextPtr, jlong tacticPtr)
       {
@@ -1929,18 +1935,47 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
         Z3_solver_reset(asZ3Context(contextPtr), asZ3Solver(solverPtr));
       }
 
-    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_solverIncRef (JNIEnv *env, jclass cls, jlong contextPtr, jlong solverPtr) {
+    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_solverIncRef
+      (JNIEnv *env, jclass cls, jlong contextPtr, jlong solverPtr) {
         Z3_solver_inc_ref(asZ3Context(contextPtr), asZ3Solver(solverPtr));
 
     }
 
-    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_solverDecRef (JNIEnv *env, jclass cls, jlong contextPtr, jlong solverPtr) {
+    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_solverDecRef
+      (JNIEnv *env, jclass cls, jlong contextPtr, jlong solverPtr) {
         Z3_solver_dec_ref(asZ3Context(contextPtr), asZ3Solver(solverPtr));
 
     }
 
-    JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_solverGetUnsatCore (JNIEnv *env, jclass cls, jlong contextPtr, jlong solverPtr) {
+    JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_solverGetUnsatCore
+      (JNIEnv *env, jclass cls, jlong contextPtr, jlong solverPtr) {
         return astvectorToLong(Z3_solver_get_unsat_core(asZ3Context(contextPtr), asZ3Solver(solverPtr)));
+    }
+
+    JNIEXPORT jint JNICALL Java_z3_Z3Wrapper_solverGetNumScopes
+      (JNIEnv *env, jclass cls, jlong contextPtr, jlong solverPtr) {
+        return (jint)Z3_solver_get_num_scopes(asZ3Context(contextPtr), asZ3Solver(solverPtr));
+    }
+
+    JNIEXPORT jint JNICALL Java_z3_Z3Wrapper_solverCheckAssumptions
+      (JNIEnv *env, jclass cls, jlong contextPtr, jlong solverPtr, jint numAssumptions, jlongArray assumptions) {
+
+        jlong * j_assumptions = (*env)->GetLongArrayElements(env, assumptions, NULL);
+
+        Z3_lbool result;
+
+        Z3_ast * c_assumptions = malloc((unsigned)numAssumptions * sizeof(Z3_ast));
+        unsigned i = 0;
+        for (i = 0; i < (unsigned)numAssumptions; ++i) {
+            c_assumptions[i] = asZ3AST(j_assumptions[i]);
+        }
+
+        (*env)->ReleaseLongArrayElements(env, assumptions, j_assumptions, 0);
+
+        result = Z3_solver_check_assumptions(asZ3Context(contextPtr), asZ3Solver(solverPtr), (unsigned)numAssumptions, c_assumptions);
+
+        free(c_assumptions);
+        return (jint)result;
     }
 
 #ifdef __cplusplus

@@ -18,6 +18,13 @@ package object scala {
     ptrs.map(_.ptr).toArray
   }
 
+  protected[z3] def i2ob(value: Int) : Option[Boolean] = value match {
+    case -1 => Some(false)
+    case 0 => None
+    case _ => Some(true)
+  }
+
+
   def error(any : Any) : Nothing = {
     //Predef.error(any.toString)
     sys.error(any.toString) // 2.9

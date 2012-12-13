@@ -22,7 +22,7 @@ sealed class Z3Context(val config: Z3Config) {
   val astQueue       = new Z3RefCountQueue[Z3ASTLike]()
   val astvectorQueue = new Z3RefCountQueue[Z3ASTVector]()
   val modelQueue     = new Z3RefCountQueue[Z3Model]()
-  val solverQueue    = new Z3RefCountQueue[Z3Solver](512)
+  val solverQueue    = new Z3RefCountQueue[Z3Solver](5)
   val tacticQueue    = new Z3RefCountQueue[Z3Tactic]()
 
   def this(params : (String,Any)*) = this(new Z3Config(params : _*))

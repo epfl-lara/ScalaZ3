@@ -59,11 +59,6 @@ extern "C" {
         return;
     }
 
-    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_softCheckCancel (JNIEnv * env, jclass cls, jlong contextPtr) {
-        Z3_soft_check_cancel(asZ3Context(contextPtr));
-        return;
-    }
-
     JNIEXPORT void JNICALL Java_z3_Z3Wrapper_toggleWarningMessages (JNIEnv * env, jclass cls, jboolean enabled) {
         Z3_toggle_warning_messages((Z3_bool)enabled);
     }

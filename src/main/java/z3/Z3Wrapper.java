@@ -127,7 +127,6 @@ public final class Z3Wrapper {
     public static native void decRef(long contextPtr, long ptr);
     public static native void interrupt(long contextPtr);
     public static native void delContext(long contextPtr);
-    public static native void softCheckCancel(long contextPtr);
     public static native void toggleWarningMessages(boolean enabled);
     public static native void updateParamValue(long contextPtr, String paramID, String paramValue);
     public static native long mkIntSymbol(long contextPtr, int i);

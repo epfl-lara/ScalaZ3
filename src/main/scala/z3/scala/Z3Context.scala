@@ -45,8 +45,9 @@ sealed class Z3Context(val config: Z3Config) {
     }
   }
 
+  @deprecated("Use interrupt instead", "")
   def softCheckCancel() : Unit = {
-    Z3Wrapper.softCheckCancel(this.ptr)
+    Z3Wrapper.interrupt(this.ptr)
   }
 
   override def toString : String = {

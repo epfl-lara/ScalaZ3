@@ -10,7 +10,7 @@ compiled with Scala 2.9.1.
 Downloading Z3
 =================
 
-Z3 can be downloaded from the [Z3 download site](http://research.microsoft.com/en-us/um/redmond/projects/z3/download.html)
+Z3 can be downloaded from the [Z3 download site](http://z3.codeplex.com/releases)
 
 
 Compiling ScalaZ3

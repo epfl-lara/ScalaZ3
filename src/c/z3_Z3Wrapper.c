@@ -29,14 +29,40 @@ extern "C" {
         // (*env)->ReleaseStringUTFChars(env, paramValue, str2);
     }
 
+    JNIEnv    * errorEnv    = NULL;
+    jclass      errorClass  = NULL;
+    jmethodID   errorMethod = NULL;
+
+    void Java_z3_ErrorHandler(Z3_context ctx, Z3_error_code e) {
+        (*errorEnv)->CallStaticVoidMethod(errorEnv, errorClass, errorMethod, ctx, e);
+    }
+
     JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkContext (JNIEnv * env, jclass cls, jlong configPtr) {
         Z3_config conf = asZ3Config(configPtr);
-        return contextToJLong(Z3_mk_context(conf));
+        Z3_context ctx = Z3_mk_context(conf);
+
+        errorEnv  = env;
+        errorClass = cls;
+        errorMethod = (*errorEnv)->GetStaticMethodID(errorEnv, errorClass, "onZ3Error", "(JJ)V");
+
+        Z3_set_error_handler(ctx, Java_z3_ErrorHandler);
+
+        return contextToJLong(ctx);
     }
+
 
     JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkContextRC (JNIEnv * env, jclass cls, jlong configPtr) {
         Z3_config conf = asZ3Config(configPtr);
-        return contextToJLong(Z3_mk_context_rc(conf));
+        Z3_context ctx = Z3_mk_context_rc(conf);
+
+
+        errorEnv    = env;
+        errorClass  = cls;
+        errorMethod = (*errorEnv)->GetStaticMethodID(errorEnv, errorClass, "onZ3Error", "(JJ)V");
+
+        Z3_set_error_handler(ctx, Java_z3_ErrorHandler);
+
+        return contextToJLong(ctx);
     }
 
 

@@ -1147,7 +1147,7 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
 
     JNIEXPORT jboolean JNICALL Java_z3_Z3Wrapper_eval (JNIEnv * env, jclass cls, jlong contextPtr, jlong modelPtr, jlong astPtr, jobject ast) {
         Z3_ast newAST;
-        Z3_bool result = Z3_eval(asZ3Context(contextPtr), asZ3Model(modelPtr), asZ3AST(astPtr), &newAST);
+        Z3_bool result = Z3_model_eval(asZ3Context(contextPtr), asZ3Model(modelPtr), asZ3AST(astPtr), 0, &newAST);
         jclass ac = (*env)->GetObjectClass(env, ast);
         jfieldID fid = (*env)->GetFieldID(env, ac, "ptr", "J");
         (*env)->SetLongField(env, ast, fid, astToJLong(newAST));

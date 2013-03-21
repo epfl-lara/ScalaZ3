@@ -488,6 +488,8 @@ public final class Z3Wrapper {
     public static native long solverGetUnsatCore(long contextPtr, long solverPtr);
     public static native int solverGetNumScopes(long contextPtr, long solverPtr);
     public static native int solverCheckAssumptions(long contextPtr, long solverPtr, int numAssumptions, long[] assumptions);
+    public static native String solverGetReasonUnknown(long contextPtr, long solverPtr);
+    public static native String solverToString(long contextPtr, long solverPtr);
 
     // AST Vector
     public static native void astvectorIncRef(long contextPtr, long vectorPtr);

@@ -2017,6 +2017,18 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
         return (jint)result;
     }
 
+    JNIEXPORT jstring JNICALL Java_z3_Z3Wrapper_solverGetReasonUnknown
+      (JNIEnv * env, jclass cls, jlong contextPtr, jlong solverPtr) {
+        const char * str = (const char *)Z3_solver_get_reason_unknown(asZ3Context(contextPtr), asZ3Solver(solverPtr));
+        return (*env)->NewStringUTF(env, str);
+    }
+
+    JNIEXPORT jstring JNICALL Java_z3_Z3Wrapper_solverToString
+      (JNIEnv * env, jclass cls, jlong contextPtr, jlong solverPtr) {
+        const char * str = (const char *)Z3_solver_to_string(asZ3Context(contextPtr), asZ3Solver(solverPtr));
+        return (*env)->NewStringUTF(env, str);
+    }
+
     JNIEXPORT void JNICALL Java_z3_Z3Wrapper_astvectorIncRef
       (JNIEnv *env, jclass cls, jlong contextPtr, jlong vectorPtr) {
 

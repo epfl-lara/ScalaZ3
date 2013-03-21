@@ -361,7 +361,9 @@ public final class Z3Wrapper {
     public static native void delModel(long contextPtr, long modelPtr);
     public static native void modelIncRef(long contextPtr, long modelPtr);
     public static native void modelDecRef(long contextPtr, long modelPtr);
+    // decprecated
     public static native boolean eval(long contextPtr, long modelPtr, long astPtr, Pointer ast);
+    public static native boolean modelEval(long contextPtr, long modelPtr, long astPtr, Pointer ast, boolean completion);
     public static native int getModelNumConstants(long contextPtr, long modelPtr);
     public static native long getModelConstant(long contextPtr, long modelPtr, int i);
     public static native boolean isArrayValue(long contextPtr, long modelPtr, long astPtr, IntPtr numEntries);

@@ -1,6 +1,7 @@
 package z3;
 
 import z3.Pointer;
+import z3.scala.Z3Context;
 
 import java.io.File;
 import java.io.InputStream;
@@ -9,6 +10,7 @@ import java.io.FileOutputStream;
 import java.util.Calendar;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
+import java.lang.ref.WeakReference;
 
 /** This class contains all the native functions. It should be accessed
  * mostly through the other classes, though. */
@@ -116,6 +118,21 @@ public final class Z3Wrapper {
             result[i] = ptrs[i].ptr;
         }
         return result;
+    }
+
+    private static HashMap<Long, WeakReference<Z3Context>> ptrToCtx = new HashMap<Long, WeakReference<Z3Context>>();
+
+    public static void onZ3Error(long contextPtr, long code) {
+        Z3Context ctx = ptrToCtx.get(Long.valueOf(contextPtr)).get();
+        ctx.onError(code);
+    }
+
+    public static void registerContext(long contextPtr, Z3Context ctx) {
+        ptrToCtx.put(Long.valueOf(contextPtr), new WeakReference<Z3Context>(ctx));
+    }
+
+    public static void unregisterContext(long contextPtr) {
+        ptrToCtx.remove(Long.valueOf(contextPtr));
     }
 
     public static native long mkConfig();

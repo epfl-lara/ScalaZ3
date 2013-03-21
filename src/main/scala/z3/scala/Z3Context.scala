@@ -19,6 +19,8 @@ object Z3Context {
 sealed class Z3Context(val config: Z3Config) {
   val ptr : Long = Z3Wrapper.mkContextRC(config.ptr)
 
+  Z3Wrapper.registerContext(ptr, this)
+
   val astQueue       = new Z3RefCountQueue[Z3ASTLike]()
   val astvectorQueue = new Z3RefCountQueue[Z3ASTVector]()
   val modelQueue     = new Z3RefCountQueue[Z3Model]()
@@ -40,9 +42,15 @@ sealed class Z3Context(val config: Z3Config) {
       astvectorQueue.clearQueue()
       tacticQueue.clearQueue()
 
+      Z3Wrapper.unregisterContext(this.ptr)
+
       Z3Wrapper.delContext(this.ptr)
       deleted = true
     }
+  }
+
+  def onError(code: Long): Nothing = {
+    throw new Exception("Unexpected Z3 error (code="+code+")")
   }
 
   @deprecated("Use interrupt instead", "")

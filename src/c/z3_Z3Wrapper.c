@@ -1180,7 +1180,7 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
         return (result == 0 ? JNI_FALSE : JNI_TRUE);
     }
 
-    JNIEXPORT jboolean JNICALL Java_z3_Z3Wrapper_model_eval (JNIEnv * env, jclass cls, jlong contextPtr, jlong modelPtr, jlong astPtr, jobject ast, jboolean completion) {
+    JNIEXPORT jboolean JNICALL Java_z3_Z3Wrapper_modelEval (JNIEnv * env, jclass cls, jlong contextPtr, jlong modelPtr, jlong astPtr, jobject ast, jboolean completion) {
         Z3_ast newAST;
         Z3_bool result = Z3_model_eval(asZ3Context(contextPtr), asZ3Model(modelPtr), asZ3AST(astPtr), completion, &newAST);
         jclass ac = (*env)->GetObjectClass(env, ast);

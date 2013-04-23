@@ -3,6 +3,10 @@ package z3
 import _root_.scala.language.implicitConversions
 
 package object scala {
+
+  @deprecated("Use Z3NumeralIntAST instead.", "4.0a")
+  val Z3NumeralAST = Z3NumeralIntAST
+
   def toggleWarningMessages(enabled: Boolean) : Unit = {
     Z3Wrapper.toggleWarningMessages(enabled)
   }

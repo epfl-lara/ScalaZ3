@@ -8,7 +8,7 @@ object Z3Model {
     if (res.isEmpty)
       None
     else
-      model.context.getNumeralInt(res.get)
+      model.context.getNumeralInt(res.get).value
   }
 
   implicit def ast2bool(model: Z3Model, ast: Z3AST): Option[Boolean] = {

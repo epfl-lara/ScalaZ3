@@ -666,6 +666,15 @@ extern "C" {
         return astToJLong(Z3_mk_real(asZ3Context(contextPtr), (int)n, (int)d));
     }
 
+    JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkNumeral (JNIEnv * env, jclass cls, jlong contextPtr, jstring numeral, jlong sortPtr) {
+        const jbyte * str;
+        str = (*env)->GetStringUTFChars(env, numeral, NULL);
+        if (str == NULL) return;
+        jlong ast = astToJLong(Z3_mk_numeral(asZ3Context(contextPtr), (const char*)str, asZ3Sort(sortPtr)));
+        (*env)->ReleaseStringUTFChars(env, numeral, str);
+        return ast;
+    }
+
     JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkPattern (JNIEnv * env, jclass cls, jlong contextPtr, jint numPatterns, jlongArray args) {
         Z3_ast * nargs = (Z3_ast*)malloc(numPatterns * sizeof(Z3_ast));
         jlong * jargs = (*env)->GetLongArrayElements(env, args, NULL);
@@ -1066,6 +1075,24 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
         jclass ipc = (*env)->GetObjectClass(env, intPtr);
         jfieldID fid = (*env)->GetFieldID(env, ipc, "value", "I");
         (*env)->SetIntField(env, intPtr, fid, (jint)val);
+        return (result == 0 ? JNI_FALSE : JNI_TRUE);
+    }
+
+    JNIEXPORT jstring JNICALL Java_z3_Z3Wrapper_getNumeralString(JNIEnv * env, jclass cls, jlong contextPtr, jlong astPtr) {
+        const char * str = (const char *)Z3_get_numeral_string(asZ3Context(contextPtr), asZ3AST(astPtr));
+        return (*env)->NewStringUTF(env, str);
+    }
+
+    JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_getNumerator(JNIEnv * env, jclass cls, jlong contextPtr, jlong astPtr) {
+        return astToJLong(Z3_get_numerator(asZ3Context(contextPtr), asZ3AST(astPtr)));
+    }
+
+    JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_getDenominator(JNIEnv * env, jclass cls, jlong contextPtr, jlong astPtr) {
+        return astToJLong(Z3_get_denominator(asZ3Context(contextPtr), asZ3AST(astPtr)));
+    }
+
+    JNIEXPORT jboolean JNICALL Java_z3_Z3Wrapper_isAlgebraicNumber(JNIEnv * env, jclass cls, jlong contextPtr, jlong astPtr) {
+        Z3_bool result = Z3_is_algebraic_number(asZ3Context(contextPtr), asZ3AST(astPtr));
         return (result == 0 ? JNI_FALSE : JNI_TRUE);
     }
 

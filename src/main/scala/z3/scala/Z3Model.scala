@@ -166,6 +166,7 @@ sealed class Z3Model private[z3](val ptr: Long, val context: Z3Context) extends 
         assert(entries.forall(_._1.size == 1))
         val asMap = entries.map {
           case (arg :: Nil, value) => (arg, value)
+          case _ => sys.error("woot?")
         }.toMap
         Some(asMap, elseValue)
       case None => None

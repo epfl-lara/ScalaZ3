@@ -1,7 +1,8 @@
-ScalaZ3 for Scala 2.9
+ScalaZ3 for Scala 2.10
 ======================
 
-This is ScalaZ3 for Scala 2.9 and Z3 4.3.
+This is ScalaZ3 for Scala 2.10 and Z3 4.3. Switch to the branch '2.9.x' for
+Scala 2.9 support.
 
 
 Downloading Z3

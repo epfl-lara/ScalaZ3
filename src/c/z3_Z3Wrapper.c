@@ -1957,6 +1957,12 @@ JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkBVMulNoUnderflow (JNIEnv * env, jcla
         return (jint)Z3_solver_check(ctx, asZ3Solver(solverPtr));
       }
 
+    JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_solverGetProof
+      (JNIEnv * env, jclass cls, jlong contextPtr, jlong solverPtr)
+      {
+        return astToJLong(Z3_solver_get_proof(asZ3Context(contextPtr), asZ3Solver(solverPtr)));
+      }
+
     JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_solverGetModel
       (JNIEnv * env, jclass cls, jlong contextPtr, jlong solverPtr)
       {

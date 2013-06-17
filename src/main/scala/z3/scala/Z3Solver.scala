@@ -43,6 +43,14 @@ class Z3Solver private[z3](val ptr : Long, val context : Z3Context) extends Z3Ob
     }
   }
 
+  def getProof() : Z3AST = {
+    if (!isModelAvailable) {
+      new Z3AST(Z3Wrapper.solverGetProof(context.ptr, this.ptr), context)
+    } else {
+      throw new Exception("Cannot get proof if formula is SAT")
+    }
+  }
+
   def getUnsatCore() : Z3ASTVector = {
     new Z3ASTVector(Z3Wrapper.solverGetUnsatCore(context.ptr, this.ptr), context)
   }

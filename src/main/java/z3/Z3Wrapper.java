@@ -483,6 +483,7 @@ public final class Z3Wrapper {
     public static native void solverReset(long contextPtr, long solverPtr);
     public static native int solverCheck(long contextPtr, long solverPtr);
     public static native long solverGetModel(long contextPtr, long solverPtr);
+    public static native long solverGetProof(long contextPtr, long solverPtr);
     public static native void solverIncRef(long contextPtr, long solverPtr);
     public static native void solverDecRef(long contextPtr, long solverPtr);
     public static native long solverGetAssertions(long contextPtr, long solverPtr);

@@ -17,6 +17,14 @@ extern "C" {
         return;
     }
 
+    JNIEXPORT void JNICALL Java_z3_Z3Wrapper_openLog(JNIEnv * env, jclass cls, jstring name) {
+        const jbyte * name_str;
+        name_str = (*env)->GetStringUTFChars(env, name, NULL);
+        if (name_str == NULL) return;
+
+        Z3_open_log((const char*)name_str);
+    }
+
     JNIEXPORT void JNICALL Java_z3_Z3Wrapper_setParamValue(JNIEnv * env, jclass cls, jlong configPtr, jstring paramID, jstring paramValue) {
         const jbyte * str1;
         const jbyte * str2;

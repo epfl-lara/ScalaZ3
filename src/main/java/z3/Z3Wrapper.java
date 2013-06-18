@@ -137,6 +137,7 @@ public final class Z3Wrapper {
     }
 
     public static native long mkConfig();
+    public static native void openLog(String name);
     public static native void delConfig(long configPtr);
     public static native void setParamValue(long configPtr, String paramID, String paramValue);
     public static native long mkContext(long configPtr);

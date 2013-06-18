@@ -27,8 +27,6 @@ public final class Z3Wrapper {
     private static final String versionString = LibraryChecksum.value;
 
     // this is just to force class loading, and therefore library loading.
-    public static void init() { }
-
     static {
         try {
             // System.out.println("Looking for Library " + LIB_NAME + " in System path" );
@@ -37,15 +35,18 @@ public final class Z3Wrapper {
             // Convert root to: lib....so in Linux, lib....jnilib in MacOS, ....dll in Windows, etc.
             String name = System.mapLibraryName(LIB_NAME);
 
-            try {
-                String curDir = System.getProperty("user.dir");
-                //System.out.println("Looking for Library " + name + " in directory:" + curDir );
-                System.load(curDir + LIB_SEPARATOR + name );
-            } catch (UnsatisfiedLinkError e2) {
-                //System.out.println("Looking for Library " + name + " in jarFile" );
+            if (withinJar()) {
                 loadFromJar();
+            } else {
+                String curDir = System.getProperty("user.dir");
+                System.load(curDir + LIB_BIN + name );
             }
         }
+    }
+
+    public static boolean withinJar() {
+       java.net.URL classJar  = Z3Wrapper.class.getResource("/lib-bin/");
+       return classJar != null;
     }
 
     public static String wrapperVersionString() {

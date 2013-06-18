@@ -36,7 +36,7 @@ import z3.scala.dsl._
 
     val nbModels = solver.checkAndGetAllModels.size
 
-    println("Total number of models: " + nbModels)
+    //println("Total number of models: " + nbModels)
     nbModels should equal (92)
 
     ctx.delete

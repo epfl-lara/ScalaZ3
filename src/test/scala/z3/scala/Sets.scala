@@ -31,7 +31,7 @@ class Sets extends FunSuite with ShouldMatchers {
         s1val should be ('defined)
         s2val should be ('defined)
         s1val should not equal (s2val)
-        println("Set values :" + s1val + ", " + s2val)
+        //println("Set values :" + s1val + ", " + s2val)
       case _ =>
     }
   }

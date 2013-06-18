@@ -8,7 +8,7 @@ class EmptyTheory(z3: Z3Context) extends Z3Theory(z3, "dummy")
 
 class ADTs extends FunSuite with ShouldMatchers {
   test("ADTs") {
-    val config = new Z3Config("MODEL" -> "true", "RELEVANCY" -> "0")
+    val config = new Z3Config("MODEL" -> "true")
     val ctx = new Z3Context(config)
     val thy = new EmptyTheory(ctx)
     // ctx.traceToStdout()

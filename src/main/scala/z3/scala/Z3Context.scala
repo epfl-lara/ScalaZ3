@@ -448,6 +448,10 @@ sealed class Z3Context(val config: Z3Config) {
     new Z3AST(Z3Wrapper.mkRem(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
+  def mkPower(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Z3Wrapper.mkPower(this.ptr, ast1.ptr, ast2.ptr), this)
+  }
+
   def mkLT(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
     new Z3AST(Z3Wrapper.mkLT(this.ptr, ast1.ptr, ast2.ptr), this)
   }

@@ -7,7 +7,7 @@ class ScalaZ3Project(info: ProjectInfo) extends DefaultProject(info) with FileTa
   // All Java classes that contain native methods.
   val nativeClasses = List("z3.Z3Wrapper")
 
-  val z3DefaultVersion = "4.3"
+  val z3DefaultVersion = "4.3.2"
 
   override def compileOptions = super.compileOptions ++ Seq(Unchecked)
 
@@ -71,7 +71,7 @@ class ScalaZ3Project(info: ProjectInfo) extends DefaultProject(info) with FileTa
 
   lazy val javah = myExec(
     "Generating JNI C headers",
-    "javah -classpath " + mainCompilePath.absolutePath + " -d " + cPath.absolutePath + " " + nativeClasses.mkString(" ")
+    "javah -classpath " + mainCompilePath.absolutePath + ":/home/edarulov/Programs/scala/lib/scala-library.jar -d " + cPath.absolutePath + " " + nativeClasses.mkString(" ")
   ) dependsOn(compile)
 
   lazy val gcc : ManagedTask = if(isUnix) {

@@ -500,6 +500,10 @@ extern "C" {
         return astToJLong(Z3_mk_rem(asZ3Context(contextPtr), asZ3AST(astPtr1), asZ3AST(astPtr2)));
     }
 
+    JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkPower (JNIEnv * env, jclass cls, jlong contextPtr, jlong astPtr1, jlong astPtr2) {
+        return astToJLong(Z3_mk_power(asZ3Context(contextPtr), asZ3AST(astPtr1), asZ3AST(astPtr2)));
+    }
+
     JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkLT (JNIEnv * env, jclass cls, jlong contextPtr, jlong astPtr1, jlong astPtr2) {
         return astToJLong(Z3_mk_lt(asZ3Context(contextPtr), asZ3AST(astPtr1), asZ3AST(astPtr2)));
     }

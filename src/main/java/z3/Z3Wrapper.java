@@ -195,7 +195,8 @@ public final class Z3Wrapper {
     public static native long mkDiv(long contextPtr, long astPtr1, long astPtr2); 
     public static native long mkDiv2(long contextPtr, long astPtr1, long astPtr2); 
     public static native long mkMod(long contextPtr, long astPtr1, long astPtr2); 
-    public static native long mkRem(long contextPtr, long astPtr1, long astPtr2); 
+    public static native long mkRem(long contextPtr, long astPtr1, long astPtr2);
+    public static native long mkPower(long contextPtr, long astPtr1, long astPtr2);
     public static native long mkLT(long contextPtr, long astPtr1, long astPtr2);
     public static native long mkLE(long contextPtr, long astPtr1, long astPtr2);
     public static native long mkGT(long contextPtr, long astPtr1, long astPtr2);

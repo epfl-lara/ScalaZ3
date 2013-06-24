@@ -182,10 +182,6 @@ sealed class Z3Model private[z3](val ptr: Long, val context: Z3Context) extends 
   }
 
   locally {
-    context.modelQueue.incRef(this)
-  }
-
-  override def finalize() {
-    context.modelQueue.decRef(this)
+    context.modelQueue.track(this)
   }
 }

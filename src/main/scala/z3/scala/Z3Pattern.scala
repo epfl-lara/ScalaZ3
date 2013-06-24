@@ -6,10 +6,6 @@ sealed class Z3Pattern private[z3](val ptr: Long, val context: Z3Context) extend
   override def toString : String = context.patternToString(this)
 
   locally {
-    context.astQueue.incRef(this)
-  }
-
-  override def finalize() {
-    context.astQueue.decRef(this)
+    context.astQueue.track(this)
   }
 }

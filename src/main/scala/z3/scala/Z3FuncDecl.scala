@@ -28,10 +28,6 @@ sealed class Z3FuncDecl private[z3](val ptr: Long, val arity: Int, val context: 
   override def toString : String = context.funcDeclToString(this)
 
   locally {
-    context.astQueue.incRef(this)
-  }
-
-  override def finalize() {
-    context.astQueue.decRef(this)
+    context.astQueue.track(this)
   }
 }

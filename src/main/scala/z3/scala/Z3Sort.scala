@@ -14,10 +14,6 @@ sealed class Z3Sort private[z3](val ptr: Long, val context: Z3Context) extends Z
   lazy val isIntSetSort : Boolean = context.isEqSort(this, context.mkSetSort(context.mkIntSort))
 
   locally {
-    context.astQueue.incRef(this)
-  }
-
-  override def finalize() {
-    context.astQueue.decRef(this)
+    context.astQueue.track(this)
   }
 }

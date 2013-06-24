@@ -220,10 +220,6 @@ class Z3Solver private[z3](val ptr : Long, val context : Z3Context) extends Z3Ob
   }
 
   locally {
-    context.solverQueue.incRef(this)
-  }
-
-  override def finalize() {
-    context.solverQueue.decRef(this)
+    context.solverQueue.track(this)
   }
 }

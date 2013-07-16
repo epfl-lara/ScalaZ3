@@ -100,10 +100,18 @@ object ScalaZ3build extends Build {
   }
 
 
-  val javahTask = (streams, classDirectory in Compile) map {
-    case (s, cd) =>
-      s.log.info("Preparing JNI headers...")
-      exec("javah -classpath " + cd.absolutePath + " -d " + cPath.absolutePath + " " + natives.mkString(" "), s)
+  val javahTask = (streams, dependencyClasspath in Compile, classDirectory in Compile) map {
+    case (s, deps, cd) =>
+
+      deps.map(_.data.absolutePath).find(_.endsWith("lib/scala-library.jar")) match {
+        case Some(lib) =>
+          s.log.info("Preparing JNI headers...")
+          exec("javah -classpath " + cd.absolutePath + ":"+lib+" -d " + cPath.absolutePath + " " + natives.mkString(" "), s)
+
+        case None =>
+          s.log.error("Scala library not found in dependencies ?!?")
+
+      }
   } dependsOn(compile.in(Compile))
 
 

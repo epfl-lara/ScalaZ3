@@ -2,7 +2,7 @@ package z3.scala
 
 import z3.Z3Wrapper
 
-trait Z3Object {
+trait Z3Object extends Z3Pointer {
   val ptr: Long
   val context: Z3Context
 

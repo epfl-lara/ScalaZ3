@@ -26,12 +26,6 @@ class ProceduralAttachment[T](context: Z3Context) extends Z3Theory(context, "PA"
 
   def variable : Z3AST = context.mkFreshConst(randomName("var-"), thySort)
 
-  implicit def elemToAST(value : T) : Z3AST = constant(value)
-  // implicit def elemToDSLAST(value : T) : dsl.Tree[dsl.BottomSort] = dsl.Z3ASTWrapper[dsl.BottomSort](elemToAST(value))
-  implicit def elemToLazyElem(value : T) : (() => T) = {
-    (() => value)
-  }
-
   private def boolAST(value : Boolean) : Z3AST = if(value) context.mkTrue else context.mkFalse
 
   type Pred1 = T => Boolean

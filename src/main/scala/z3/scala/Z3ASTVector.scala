@@ -41,10 +41,6 @@ final class Z3ASTVector private[z3](val ptr : Long, val context : Z3Context) ext
   }
 
   locally {
-    context.astvectorQueue.incRef(this)
-  }
-
-  override def finalize() {
-    context.astvectorQueue.decRef(this)
+    context.astvectorQueue.track(this)
   }
 }

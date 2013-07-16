@@ -20,10 +20,6 @@ class Z3Tactic private[z3](val ptr : Long, val context : Z3Context) extends Z3Ob
   }
 
   locally {
-    context.tacticQueue.incRef(this)
-  }
-
-  override def finalize() {
-    context.tacticQueue.decRef(this)
+    context.tacticQueue.track(this)
   }
 }

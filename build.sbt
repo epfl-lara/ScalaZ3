@@ -4,6 +4,12 @@ version := "2.0"
 
 organization := "ch.epfl.lara"
 
+scalacOptions += "-deprecation"
+
+scalacOptions += "-unchecked"
+
+scalacOptions += "-feature"
+
 scalaVersion := "2.10.2"
 
 libraryDependencies ++= Seq(

@@ -27,8 +27,6 @@ public final class Z3Wrapper {
     private static final String versionString = LibraryChecksum.value;
 
     // this is just to force class loading, and therefore library loading.
-    public static void init() { }
-
     static {
         try {
             // System.out.println("Looking for Library " + LIB_NAME + " in System path" );
@@ -37,15 +35,18 @@ public final class Z3Wrapper {
             // Convert root to: lib....so in Linux, lib....jnilib in MacOS, ....dll in Windows, etc.
             String name = System.mapLibraryName(LIB_NAME);
 
-            try {
-                String curDir = System.getProperty("user.dir");
-                //System.out.println("Looking for Library " + name + " in directory:" + curDir );
-                System.load(curDir + LIB_SEPARATOR + name );
-            } catch (UnsatisfiedLinkError e2) {
-                //System.out.println("Looking for Library " + name + " in jarFile" );
+            if (withinJar()) {
                 loadFromJar();
+            } else {
+                String curDir = System.getProperty("user.dir");
+                System.load(curDir + LIB_BIN + name );
             }
         }
+    }
+
+    public static boolean withinJar() {
+       java.net.URL classJar  = Z3Wrapper.class.getResource("/lib-bin/");
+       return classJar != null;
     }
 
     public static String wrapperVersionString() {
@@ -136,6 +137,7 @@ public final class Z3Wrapper {
     }
 
     public static native long mkConfig();
+    public static native void openLog(String name);
     public static native void delConfig(long configPtr);
     public static native void setParamValue(long configPtr, String paramID, String paramValue);
     public static native long mkContext(long configPtr);
@@ -489,6 +491,7 @@ public final class Z3Wrapper {
     public static native void solverReset(long contextPtr, long solverPtr);
     public static native int solverCheck(long contextPtr, long solverPtr);
     public static native long solverGetModel(long contextPtr, long solverPtr);
+    public static native long solverGetProof(long contextPtr, long solverPtr);
     public static native void solverIncRef(long contextPtr, long solverPtr);
     public static native void solverDecRef(long contextPtr, long solverPtr);
     public static native long solverGetAssertions(long contextPtr, long solverPtr);

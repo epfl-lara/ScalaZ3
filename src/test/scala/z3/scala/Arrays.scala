@@ -29,8 +29,8 @@ class Arrays extends FunSuite with ShouldMatchers {
 
     val (result, model) = solver.checkAndGetModel
 
-    println("model is")
-    println(model)
+    //println("model is")
+    //println(model)
     result should equal(Some(true))
 
     val array1Evaluated = model.eval(array1)
@@ -39,7 +39,7 @@ class Arrays extends FunSuite with ShouldMatchers {
       case Some(ae) =>
         val array1Val = model.getArrayValue(ae)
         array1Val should be ('defined)
-	println("When evaluated, array1 is: " + array1Val)
+        //println("When evaluated, array1 is: " + array1Val)
         array1Val match {
           case Some((valueMap,default)) =>
             model.evalAs[Int](default) should equal (Some(42))
@@ -54,7 +54,7 @@ class Arrays extends FunSuite with ShouldMatchers {
       case Some(ae) => {
         val array2Val = model.getArrayValue(ae)
         array2Val should be ('defined)
-	println("When evaluated, array2 is: " + array2Val)
+        //println("When evaluated, array2 is: " + array2Val)
         array2Val match {
           case Some((valueMap,default)) => {
             valueMap(z3.mkInt(2, z3.mkIntSort)) should equal (z3.mkInt(0, z3.mkIntSort))

@@ -36,9 +36,9 @@ class Quantifiers extends FunSuite with ShouldMatchers {
 
     val someName: Z3Symbol = z3.mkIntSymbol(0)
     val fibN = z3.mkQuantifier(true, 0, List(pattern), List((someName, intSort)), axiomTree)
-    println("fib0 ::: " + fib0)
-    println("fib1 ::: " + fib1)
-    println("fibN ::: " + fibN)
+    //println("fib0 ::: " + fib0)
+    //println("fib1 ::: " + fib1)
+    //println("fibN ::: " + fibN)
 
     val solver = z3.mkSolver
     solver.assertCnstr(fib0)

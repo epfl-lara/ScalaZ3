@@ -195,7 +195,8 @@ public final class Z3Wrapper {
     public static native long mkDiv(long contextPtr, long astPtr1, long astPtr2); 
     public static native long mkDiv2(long contextPtr, long astPtr1, long astPtr2); 
     public static native long mkMod(long contextPtr, long astPtr1, long astPtr2); 
-    public static native long mkRem(long contextPtr, long astPtr1, long astPtr2); 
+    public static native long mkRem(long contextPtr, long astPtr1, long astPtr2);
+    public static native long mkPower(long contextPtr, long astPtr1, long astPtr2);
     public static native long mkLT(long contextPtr, long astPtr1, long astPtr2);
     public static native long mkLE(long contextPtr, long astPtr1, long astPtr2);
     public static native long mkGT(long contextPtr, long astPtr1, long astPtr2);
@@ -227,6 +228,7 @@ public final class Z3Wrapper {
     // ...
     public static native long mkInt(long contextPtr, int v, long sortPtr);
     public static native long mkReal(long contextPtr, int num, int den);
+    public static native long mkNumeral(long contextPtr, String numeral, long sortPtr);
     // ...
     public static native long mkPattern(long contextPtr, int numPatterns, long[] terms);
     public static native long mkBound(long contextPtr, int index, long sortPtr);
@@ -361,6 +363,11 @@ public final class Z3Wrapper {
     public static native long getRange(long contextPtr, long funcDeclPtr);
     // ...
     public static native boolean getNumeralInt(long contextPtr, long astPtr, IntPtr i);
+    public static native String getNumeralString(long contextPtr, long astPtr);
+    public static native long getNumerator(long contextPtr, long astPtr);
+    public static native long getDenominator(long contextPtr, long astPtr);
+    public static native boolean isAlgebraicNumber(long contextPtr, long astPtr);
+
     // ...
     public static native int getBoolValue(long contextPtr, long astPtr);
 

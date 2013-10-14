@@ -5,10 +5,17 @@ object ScalaZ3build extends Build {
 
   val natives = List("z3.Z3Wrapper")
 
+  lazy val PS               = java.io.File.pathSeparator
+  lazy val DS               = java.io.File.separator
+
   lazy val cPath            = file("src") / "c"
   lazy val cFiles           = file("src") / "c" * "*.c"
   lazy val soName           = System.mapLibraryName("scalaz3")
+
+  lazy val z3Name     = if (isMac) "libz3.dylib" else if(isWindows) "libz3.dll" else System.mapLibraryName("z3")
+
   lazy val libBinPath       = file("lib-bin")
+  lazy val z3BinFilePath    = z3LibPath / z3Name
   lazy val libBinFilePath   = libBinPath / soName
   lazy val jdkIncludePath   = file(System.getProperty("java.home")) / ".." / "include"
   lazy val jdkUnixIncludePath = jdkIncludePath / "linux"
@@ -54,7 +61,7 @@ object ScalaZ3build extends Build {
 
   val javahKey    = TaskKey[Unit]("javah", "Prepares the JNI headers")
   val gccKey      = TaskKey[Unit]("gcc", "Compiles the C sources")
-  val checksumKey = TaskKey[Unit]("checksum", "Generates checksum file.")
+  val checksumKey = TaskKey[String]("checksum", "Generates checksum file.")
 
   val checksumTask = (streams, sourceDirectory in Compile) map {
     case (s, sd) =>
@@ -97,16 +104,18 @@ object ScalaZ3build extends Build {
       fw.close
 
       s.log.info("Wrote checksum " + md5String + " as part of " + checksumFilePath.asFile + ".")
+
+      md5String
   }
 
 
   val javahTask = (streams, dependencyClasspath in Compile, classDirectory in Compile) map {
     case (s, deps, cd) =>
 
-      deps.map(_.data.absolutePath).find(_.endsWith("lib/scala-library.jar")) match {
+      deps.map(_.data.absolutePath).find(_.endsWith("lib" + DS + "scala-library.jar")) match {
         case Some(lib) =>
           s.log.info("Preparing JNI headers...")
-          exec("javah -classpath " + cd.absolutePath + ":"+lib+" -d " + cPath.absolutePath + " " + natives.mkString(" "), s)
+          exec("javah -classpath " + cd.absolutePath + PS + lib + " -d " + cPath.absolutePath + " " + natives.mkString(" "), s)
 
         case None =>
           s.log.error("Scala library not found in dependencies ?!?")
@@ -114,8 +123,12 @@ object ScalaZ3build extends Build {
       }
   } dependsOn(compile.in(Compile))
 
+  def extractDir(checksum: String): String = {
+    System.getProperty("java.io.tmpdir") + DS + "SCALAZ3_" + checksum + DS + "lib-bin" + DS   
+  }
 
-  val gccTask = (streams) map { case (s) =>
+
+  val gccTask = (streams, checksumKey) map { case (s, cs) =>
     s.log.info("Compiling C sources ...")
 
     // First, we look for z3
@@ -131,17 +144,20 @@ object ScalaZ3build extends Build {
              "-I" + jdkUnixIncludePath.absolutePath + " " +
              "-I" + z3IncludePath.absolutePath + " " +
              "-L" + z3LibPath.absolutePath + " " +
-             "-g -lc -Wl,--no-as-needed -Wl,--copy-dt-needed -lz3 -fPIC -O2 -fopenmp " +
+             "-g -lc " +
+             "-Wl,-rpath,"+extractDir(cs)+" -Wl,--no-as-needed -Wl,--copy-dt-needed " +
+             "-lz3 -fPIC -O2 -fopenmp " +
              cFiles.getPaths.mkString(" "), s)
 
       } else if (isWindows) {
         exec("gcc -shared -o " + libBinFilePath.absolutePath + " " +
              "-D_JNI_IMPLEMENTATION_ -Wl,--kill-at " +
-             "-I " + "\"" + jdkIncludePath.absolutePath + "\"" + " " +
-             "-I " + "\"" + jdkWinIncludePath.absolutePath + "\"" + " " +
-             "-I " + z3IncludePath.absolutePath + " " +
-             cFiles.getPaths.mkString(" ") + " " +
-             z3LibPath.absolutePath, s)
+             "-D__int64=\"long long\" " +
+             "-I " + "\"" + jdkIncludePath.absolutePath + "\" " +
+             "-I " + "\"" + jdkWinIncludePath.absolutePath + "\" " +
+             "-I " + "\"" + z3IncludePath.absolutePath + "\" " +
+             cFiles.getPaths.mkString(" ") +
+             " " + z3BinFilePath.absolutePath + "\" ", s)
       } else if (isMac) {
         val frameworkPath = "/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers"
 
@@ -151,7 +167,9 @@ object ScalaZ3build extends Build {
              "-I" + frameworkPath + " " +
              "-I" + z3IncludePath.absolutePath + " " +
              "-L" + z3LibPath.absolutePath + " " +
-             "-g -lc -lz3 -fPIC -O2 -fopenmp " +
+             "-g -lc " +
+             "-Wl,-rpath,"+extractDir(cs)+" " +
+             "-lz3 -fPIC -O2 -fopenmp " +
              cFiles.getPaths.mkString(" "), s)
       } else {
         s.log.error("Unknown arch: "+osInf+" - "+osArch)
@@ -161,9 +179,25 @@ object ScalaZ3build extends Build {
 
   val packageTask = (Keys.`package` in Compile).dependsOn(javahKey, gccKey)
 
-  val newMappingsTask = mappings in (Compile, packageBin) <<= (mappings in (Compile, packageBin)) map {
-    case maps =>
-      (libBinFilePath.getAbsoluteFile -> ("lib-bin/"+soName)) +: maps
+  val newMappingsTask = mappings in (Compile, packageBin) <<= (mappings in (Compile, packageBin), streams) map {
+    case (normalFiles, s) =>
+      val newFiles = 
+        (libBinFilePath.getAbsoluteFile -> ("lib-bin/"+libBinFilePath.getName)) ::
+        (z3LibPath.listFiles.toList.map { f =>
+	  f.getAbsoluteFile -> ("lib-bin/"+f.getName)
+        })
+
+      s.log.info("Bundling files:")
+      for ((from, to) <- newFiles) {
+	  s.log.info(" - "+from+" -> "+to)
+      }
+
+      newFiles ++ normalFiles
+  }
+
+  val newTestClassPath = internalDependencyClasspath in (Test) <<= (artifactPath in (Compile, packageBin)) map {
+    case jar =>
+      List(Attributed.blank(jar))
   }
 
   lazy val root = Project(id = "ScalaZ3",
@@ -174,6 +208,7 @@ object ScalaZ3build extends Build {
                             javahKey <<= javahTask,
                             compile.in(Compile) <<= compile.in(Compile).dependsOn(checksumTask),
                             Keys.`package`.in(Compile) <<= packageTask,
+                            newTestClassPath,
                             newMappingsTask
                           )
                      )

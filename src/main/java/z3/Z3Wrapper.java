@@ -35,8 +35,7 @@ public final class Z3Wrapper {
 
     private static final String versionString = LibraryChecksum.value;
 
-    //private static final String isDebug = System.getProperty("scalaz3.debug.load");
-    private static final String isDebug = "aaa";
+    private static final String isDebug = System.getProperty("scalaz3.debug.load");
 
     // this is just to force class loading, and therefore library loading.
     static {
@@ -52,10 +51,6 @@ public final class Z3Wrapper {
         if (isDebug != null) {
           System.out.println(msg);
         }
-    }
-
-    public static void main(String[] args) {
-	System.out.println("yay");
     }
 
     public static boolean withinJar() {

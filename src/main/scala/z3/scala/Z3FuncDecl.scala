@@ -22,7 +22,7 @@ sealed class Z3FuncDecl private[z3](val ptr: Long, val arity: Int, val context: 
     that != null && that.isInstanceOf[Z3FuncDecl] && context.isEqFuncDecl(this, that.asInstanceOf[Z3FuncDecl])
   }
 
-  private lazy val hc : Int = 0
+  private val hc : Int = ptr.hashCode()
   override def hashCode : Int = hc
 
   override def toString : String = context.funcDeclToString(this)

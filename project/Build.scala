@@ -144,7 +144,7 @@ object ScalaZ3build extends Build {
              "-I" + jdkUnixIncludePath.absolutePath + " " +
              "-I" + z3IncludePath.absolutePath + " " +
              "-L" + z3LibPath.absolutePath + " " +
-             "-Wreturn-type " +
+             "-Wall " +
              "-g -lc " +
              "-Wl,-rpath,"+extractDir(cs)+" -Wl,--no-as-needed -Wl,--copy-dt-needed " +
              "-lz3 -fPIC -O2 -fopenmp " +
@@ -169,7 +169,6 @@ object ScalaZ3build extends Build {
              "-I" + frameworkPath + " " +
              "-I" + z3IncludePath.absolutePath + " " +
              "-L" + z3LibPath.absolutePath + " " +
-             "-w " +
              "-g -lc " +
              "-Wl,-rpath,"+extractDir(cs)+" " +
              "-lz3 -fPIC -O2 -fopenmp " +

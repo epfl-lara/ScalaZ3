@@ -12,29 +12,31 @@ extern "C" {
         Z3_symbol * nsortsN    = (numSorts > 0 ? (Z3_symbol*)malloc(numSorts * sizeof(Z3_symbol)) : NULL);
         Z3_func_decl * ndecls  = (numDecls > 0 ? (Z3_func_decl*)malloc(numDecls * sizeof(Z3_func_decl)) : NULL);
         Z3_symbol * ndeclsN    = (numDecls > 0 ? (Z3_symbol*)malloc(numDecls * sizeof(Z3_symbol)) : NULL);
-        jlong * jsorts;
-        jlong * jsortsN;
-        jlong * jdecls;
-        jlong * jdeclsN;
+        jlong * jsorts = NULL;
+        jlong * jsortsN = NULL;
+        jlong * jdecls = NULL;
+        jlong * jdeclsN = NULL;
         int i = 0;
-        const jbyte * z3str;
+        const char * z3str;
         jlong resultingAST = 0;
 
         if(numSorts > 0) {
             jsorts = (*env)->GetLongArrayElements(env, sorts, NULL); if(jsorts == 0) return 0;
             jsortsN = (*env)->GetLongArrayElements(env, sortNames, NULL); if(jsortsN == 0) return 0;
+
+            for(i = 0; i < numSorts; ++i) {
+                nsorts[i] = asZ3Sort(jsorts[i]);
+                nsortsN[i] = asZ3Symbol(jsortsN[i]);
+            }
         }
         if(numDecls > 0) {
             jdecls = (*env)->GetLongArrayElements(env, decls, NULL); if(jdecls == 0) return 0;
             jdeclsN = (*env)->GetLongArrayElements(env, declNames, NULL); if(jdeclsN == 0) return 0;
-        }
-        for(i = 0; i < numSorts; ++i) {
-            nsorts[i] = asZ3Sort(jsorts[i]);
-            nsortsN[i] = asZ3Symbol(jsortsN[i]);
-        }
-        for(i = 0; i < numDecls; ++i) {
-            ndecls[i] = asZ3FuncDecl(jdecls[i]);
-            ndeclsN[i] = asZ3Symbol(jdeclsN[i]);
+
+            for(i = 0; i < numDecls; ++i) {
+                ndecls[i] = asZ3FuncDecl(jdecls[i]);
+                ndeclsN[i] = asZ3Symbol(jdeclsN[i]);
+            }
         }
 
         z3str = (*env)->GetStringUTFChars(env, str, NULL); if (z3str == NULL) return 0;
@@ -42,7 +44,7 @@ extern "C" {
         if(isSMTLIB2 == JNI_TRUE) {
           resultingAST = astToJLong(Z3_parse_smtlib2_string(
                   asZ3Context(contextPtr),
-                  (const char*)z3str,
+                  z3str,
                   (unsigned)numSorts,
                   nsortsN,
                   nsorts,
@@ -52,7 +54,7 @@ extern "C" {
         } else {
           Z3_parse_smtlib_string(
                   asZ3Context(contextPtr),
-                  (const char*)z3str,
+                  z3str,
                   (unsigned)numSorts,
                   nsortsN,
                   nsorts,
@@ -82,12 +84,12 @@ extern "C" {
         Z3_symbol * nsortsN    = (numSorts > 0 ? (Z3_symbol*)malloc(numSorts * sizeof(Z3_symbol)) : NULL);
         Z3_func_decl * ndecls  = (numDecls > 0 ? (Z3_func_decl*)malloc(numDecls * sizeof(Z3_func_decl)) : NULL);
         Z3_symbol * ndeclsN    = (numDecls > 0 ? (Z3_symbol*)malloc(numDecls * sizeof(Z3_symbol)) : NULL);
-        jlong * jsorts;
-        jlong * jsortsN;
-        jlong * jdecls;
-        jlong * jdeclsN;
+        jlong * jsorts = NULL;
+        jlong * jsortsN = NULL;
+        jlong * jdecls = NULL;
+        jlong * jdeclsN = NULL;
         int i = 0;
-        const jbyte * z3str;
+        const char * z3str;
 
         if(numSorts > 0) {
             jsorts = (*env)->GetLongArrayElements(env, sorts, NULL); if(jsorts == 0) return 0;
@@ -111,7 +113,7 @@ extern "C" {
         if(isSMTLIB2 == JNI_TRUE) {
           Z3_parse_smtlib2_file(
                   asZ3Context(contextPtr),
-                  (const char*)z3str,
+                  z3str,
                   (unsigned)numSorts,
                   nsortsN,
                   nsorts,
@@ -121,7 +123,7 @@ extern "C" {
         } else {
           Z3_parse_smtlib_file(
                   asZ3Context(contextPtr),
-                  (const char*)z3str,
+                  z3str,
                   (unsigned)numSorts,
                   nsortsN,
                   nsorts,

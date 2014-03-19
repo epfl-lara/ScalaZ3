@@ -144,6 +144,7 @@ object ScalaZ3build extends Build {
              "-I" + jdkUnixIncludePath.absolutePath + " " +
              "-I" + z3IncludePath.absolutePath + " " +
              "-L" + z3LibPath.absolutePath + " " +
+             "-Wreturn-type " +
              "-g -lc " +
              "-Wl,-rpath,"+extractDir(cs)+" -Wl,--no-as-needed -Wl,--copy-dt-needed " +
              "-lz3 -fPIC -O2 -fopenmp " +
@@ -156,6 +157,7 @@ object ScalaZ3build extends Build {
              "-I " + "\"" + jdkIncludePath.absolutePath + "\" " +
              "-I " + "\"" + jdkWinIncludePath.absolutePath + "\" " +
              "-I " + "\"" + z3IncludePath.absolutePath + "\" " +
+             "-Wreturn-type " +
              cFiles.getPaths.mkString(" ") +
              " " + z3BinFilePath.absolutePath + "\" ", s)
       } else if (isMac) {
@@ -167,6 +169,7 @@ object ScalaZ3build extends Build {
              "-I" + frameworkPath + " " +
              "-I" + z3IncludePath.absolutePath + " " +
              "-L" + z3LibPath.absolutePath + " " +
+             "-w " +
              "-g -lc " +
              "-Wl,-rpath,"+extractDir(cs)+" " +
              "-lz3 -fPIC -O2 -fopenmp " +

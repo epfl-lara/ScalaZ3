@@ -681,7 +681,7 @@ extern "C" {
     JNIEXPORT jlong JNICALL Java_z3_Z3Wrapper_mkNumeral (JNIEnv * env, jclass cls, jlong contextPtr, jstring numeral, jlong sortPtr) {
         const jbyte * str;
         str = (*env)->GetStringUTFChars(env, numeral, NULL);
-        if (str == NULL) return;
+        if (str == NULL) return 0;
         jlong ast = astToJLong(Z3_mk_numeral(asZ3Context(contextPtr), (const char*)str, asZ3Sort(sortPtr)));
         (*env)->ReleaseStringUTFChars(env, numeral, str);
         return ast;

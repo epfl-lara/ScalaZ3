@@ -69,7 +69,6 @@ extern "C" {
         unsigned tid = get_theory_id(thyPtr);
         jclass proxyCls = theoryProxyClasses[tid];
         jobject proxy   = theoryProxies[tid];
-        jclass proxyCls2 = (*jniEnv)->GetObjectClass(jniEnv, proxy);
         jmethodID mid   = (*jniEnv)->GetMethodID(jniEnv, proxyCls, "delete", "(J)V");
         (*jniEnv)->CallVoidMethod(jniEnv, proxy, mid, thyPtr);
     }
@@ -79,7 +78,6 @@ extern "C" {
         unsigned tid = get_theory_id(thyPtr);
         jclass proxyCls = theoryProxyClasses[tid];
         jobject proxy   = theoryProxies[tid];
-        jclass proxyCls2 = (*jniEnv)->GetObjectClass(jniEnv, proxy);
         jmethodID mid   = (*jniEnv)->GetMethodID(jniEnv, proxyCls, "reduceApp", "(JJI[JLz3/Pointer;)Z");
         // we create the array
         jlongArray newArgs = (*jniEnv)->NewLongArray(jniEnv, (jsize)argc);
@@ -108,7 +106,6 @@ extern "C" {
         unsigned tid = get_theory_id(thyPtr);
         jclass proxyCls = theoryProxyClasses[tid];
         jobject proxy   = theoryProxies[tid];
-        jclass proxyCls2 = (*jniEnv)->GetObjectClass(jniEnv, proxy);
         jmethodID mid   = (*jniEnv)->GetMethodID(jniEnv, proxyCls, "reduceEq", "(JJJLz3/Pointer;)Z");
         jobject pointer = mk_fresh_pointer(jniEnv);
         jboolean result = (*jniEnv)->CallBooleanMethod(jniEnv, proxy, mid, thyPtr, astToJLong(a), astToJLong(b), pointer);
@@ -126,7 +123,6 @@ extern "C" {
         unsigned tid = get_theory_id(thyPtr);
         jclass proxyCls = theoryProxyClasses[tid];
         jobject proxy   = theoryProxies[tid];
-        jclass proxyCls2 = (*jniEnv)->GetObjectClass(jniEnv, proxy);
         jmethodID mid   = (*jniEnv)->GetMethodID(jniEnv, proxyCls, "reduceDistinct", "(J[JLz3/Pointer;)Z");
         // we create the array
         jlongArray newArgs = (*jniEnv)->NewLongArray(jniEnv, (jsize)argc);
@@ -155,7 +151,6 @@ extern "C" {
         unsigned tid = get_theory_id(thyPtr);
         jclass proxyCls = theoryProxyClasses[tid];
         jobject proxy   = theoryProxies[tid];
-        jclass proxyCls2 = (*jniEnv)->GetObjectClass(jniEnv, proxy);
         jmethodID mid   = (*jniEnv)->GetMethodID(jniEnv, proxyCls, "newApp", "(JJ)V");
         (*jniEnv)->CallVoidMethod(jniEnv, proxy, mid, thyPtr, astToJLong(a));
     }
@@ -165,7 +160,6 @@ extern "C" {
         unsigned tid = get_theory_id(thyPtr);
         jclass proxyCls = theoryProxyClasses[tid];
         jobject proxy   = theoryProxies[tid];
-        jclass proxyCls2 = (*jniEnv)->GetObjectClass(jniEnv, proxy);
         jmethodID mid   = (*jniEnv)->GetMethodID(jniEnv, proxyCls, "newElem", "(JJ)V");
         (*jniEnv)->CallVoidMethod(jniEnv, proxy, mid, thyPtr, astToJLong(a));
     }
@@ -175,7 +169,6 @@ extern "C" {
         unsigned tid = get_theory_id(thyPtr);
         jclass proxyCls = theoryProxyClasses[tid];
         jobject proxy   = theoryProxies[tid];
-        jclass proxyCls2 = (*jniEnv)->GetObjectClass(jniEnv, proxy);
         jmethodID mid   = (*jniEnv)->GetMethodID(jniEnv, proxyCls, "initSearch", "(J)V");
         (*jniEnv)->CallVoidMethod(jniEnv, proxy, mid, thyPtr);
     }
@@ -185,7 +178,6 @@ extern "C" {
         unsigned tid = get_theory_id(thyPtr);
         jclass proxyCls = theoryProxyClasses[tid];
         jobject proxy   = theoryProxies[tid];
-        jclass proxyCls2 = (*jniEnv)->GetObjectClass(jniEnv, proxy);
         jmethodID mid   = (*jniEnv)->GetMethodID(jniEnv, proxyCls, "push", "(J)V");
         (*jniEnv)->CallVoidMethod(jniEnv, proxy, mid, thyPtr);
     }
@@ -195,7 +187,6 @@ extern "C" {
         unsigned tid = get_theory_id(thyPtr);
         jclass proxyCls = theoryProxyClasses[tid];
         jobject proxy   = theoryProxies[tid];
-        jclass proxyCls2 = (*jniEnv)->GetObjectClass(jniEnv, proxy);
         jmethodID mid   = (*jniEnv)->GetMethodID(jniEnv, proxyCls, "pop", "(J)V");
         (*jniEnv)->CallVoidMethod(jniEnv, proxy, mid, thyPtr);
     }
@@ -205,7 +196,6 @@ extern "C" {
         unsigned tid = get_theory_id(thyPtr);
         jclass proxyCls = theoryProxyClasses[tid];
         jobject proxy   = theoryProxies[tid];
-        jclass proxyCls2 = (*jniEnv)->GetObjectClass(jniEnv, proxy);
         jmethodID mid   = (*jniEnv)->GetMethodID(jniEnv, proxyCls, "restart", "(J)V");
         (*jniEnv)->CallVoidMethod(jniEnv, proxy, mid, thyPtr);
     }
@@ -215,7 +205,6 @@ extern "C" {
         unsigned tid = get_theory_id(thyPtr);
         jclass proxyCls = theoryProxyClasses[tid];
         jobject proxy   = theoryProxies[tid];
-        jclass proxyCls2 = (*jniEnv)->GetObjectClass(jniEnv, proxy);
         jmethodID mid   = (*jniEnv)->GetMethodID(jniEnv, proxyCls, "reset", "(J)V");
         (*jniEnv)->CallVoidMethod(jniEnv, proxy, mid, thyPtr);
     }
@@ -225,7 +214,6 @@ extern "C" {
         unsigned tid = get_theory_id(thyPtr);
         jclass proxyCls = theoryProxyClasses[tid];
         jobject proxy   = theoryProxies[tid];
-        jclass proxyCls2 = (*jniEnv)->GetObjectClass(jniEnv, proxy);
         jmethodID mid   = (*jniEnv)->GetMethodID(jniEnv, proxyCls, "finalCheck", "(J)Z");
         jboolean result = (*jniEnv)->CallBooleanMethod(jniEnv, proxy, mid, thyPtr);
         return (result == JNI_TRUE ? Z3_TRUE : Z3_FALSE);
@@ -236,7 +224,6 @@ extern "C" {
         unsigned tid = get_theory_id(thyPtr);
         jclass proxyCls = theoryProxyClasses[tid];
         jobject proxy   = theoryProxies[tid];
-        jclass proxyCls2 = (*jniEnv)->GetObjectClass(jniEnv, proxy);
         jmethodID mid   = (*jniEnv)->GetMethodID(jniEnv, proxyCls, "newEq", "(JJJ)V");
         (*jniEnv)->CallVoidMethod(jniEnv, proxy, mid, thyPtr, astToJLong(a), astToJLong(b));
     }
@@ -246,7 +233,6 @@ extern "C" {
         unsigned tid = get_theory_id(thyPtr);
         jclass proxyCls = theoryProxyClasses[tid];
         jobject proxy   = theoryProxies[tid];
-        jclass proxyCls2 = (*jniEnv)->GetObjectClass(jniEnv, proxy);
         jmethodID mid   = (*jniEnv)->GetMethodID(jniEnv, proxyCls, "newDiseq", "(JJJ)V");
         (*jniEnv)->CallVoidMethod(jniEnv, proxy, mid, thyPtr, astToJLong(a), astToJLong(b));
     }
@@ -258,7 +244,6 @@ extern "C" {
         //printf("thid is %d\n", tid);
         jclass proxyCls = theoryProxyClasses[tid];
         jobject proxy   = theoryProxies[tid];
-        jclass proxyCls2 = (*jniEnv)->GetObjectClass(jniEnv, proxy);
         jmethodID mid   = (*jniEnv)->GetMethodID(jniEnv, proxyCls, "newAssignment", "(JJZ)V");
         (*jniEnv)->CallVoidMethod(jniEnv, proxy, mid, thyPtr, astToJLong(a), (p == Z3_TRUE ? JNI_TRUE : JNI_FALSE));
     }
@@ -268,7 +253,6 @@ extern "C" {
         unsigned tid = get_theory_id(thyPtr);
         jclass proxyCls = theoryProxyClasses[tid];
         jobject proxy   = theoryProxies[tid];
-        jclass proxyCls2 = (*jniEnv)->GetObjectClass(jniEnv, proxy);
         jmethodID mid   = (*jniEnv)->GetMethodID(jniEnv, proxyCls, "newRelevant", "(JJ)V");
         (*jniEnv)->CallVoidMethod(jniEnv, proxy, mid, thyPtr, astToJLong(a));
     }

@@ -7,6 +7,9 @@ sealed class Z3Sort private[z3](val ptr: Long, val context: Z3Context) extends Z
     that != null && that.isInstanceOf[Z3Sort] && context.isEqSort(this, that.asInstanceOf[Z3Sort])
   }
 
+  private val hc : Int = ptr.hashCode()
+  override def hashCode : Int = hc
+
   override def toString : String = context.sortToString(this)
 
   lazy val isBoolSort : Boolean = context.isEqSort(this, context.mkBoolSort)

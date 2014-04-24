@@ -83,9 +83,9 @@ If you wish to use the given DLL for x64 architectures:
 13. Change the quotes `#include <z3.h>` to `#include "z3.h"` in `cast.h`,`extra.h`, `z3_thycallbacks.h`, `z3_thycallbacks.cpp` and `z3_Z3Wrapper.cpp`.
 14. Add `#include "stdafx.h"` at the very beginning of `cast.h`, `z3_thycallbacks.cpp`, `extra.cpp` and `casts.cpp`
 15. Remove all `inline` keywords in `cast.cpp` and `cast.h`
-16. Locate line 27 in `Z3_thycallbacks.cpp` and change `(*env)->NewGlobalRef(env, pc);` to `pc`.
+16. Locate line 27 in `Z3_thycallbacks.cpp` and change `(*env)->NewGlobalRef(env, pc);` to `pc;`.
 17. Now compiling (Project menu, generate the solution) gives the DLL in the following repository (Note that this is the "solution" folder, not the "project" one)  
-    ```C:\Users\Mikael\Documents\Visual Studio 2013\Projects\scalaz3\x64\Debug```
+    ```C:\Users\...\Documents\Visual Studio 2013\Projects\scalaz3\x64\Debug```
 18. Copy the `scalaZ3.dll` from step 17 to `ScalaZ3/lib-bin` and replace the existing dll.  
     *** THE STEP WHICH MADE EVERYTHING WORK: COMPLETELY CUT FROM CYGWIN ***
 19. Remove `C:\cygwin\bin` from the PATH environment variable so that when invoking sbt it makes sure that no cygwin is involved.
@@ -94,11 +94,9 @@ If you wish to use the given DLL for x64 architectures:
 'target/scala2.10/scalaz3\_2.10-2.1.jar' and will contain the shared library
 dependencies.
 
-    >sbt
-	>compile
-	>package  //this fails because it cannot run gcc
-	>packageBin
+    sbt package //fails at some point because it cannot run gcc
+	sbt packageBin // Uses the correct dll
 
 4) Run the tests with
 
-    test
+    sbt test

@@ -75,9 +75,9 @@ If you wish to use the given DLL for x64 architectures:
 12. Change `(*ENV)->get....(ENV, ` to `ENV->get...(` everywhere (`ENV` is a string which is not necessarily "env") in `extra.cpp`, `z3_Z3Wrapper.cpp` and `Z3_thycallbacks.cpp`.  Fix other compilation errors if any. 
 
     You can use the regexp to find  
-    ```\(\*(\w)+\)->(\w+)\(\1, ```  
+    `\(\*(\w)+\)->(\w+)\(\1, `  
     and replace by  
-    ```\1->\2\(```  
+    `\1->\2\(`  
     The following four instructions also help to fix errors depending on your jni.h version and visual studio version:
 
 13. Change the quotes `#include <z3.h>` to `#include "z3.h"` in `cast.h`,`extra.h`, `z3_thycallbacks.h`, `z3_thycallbacks.cpp` and `z3_Z3Wrapper.cpp`.

@@ -64,7 +64,7 @@ If you wish to use the given DLL for x64 architectures:
 6. In project properties, configuration properties, C/C++, General, Other include directory, add both `C:\Program Files\Java\jdk1.7.0_25\include` and `C:\Program Files\Java\jdk1.7.0_25\include\win32`. You should have this jdk installed already. If not, [download it there](http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html).
 7. Open the Visual Studio Command Line Prompt for x64 bits (Start menu, All programs Visual Studio 2013, Visual Studio Tools, Native tool command line x64 for VS2013 or something similar)
 8. Navigate to the visual studio project (see step 4.) and run: `dumpbin /exports libz3.dll > libz3.def`
-9. Change the content of libz3.def so that the start looks like (use Notepad++ for example)
+9. Change the content of libz3.def so that the start looks like (use Notepad++ for example)  
    `EXPORTS`  
    `Z3_app_to_ast`  
    `Z3_append_log`
@@ -73,30 +73,32 @@ If you wish to use the given DLL for x64 architectures:
     and then add it to the project.
 11. Rename `cast.c`,`extra.c`, `z3_thycallbacks.c` and `z3_Z3Wrapper.c` with the `*.cpp` extension
 12. Change `(*ENV)->get....(ENV, ` to `ENV->get...(` everywhere (`ENV` is a string which is not necessarily "env") in `extra.cpp`, `z3_Z3Wrapper.cpp` and `Z3_thycallbacks.cpp`.  Fix other compilation errors if any. 
+
     You can use the regexp to find  
     ```\(\*(\w)+\)->(\w+)\(\1, ```  
     and replace by  
     ```\1->\2\(```  
     The following four instructions also help to fix errors depending on your jni.h version and visual studio version:
+
 13. Change the quotes `#include <z3.h>` to `#include "z3.h"` in `cast.h`,`extra.h`, `z3_thycallbacks.h`, `z3_thycallbacks.cpp` and `z3_Z3Wrapper.cpp`.
 14. Add `#include "stdafx.h"` at the very beginning of `cast.h`, `z3_thycallbacks.cpp`, `extra.cpp` and `casts.cpp`
 15. Remove all `inline` keywords in `cast.cpp` and `cast.h`
 16. Locate line 27 in `Z3_thycallbacks.cpp` and change `(*env)->NewGlobalRef(env, pc);` to `pc`.
 17. Now compiling (Project menu, generate the solution) gives the DLL in the following repository (Note that this is the "solution" folder, not the "project" one)  
     ```C:\Users\Mikael\Documents\Visual Studio 2013\Projects\scalaz3\x64\Debug```
-
 18. Copy the `scalaZ3.dll` from step 17 to `ScalaZ3/lib-bin` and replace the existing dll.  
     *** THE STEP WHICH MADE EVERYTHING WORK: COMPLETELY CUT FROM CYGWIN ***
-19. Remove  C:\cygwin\bin from the PATH environment variable so that when invoking sbt it makes sure that no cygwin is involved.
+19. Remove `C:\cygwin\bin` from the PATH environment variable so that when invoking sbt it makes sure that no cygwin is involved.
 
 3) Run to create the jar file. It will end up in
 'target/scala2.10/scalaz3\_2.10-2.1.jar' and will contain the shared library
 dependencies.
 
-    sbt compile
-	sbt package  //this fails because it cannot run gcc
-	sbt packageBin
+    >sbt
+	>compile
+	>package  //this fails because it cannot run gcc
+	>packageBin
 
 4) Run the tests with
 
-    sbt test
+    test

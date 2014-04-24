@@ -65,11 +65,9 @@ If you wish to use the given DLL for x64 architectures:
 7. Open the Visual Studio Command Line Prompt for x64 bits (Start menu, All programs Visual Studio 2013, Visual Studio Tools, Native tool command line x64 for VS2013 or something similar)
 8. Navigate to the visual studio project (see step 4.) and run: `dumpbin /exports libz3.dll > libz3.def`
 9. Change the content of libz3.def so that the start looks like (use Notepad++ for example)
-   ```  
-   EXPORTS  
-   Z3_app_to_ast  
-   Z3_append_log
-   ```
+   `EXPORTS`  
+   `Z3_app_to_ast`  
+   `Z3_append_log`
 10. Create the lib with the Visual Studio Command Line with the command:  
     ```lib /def:.\libz3.def /OUT:.\libz3.lib```  
     and then add it to the project.

@@ -29,7 +29,6 @@ public final class Z3Wrapper {
     private static final String LIB_BIN = DS + "lib-bin" + DS;
     // the root name of the library file. lib....so in Linux, lib....jnilib in MacOS, ....dll in Windows, etc.
     private static final String LIB_NAME = "scalaz3";
-    private static final String Z3_LIB_NAME = "z3";
 
     public static Object gc_lock = new Object();
 
@@ -77,7 +76,6 @@ public final class Z3Wrapper {
         File libDir  = new File(System.getProperty("java.io.tmpdir") + DS + path + LIB_BIN);
 
         String libRealName   = System.mapLibraryName(LIB_NAME);
-        String z3LibRealName = System.mapLibraryName(Z3_LIB_NAME);
 
         try {
           if (!libDir.isDirectory() || !libDir.canRead()) {
@@ -86,6 +84,13 @@ public final class Z3Wrapper {
           }
 
           addLibraryPath(libDir.getAbsolutePath());
+
+          String os = System.getProperty("os.name");
+          if (os != null && os.indexOf("Win") >= 0) {
+            // Under windows, we first load libz3 explicitly, on which ScalaZ3 depends
+            debug("Loading libz3")
+            System.loadLibrary("libz3");
+          }
 
           debug("Loading "+LIB_NAME);
           System.loadLibrary(LIB_NAME);

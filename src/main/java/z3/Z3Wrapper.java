@@ -88,7 +88,7 @@ public final class Z3Wrapper {
           addLibraryPath(libDir.getAbsolutePath());
           
           String os = System.getProperty("os.name");
-          boolean isWin = os.indexOf("Win") >= 0;
+          boolean isWin = os != null && os.indexOf("Win") >= 0;
           if(isWin) System.loadLibrary("libz3");
           debug("Loading "+LIB_NAME);
           System.loadLibrary(LIB_NAME);

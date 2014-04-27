@@ -11,12 +11,14 @@ object ScalaZ3build extends Build {
   lazy val cPath            = file("src") / "c"
   lazy val cFiles           = file("src") / "c" * "*.c"
   lazy val soName           = System.mapLibraryName("scalaz3")
+  lazy val msName           = System.mapLibraryName("msvcr120d")
 
   lazy val z3Name     = if (isMac) "libz3.dylib" else if(isWindows) "libz3.dll" else System.mapLibraryName("z3")
 
   lazy val libBinPath       = file("lib-bin")
   lazy val z3BinFilePath    = z3LibPath / z3Name
   lazy val libBinFilePath   = libBinPath / soName
+  lazy val msFilePath       = libBinPath / msName
   lazy val jdkIncludePath   = file(System.getProperty("java.home")) / ".." / "include"
   lazy val jdkUnixIncludePath = jdkIncludePath / "linux"
   lazy val jdkWinIncludePath  = jdkIncludePath / "win32"
@@ -184,6 +186,7 @@ object ScalaZ3build extends Build {
   val newMappingsTask = mappings in (Compile, packageBin) <<= (mappings in (Compile, packageBin), streams) map {
     case (normalFiles, s) =>
       val newFiles = 
+      (msFilePath.getAbsoluteFile -> ("lib-bin/"+msFilePath.getName)) ::
         (libBinFilePath.getAbsoluteFile -> ("lib-bin/"+libBinFilePath.getName)) ::
         (z3LibPath.listFiles.toList.map { f =>
 	  f.getAbsoluteFile -> ("lib-bin/"+f.getName)

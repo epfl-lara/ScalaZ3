@@ -163,8 +163,11 @@ object ScalaZ3build extends Build {
       } else if (isMac) {
         val frameworkPath = "/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers"
 
+        exec("install_name_tool -id @loader_path/"+z3Name+" "+z3BinFilePath.absolutePath, s)
+
         exec("gcc -o " + libBinFilePath.absolutePath + " " +
              "-dynamiclib" + " " +
+             "-install_name "+extractDir(cs)+soName + " " +
              "-I" + jdkIncludePath.absolutePath + " " +
              "-I" + frameworkPath + " " +
              "-I" + z3IncludePath.absolutePath + " " +

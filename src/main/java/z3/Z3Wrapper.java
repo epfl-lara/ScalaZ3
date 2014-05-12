@@ -88,7 +88,7 @@ public final class Z3Wrapper {
           String os = System.getProperty("os.name");
           if (os != null && os.indexOf("Win") >= 0) {
             // Under windows, we first load libz3 explicitly, on which ScalaZ3 depends
-            debug("Loading libz3")
+            debug("Loading libz3");
             System.loadLibrary("libz3");
           }
 

@@ -32,7 +32,7 @@ Mac
 
 1) Download Z3 source code from http://z3.codeplex.com/, compile it, and copy
 the headers and built library to z3/[z3version]/include and z3/[z3version]/lib
-respectively. (eg: z3/4.3-osx/include/{z3,z3_api,z3_macros}.h and
+respectively. (eg: z3/4.3-osx-64b/include/{z3,z3_api,z3_macros}.h and
 z3/4.3-osx-64b/lib/libz3.dylib).
 
 2) Run 'sbt package' to create the jar file. It will be in

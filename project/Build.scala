@@ -112,7 +112,7 @@ object ScalaZ3build extends Build {
   val javahTask = (streams, dependencyClasspath in Compile, classDirectory in Compile) map {
     case (s, deps, cd) =>
 
-      deps.map(_.data.absolutePath).find(_.endsWith("lib" + DS + "scala-library.jar")) match {
+      deps.map(_.data.absolutePath).find(_.contains("scala-library")) match {
         case Some(lib) =>
           s.log.info("Preparing JNI headers...")
           exec("javah -classpath " + cd.absolutePath + PS + lib + " -d " + cPath.absolutePath + " " + natives.mkString(" "), s)
@@ -124,7 +124,7 @@ object ScalaZ3build extends Build {
   } dependsOn(compile.in(Compile))
 
   def extractDir(checksum: String): String = {
-    System.getProperty("java.io.tmpdir") + DS + "SCALAZ3_" + checksum + DS + "lib-bin" + DS   
+    System.getProperty("java.io.tmpdir") + DS + "SCALAZ3_" + checksum + DS + "lib-bin" + DS
   }
 
 

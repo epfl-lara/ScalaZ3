@@ -1,12 +1,11 @@
 package z3
 
-import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.{FunSuite, Matchers}
 import z3.scala._
 
 class EmptyTheory(z3: Z3Context) extends Z3Theory(z3, "dummy")
 
-class ADTs extends FunSuite with ShouldMatchers {
+class ADTs extends FunSuite with Matchers {
   test("ADTs") {
     val config = new Z3Config("MODEL" -> "true")
     val ctx = new Z3Context(config)
@@ -108,7 +107,6 @@ class ADTs extends FunSuite with ShouldMatchers {
     sol should equal(Some(true))
     model.eval(t1) should equal(Some(leafCons()))
 
-    model.delete
     ctx.delete
   }
 }

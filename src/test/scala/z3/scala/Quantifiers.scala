@@ -1,9 +1,8 @@
 package z3
 
-import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.{FunSuite, Matchers}
 
-class Quantifiers extends FunSuite with ShouldMatchers {
+class Quantifiers extends FunSuite with Matchers {
   import z3.scala._
 
   test("Quantifiers") {

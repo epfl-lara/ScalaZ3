@@ -1,9 +1,8 @@
 package z3
 
-import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.{FunSuite, Matchers}
 
-class IntArith extends FunSuite with ShouldMatchers {
+class IntArith extends FunSuite with Matchers {
   import z3.scala._
 
   test("Comfusy-like") {
@@ -40,7 +39,6 @@ class IntArith extends FunSuite with ShouldMatchers {
     model.evalAs[Int](m) should equal(Some(20))
     model.evalAs[Int](s) should equal(Some(34))
 
-    model.delete
     z3.delete
   }
 }

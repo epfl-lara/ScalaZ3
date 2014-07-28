@@ -1,9 +1,8 @@
 package z3
 
-import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.{FunSuite, Matchers}
 
-class ForComprehension extends FunSuite with ShouldMatchers {
+class ForComprehension extends FunSuite with Matchers {
   import z3.scala.dsl._
 
   def isPrime(i : Int) : Boolean = {

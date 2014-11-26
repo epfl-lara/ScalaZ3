@@ -19,6 +19,7 @@ object ScalaZ3build extends Build {
   lazy val libBinFilePath   = libBinPath / soName
   lazy val jdkIncludePath   = file(System.getProperty("java.home")) / ".." / "include"
   lazy val jdkUnixIncludePath = jdkIncludePath / "linux"
+  lazy val jdkMacIncludePath  = jdkIncludePath / "darwin"
   lazy val jdkWinIncludePath  = jdkIncludePath / "win32"
 
   lazy val osInf: String = Option(System.getProperty("os.name")).getOrElse("")
@@ -169,6 +170,7 @@ object ScalaZ3build extends Build {
              "-dynamiclib" + " " +
              "-install_name "+extractDir(cs)+soName + " " +
              "-I" + jdkIncludePath.absolutePath + " " +
+             "-I" + jdkMacIncludePath.absolutePath + " " +
              "-I" + frameworkPath + " " +
              "-I" + z3IncludePath.absolutePath + " " +
              "-L" + z3LibPath.absolutePath + " " +

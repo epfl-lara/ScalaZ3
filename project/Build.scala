@@ -139,7 +139,7 @@ object ScalaZ3build extends Build {
       sys.error("Could not find Z3 library: " + z3LibPath.absolutePath)
     } else {
       if (isUnix) {
-        exec("gcc -o " + libBinFilePath.absolutePath + " " +
+        exec("gcc -std=gnu89 -o " + libBinFilePath.absolutePath + " " +
              "-shared -Wl,-soname," + soName + " " +
              "-I" + jdkIncludePath.absolutePath + " " +
              "-I" + jdkUnixIncludePath.absolutePath + " " +
@@ -152,7 +152,7 @@ object ScalaZ3build extends Build {
              cFiles.getPaths.mkString(" "), s)
 
       } else if (isWindows) {
-        exec("gcc -shared -o " + libBinFilePath.absolutePath + " " +
+        exec("gcc -std=gnu89 -shared -o " + libBinFilePath.absolutePath + " " +
              "-D_JNI_IMPLEMENTATION_ -Wl,--kill-at " +
              "-D__int64=\"long long\" " +
              "-I " + "\"" + jdkIncludePath.absolutePath + "\" " +
@@ -166,7 +166,7 @@ object ScalaZ3build extends Build {
 
         exec("install_name_tool -id @loader_path/"+z3Name+" "+z3BinFilePath.absolutePath, s)
 
-        exec("gcc -o " + libBinFilePath.absolutePath + " " +
+        exec("gcc -std=gnu89 -o " + libBinFilePath.absolutePath + " " +
              "-dynamiclib" + " " +
              "-install_name "+extractDir(cs)+soName + " " +
              "-I" + jdkIncludePath.absolutePath + " " +

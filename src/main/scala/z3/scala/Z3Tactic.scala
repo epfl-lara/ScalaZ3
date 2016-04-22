@@ -1,9 +1,9 @@
 package z3.scala
 
-import z3.Z3Wrapper
+import com.microsoft.z3.Native
 
 class Z3Tactic private[z3](val ptr : Long, val context : Z3Context) extends Z3Object {
-  override def equals(that : Any) : Boolean = {
+  override def equals(that: Any) : Boolean = {
     that != null &&
       that.isInstanceOf[Z3Tactic] && {
       val that2 = that.asInstanceOf[Z3Tactic]
@@ -12,11 +12,11 @@ class Z3Tactic private[z3](val ptr : Long, val context : Z3Context) extends Z3Ob
   }
 
   def incRef() {
-    Z3Wrapper.tacticIncRef(context.ptr, this.ptr)
+    Native.tacticIncRef(context.ptr, this.ptr)
   }
 
   def decRef() {
-    Z3Wrapper.tacticDecRef(context.ptr, this.ptr)
+    Native.tacticDecRef(context.ptr, this.ptr)
   }
 
   locally {

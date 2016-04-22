@@ -1,7 +1,5 @@
 package z3.scala
 
-import z3.Pointer
-
 // We store the arity when it's known to help preventing segfaults...
 sealed class Z3FuncDecl private[z3](val ptr: Long, val arity: Int, val context: Z3Context) extends Z3ASTLike {
   def apply(args: Z3AST*) : Z3AST = context.mkApp(this, args:_*)

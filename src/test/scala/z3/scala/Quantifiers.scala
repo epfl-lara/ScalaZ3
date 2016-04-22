@@ -1,75 +1,89 @@
 package z3
 
 import org.scalatest.{FunSuite, Matchers}
+import z3.scala._
 
 class Quantifiers extends FunSuite with Matchers {
-  import z3.scala._
+
+  /*
+   * (declare-sort Type)
+   * (declare-fun subtype (Type Type) Bool)
+   * (declare-fun array-of (Type) Type)
+   * (assert (forall ((x Type)) (subtype x x)))
+   * (assert (forall ((x Type) (y Type) (z Type))
+   *             (=> (and (subtype x y) (subtype y z)) 
+   *                             (subtype x z)))) 
+   * (assert (forall ((x Type) (y Type))
+   *             (=> (and (subtype x y) (subtype y x)) 
+   *                             (= x y))))
+   * (assert (forall ((x Type) (y Type) (z Type))
+   *             (=> (and (subtype x y) (subtype x z)) 
+   *                             (or (subtype y z) (subtype z y))))) 
+   * (assert (forall ((x Type) (y Type))
+   *             (=> (subtype x y) 
+   *                             (subtype (array-of x) (array-of y)))))
+   * (declare-const root-type Type)
+   * (assert (forall ((x Type)) (subtype x root-type)))
+   * (check-sat)
+   */
 
   test("Quantifiers") {
-    val config = new Z3Config
-    config.setParamValue("MODEL", "true")
-    val z3 = new Z3Context(config)
-    toggleWarningMessages(true)
-//    z3.traceToStdout
-    val intSort = z3.mkIntSort
-
-    val fibonacci = z3.mkFreshFuncDecl("fib", List(intSort), intSort)
-
-    val fib0 = z3.mkEq(fibonacci(z3.mkInt(0, intSort)), z3.mkInt(0, intSort))
-    val fib1 = z3.mkEq(fibonacci(z3.mkInt(1, intSort)), z3.mkInt(1, intSort))
-
-    // FORALL x . x > 1 ==> fib(x) = fib(x-1) + fib(x-2)
-    val boundVar = z3.mkBound(0, intSort)
-    val pattern: Z3Pattern = z3.mkPattern(fibonacci(boundVar))
-    val axiomTree = z3.mkImplies(
-        z3.mkGT(boundVar, z3.mkInt(1, intSort)),
-        z3.mkEq(
-          fibonacci(boundVar),
-          z3.mkAdd(
-            fibonacci(z3.mkSub(boundVar, z3.mkInt(1, intSort))),
-            fibonacci(z3.mkSub(boundVar, z3.mkInt(2, intSort))))
-          )
-        ) 
-
-//    val axiomTree = z3.mkEq(fibonacci(boundVar), boundVar)
-
-    val someName: Z3Symbol = z3.mkIntSymbol(0)
-    val fibN = z3.mkQuantifier(true, 0, List(pattern), List((someName, intSort)), axiomTree)
-    //println("fib0 ::: " + fib0)
-    //println("fib1 ::: " + fib1)
-    //println("fibN ::: " + fibN)
-
+    val z3 = new Z3Context("MODEL" -> true)
     val solver = z3.mkSolver
-    solver.assertCnstr(fib0)
-    solver.assertCnstr(fib1)
-    solver.assertCnstr(fibN)
 
-    // z3.push
-    // z3.assertCnstr(z3.mkEq(fibonacci(z3.mkInt(4, intSort)), z3.mkInt(4, intSort)))
+    /*
+     * (declare-sort Type)
+     * (declare-fun subtype (Type Type) Bool)
+     * (declare-fun array-of (Type) Type)
+     */
+    val typeSort = z3.mkUninterpretedSort("Type")
+    val subtype = z3.mkFuncDecl("subtype", List[Z3Sort](typeSort, typeSort).toArray, z3.mkBoolSort)
+    val arrayOf = z3.mkFuncDecl("array-of", List[Z3Sort](typeSort).toArray, typeSort)
 
-    // val (answer, model) = z3.checkAndGetModel
+    val syms @ List(xSym, ySym, zSym) = List("x", "y", "z").map(z3.mkSymbol(_))
+    val consts @ List(x, y, z) = syms.map(sym => z3.mkConst(sym, typeSort))
 
-    // println("fibonacci(4) = 4 ?")
-    // println(answer match {
-    //   case Some(true) => "possibly"
-    //   case Some(false) => "no way"
-    //   case _ => "error"
-    // })
+    /* (assert (forall ((x Type)) (subtype x x))) */
+    solver.assertCnstr(z3.mkForall(0, Seq.empty,
+      Seq(xSym -> typeSort),
+      subtype(x, x)))
 
-    // z3.pop(0)
+    /* (assert (forall ((x Type) (y Type) (z Type))
+                   (=> (and (subtype x y) (subtype y z)) 
+                                  (subtype x z)))) */
+    solver.assertCnstr(z3.mkForall(0, Seq.empty,
+      Seq(xSym -> typeSort, ySym -> typeSort, zSym -> typeSort),
+      z3.mkImplies(z3.mkAnd(subtype(x, y), subtype(y, z)), subtype(x, z))))
 
-    val x = z3.mkConst(z3.mkStringSymbol("v"), intSort)
-    val query = z3.mkEq(x, fibonacci(z3.mkInt(5, intSort)))
-    // println("Query ::: " + query)
-    solver.assertCnstr(query)
-    
-    // val (answer2, model2) = z3.checkAndGetModel
+    /* (assert (forall ((x Type) (y Type))
+                   (=> (and (subtype x y) (subtype y x)) 
+                                  (= x y)))) */
+    solver.assertCnstr(z3.mkForall(0, Seq.empty,
+      Seq(xSym -> typeSort, ySym -> typeSort),
+      z3.mkImplies(z3.mkAnd(subtype(x, y), subtype(y, x)), z3.mkEq(x, y))))
 
-    // println("fibonacci(5) = ?")
-    // answer2 should equal(None)
-    // model2.evalAs[Int](x) should equal(Some(5))
+    /* (assert (forall ((x Type) (y Type) (z Type))
+                   (=> (and (subtype x y) (subtype x z)) 
+                                  (or (subtype y z) (subtype z y))))) */
+    solver.assertCnstr(z3.mkForall(0, Seq.empty,
+      Seq(xSym -> typeSort, ySym -> typeSort, zSym -> typeSort),
+      z3.mkImplies(z3.mkAnd(subtype(x, y), subtype(x, z)), z3.mkOr(subtype(y, z), subtype(z, y)))))
 
-    // model2.delete
-    z3.delete
+    /* (assert (forall ((x Type) (y Type))
+                  (=> (subtype x y) 
+                                  (subtype (array-of x) (array-of y))))) */
+    solver.assertCnstr(z3.mkForall(0, Seq.empty,
+      Seq(xSym -> typeSort, ySym -> typeSort),
+      z3.mkImplies(subtype(x, y), subtype(arrayOf(x), arrayOf(y)))))
+
+    /* (declare-const root-type Type) */
+    val rootType = z3.mkConst("root-type", typeSort)
+
+    /* (assert (forall ((x Type)) (subtype x root-type))) */
+    solver.assertCnstr(z3.mkForall(0, Seq.empty,
+      Seq(xSym -> typeSort),
+      subtype(x, rootType)))
+
+    solver.check should equal(Some(true))
   }
 }

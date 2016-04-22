@@ -1,6 +1,6 @@
 name := "ScalaZ3"
 
-version := "2.1"
+version := "3.0"
 
 organization := "ch.epfl.lara"
 
@@ -10,9 +10,9 @@ scalacOptions += "-unchecked"
 
 scalacOptions += "-feature"
 
-scalaVersion := "2.11.7"
+scalaVersion := "2.11.8"
 
-crossScalaVersions := Seq("2.10.4", "2.11.7")
+crossScalaVersions := Seq("2.10.4", "2.11.8")
 
 libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % "2.1.3" % "test"

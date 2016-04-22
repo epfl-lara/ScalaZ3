@@ -74,22 +74,6 @@ package object dsl {
       model.evalAs[Int](ast).getOrElse(0)
   }
 
-  implicit def liftToSetValHander[A : Default : ValHandler] : ValHandler[Set[A]] = new ValHandler[Set[A]] {
-    private val underlying = implicitly[ValHandler[A]]
-
-    def mkSort(z3 : Z3Context) : Z3Sort = z3.mkSetSort(underlying.mkSort(z3))
-
-    def convert(model : Z3Model, ast : Z3AST) : Set[A] = {
-      model.eval(ast) match {
-        case None => default.value // when not in model, we assume anything is OK
-        case Some(evaluated) => model.getSetValue(evaluated) match {
-          case Some(astSet) => astSet.map(a => underlying.convert(model, a)).toSet
-          case None => default.value
-        }
-      }
-    }  
-  }
-
   /** Instances of this class are used to represent models of Z3 maps, which
    * are typically defined by a finite collection of pairs and a default
    * value. More sophisticated representations à la functional programs that

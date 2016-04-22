@@ -14,7 +14,7 @@ class SatSolver extends FunSuite with Matchers {
       if(f.isEmpty) (true, Map.empty)
       else if(f.exists(clause => clause.isEmpty)) (false, Map.empty)
       else {
-        val z3 = new Z3Context((new Z3Config).setParamValue("MODEL", "true"))
+        val z3 = new Z3Context("MODEL" -> true)
         val b = z3.mkBoolSort()
 
         val literals = f.reduceLeft((a,b) => a ++ b)

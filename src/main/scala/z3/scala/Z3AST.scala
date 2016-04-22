@@ -1,7 +1,5 @@
 package z3.scala
 
-import z3.Pointer
-
 sealed class Z3AST private[z3](val ptr : Long, val context : Z3Context) extends Z3ASTLike {
   override def equals(that : Any) : Boolean = {
     that != null &&
@@ -23,7 +21,6 @@ sealed class Z3AST private[z3](val ptr : Long, val context : Z3Context) extends 
   import dsl.{Tree,TopSort,BoolSort,BottomSort,Z3ASTWrapper,Eq,Distinct}
   def ===(that: Tree[_ >: BottomSort <: TopSort]): Tree[BoolSort] = Eq(Z3ASTWrapper[BottomSort](this), that)
   def !==(that: Tree[_ >: BottomSort <: TopSort]): Tree[BoolSort] = Distinct(Z3ASTWrapper[BottomSort](this), that)
-
 
   locally {
     context.astQueue.track(this)

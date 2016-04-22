@@ -7,7 +7,7 @@ class Core extends FunSuite with Matchers {
   import z3.scala.dsl._
 
   test("Core") {
-    val z3 = new Z3Context(new Z3Config("MODEL" -> true))
+    val z3 = new Z3Context("MODEL" -> "true")
 
     val x = z3.mkFreshConst("x", z3.mkIntSort)
     val y = z3.mkFreshConst("y", z3.mkIntSort)

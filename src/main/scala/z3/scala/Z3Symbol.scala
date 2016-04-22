@@ -1,7 +1,5 @@
 package z3.scala
 
-import z3.Pointer
-
 sealed class Z3Symbol private[z3](val ptr: Long, context: Z3Context) extends Z3Pointer {
   override def equals(that: Any) : Boolean = {
     that != null && that.isInstanceOf[Z3Symbol] && that.asInstanceOf[Z3Symbol].ptr == this.ptr
@@ -13,5 +11,6 @@ sealed class Z3Symbol private[z3](val ptr: Long, context: Z3Context) extends Z3P
     case Z3IntSymbol(v) => "sym#" + v
     case Z3StringSymbol(s) => s
   }
+
   override def toString : String = strRepr
 }

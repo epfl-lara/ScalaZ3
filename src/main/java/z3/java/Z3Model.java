@@ -1,9 +1,8 @@
 package z3.java;
 
-import z3.Z3Wrapper;
-import z3.Pointer;
+import com.microsoft.z3.Native;
 
-public class Z3Model extends Pointer {
+public class Z3Model extends Z3Pointer {
     private final Z3Context context;
 
     protected Z3Model(Z3Context context) {
@@ -11,26 +10,21 @@ public class Z3Model extends Pointer {
         this.context = context;
     }
 
-    protected long contextPtr() {
-        return context.ptr;
-    }
-
-    public void delete() {
-        Z3Wrapper.delModel(context.ptr, this.ptr);
-        this.ptr = 0L;
-    }
-
-    public Z3AST eval(Z3AST ast) {
-        if(this.ptr == 0L) {
+    public Z3AST eval(Z3AST ast, boolean completion) {
+        if(this.value == 0L) {
             throw new IllegalStateException("The model is not initialized.");
         }
         Z3AST out = new Z3AST(0L);
-        boolean result = Z3Wrapper.eval(context.ptr, this.ptr, ast.ptr, out);
+        boolean result = Native.modelEval(context.value, this.value, ast.value, completion, out);
         if (result) {
             return out;
         } else {
             return null;
         }
+    }
+
+    public Z3AST eval(Z3AST ast) {
+        return eval(ast, false);
     }
 
     public Integer evalAsInt(Z3AST ast) {
@@ -43,5 +37,13 @@ public class Z3Model extends Pointer {
         Z3AST res = this.eval(ast);
         if(res == null) return null;
         return context.getBoolValue(res);
+    }
+
+    public void incRef() {
+        Native.modelIncRef(context.value, this.value);
+    }
+
+    public void decRef() {
+        Native.modelDecRef(context.value, this.value);
     }
 }

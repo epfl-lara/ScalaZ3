@@ -1,28 +1,27 @@
 package z3.scala
 
-import z3.Z3Wrapper
-import scala.collection.SeqLike
+import com.microsoft.z3.Native
 
-final class Z3ASTVector private[z3](val ptr : Long, val context : Z3Context) extends Z3Object {
+final class Z3ASTVector private[z3](val ptr: Long, val context: Z3Context) extends Z3Object {
 
   def incRef() {
-    Z3Wrapper.astvectorIncRef(context.ptr, this.ptr)
+    Native.astVectorIncRef(context.ptr, this.ptr)
   }
 
   def decRef() {
-    Z3Wrapper.astvectorDecRef(context.ptr, this.ptr)
+    Native.astVectorDecRef(context.ptr, this.ptr)
   }
 
   def get(i: Int): Z3AST = {
-    new Z3AST(Z3Wrapper.astvectorGet(context.ptr, this.ptr, i), context)
+    new Z3AST(Native.astVectorGet(context.ptr, this.ptr, i), context)
   }
 
   def set(i: Int, v: Z3AST) {
-    Z3Wrapper.astvectorSet(context.ptr, this.ptr, i, v.ptr)
+    Native.astVectorSet(context.ptr, this.ptr, i, v.ptr)
   }
 
   def size: Int = {
-    Z3Wrapper.astvectorSize(context.ptr, this.ptr)
+    Native.astVectorSize(context.ptr, this.ptr)
   }
 
   // Utility functions
@@ -41,6 +40,6 @@ final class Z3ASTVector private[z3](val ptr : Long, val context : Z3Context) ext
   }
 
   locally {
-    context.astvectorQueue.track(this)
+    context.astVectorQueue.track(this)
   }
 }

@@ -1,9 +1,9 @@
 package z3.scala
 
-import z3.Z3Wrapper
+import com.microsoft.z3.Native
 
-class Z3Solver private[z3](val ptr : Long, val context : Z3Context) extends Z3Object {
-  override def equals(that : Any) : Boolean = {
+class Z3Solver private[z3](val ptr: Long, val context: Z3Context) extends Z3Object {
+  override def equals(that: Any) : Boolean = {
     that != null &&
       that.isInstanceOf[Z3Solver] && {
       val that2 = that.asInstanceOf[Z3Solver]
@@ -12,32 +12,32 @@ class Z3Solver private[z3](val ptr : Long, val context : Z3Context) extends Z3Ob
   }
 
   def pop(numScopes : Int = 1) = {
-    Z3Wrapper.solverPop(context.ptr, this.ptr, numScopes)
+    Native.solverPop(context.ptr, this.ptr, numScopes)
   }
 
   def push() = {
-    Z3Wrapper.solverPush(context.ptr, this.ptr)
+    Native.solverPush(context.ptr, this.ptr)
   }
 
   var isModelAvailable = false
 
   def assertCnstr(ast: Z3AST) = {
-    Z3Wrapper.solverAssertCnstr(context.ptr, this.ptr, ast.ptr)
+    Native.solverAssert(context.ptr, this.ptr, ast.ptr)
   }
 
   def check() : Option[Boolean] = {
-    val res = i2ob(Z3Wrapper.solverCheck(context.ptr, this.ptr))
+    val res = i2ob(Native.solverCheck(context.ptr, this.ptr))
     isModelAvailable = res != Some(false)
     res
   }
 
   def getAssertions(): Z3ASTVector = {
-    new Z3ASTVector(Z3Wrapper.solverGetAssertions(context.ptr, this.ptr), context)
+    new Z3ASTVector(Native.solverGetAssertions(context.ptr, this.ptr), context)
   }
 
   def getModel() : Z3Model = {
     if (isModelAvailable) {
-      new Z3Model(Z3Wrapper.solverGetModel(context.ptr, this.ptr), context)
+      new Z3Model(Native.solverGetModel(context.ptr, this.ptr), context)
     } else {
       throw new Exception("Cannot get model if check failed")
     }
@@ -45,35 +45,35 @@ class Z3Solver private[z3](val ptr : Long, val context : Z3Context) extends Z3Ob
 
   def getProof() : Z3AST = {
     if (!isModelAvailable) {
-      new Z3AST(Z3Wrapper.solverGetProof(context.ptr, this.ptr), context)
+      new Z3AST(Native.solverGetProof(context.ptr, this.ptr), context)
     } else {
       throw new Exception("Cannot get proof if formula is SAT")
     }
   }
 
   def getUnsatCore() : Z3ASTVector = {
-    new Z3ASTVector(Z3Wrapper.solverGetUnsatCore(context.ptr, this.ptr), context)
+    new Z3ASTVector(Native.solverGetUnsatCore(context.ptr, this.ptr), context)
   }
 
   def reset() = {
-    Z3Wrapper.solverReset(context.ptr, this.ptr)
+    Native.solverReset(context.ptr, this.ptr)
   }
 
   def getNumScopes() = {
-    Z3Wrapper.solverGetNumScopes(context.ptr, this.ptr)  
+    Native.solverGetNumScopes(context.ptr, this.ptr)  
   }
 
   def incRef() {
-    Z3Wrapper.solverIncRef(context.ptr, this.ptr)
+    Native.solverIncRef(context.ptr, this.ptr)
   }
 
   def decRef() {
-    Z3Wrapper.solverDecRef(context.ptr, this.ptr)
+    Native.solverDecRef(context.ptr, this.ptr)
   }
 
   def checkAssumptions(assumptions: Z3AST*) : Option[Boolean] = {
     val res = i2ob(
-      Z3Wrapper.solverCheckAssumptions(
+      Native.solverCheckAssumptions(
         context.ptr,
         this.ptr,
         assumptions.size,
@@ -113,7 +113,7 @@ class Z3Solver private[z3](val ptr : Long, val context : Z3Context) extends Z3Ob
           val toReturn = (result match {
             case (Some(true), m) =>
               nextModel = Some(Some(m))
-              val newConstraints = m.getModelConstantInterpretations.foldLeft(context.mkTrue){
+              val newConstraints = m.getConstInterpretations.foldLeft(context.mkTrue){
                 (acc, s) => context.mkAnd(acc, context.mkEq(s._1(), s._2))
               }
               constraints = context.mkAnd(constraints, context.mkNot(newConstraints))
@@ -139,7 +139,7 @@ class Z3Solver private[z3](val ptr : Long, val context : Z3Context) extends Z3Ob
           pop(1)
           val toReturn = (result match {
             case (Some(true), m) =>
-              val newConstraints = m.getModelConstantInterpretations.foldLeft(context.mkTrue){
+              val newConstraints = m.getConstInterpretations.foldLeft(context.mkTrue){
                 (acc, s) => context.mkAnd(acc, context.mkEq(s._1(), s._2))
               }
               constraints = context.mkAnd(constraints, context.mkNot(newConstraints))
@@ -174,7 +174,7 @@ class Z3Solver private[z3](val ptr : Long, val context : Z3Context) extends Z3Ob
               false
             case (outcome, m) =>
               nextModel = Some(Some((outcome, m)))
-              val newConstraints = m.getModelConstantInterpretations.foldLeft(context.mkTrue){
+              val newConstraints = m.getConstInterpretations.foldLeft(context.mkTrue){
                 (acc, s) => context.mkAnd(acc, context.mkEq(s._1(), s._2))
               }
               constraints = context.mkAnd(constraints, context.mkNot(newConstraints))
@@ -196,7 +196,7 @@ class Z3Solver private[z3](val ptr : Long, val context : Z3Context) extends Z3Ob
             case (Some(false), _) =>
               throw new Exception("Requesting a new model while there are no more models.")
             case (outcome, m) =>
-              val newConstraints = m.getModelConstantInterpretations.foldLeft(context.mkTrue){
+              val newConstraints = m.getConstInterpretations.foldLeft(context.mkTrue){
                 (acc, s) => context.mkAnd(acc, context.mkEq(s._1(), s._2))
               }
               constraints = context.mkAnd(constraints, context.mkNot(newConstraints))
@@ -212,11 +212,11 @@ class Z3Solver private[z3](val ptr : Long, val context : Z3Context) extends Z3Ob
   }
 
   def getReasonUnknown() : String = {
-    Z3Wrapper.solverGetReasonUnknown(context.ptr, this.ptr)
+    Native.solverGetReasonUnknown(context.ptr, this.ptr)
   }
 
   override def toString() : String = {
-    Z3Wrapper.solverToString(context.ptr, this.ptr)
+    Native.solverToString(context.ptr, this.ptr)
   }
 
   locally {

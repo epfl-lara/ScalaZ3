@@ -1,18 +1,16 @@
 package z3
 
+import com.microsoft.z3.Native
 import _root_.scala.language.implicitConversions
 
 package object scala {
 
-  @deprecated("Use Z3NumeralIntAST instead.", "4.0a")
-  val Z3NumeralAST = Z3NumeralIntAST
-
   def toggleWarningMessages(enabled: Boolean) : Unit = {
-    Z3Wrapper.toggleWarningMessages(enabled)
+    Native.toggleWarningMessages(enabled)
   }
 
   def resetMemory : Unit = {
-    Z3Wrapper.resetMemory()
+    Native.resetMemory()
   }
 
   /** A string representation of the version numbers for Z3, and the API (including bindings) */

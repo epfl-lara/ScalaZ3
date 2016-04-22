@@ -3,14 +3,10 @@ package z3
 import org.scalatest.{FunSuite, Matchers}
 import z3.scala._
 
-class EmptyTheory(z3: Z3Context) extends Z3Theory(z3, "dummy")
-
 class ADTs extends FunSuite with Matchers {
   test("ADTs") {
-    val config = new Z3Config("MODEL" -> "true")
-    val ctx = new Z3Context(config)
-    val thy = new EmptyTheory(ctx)
-    // ctx.traceToStdout()
+    val ctx = new Z3Context("MODEL" -> true)
+
     toggleWarningMessages(true)
     val intSort = ctx.mkIntSort
 

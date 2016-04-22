@@ -1,7 +1,9 @@
 package z3.scala
 
 import dsl.Z3ASTWrapper
-import z3.{Z3Wrapper,Pointer}
+import z3.Z3Wrapper
+import com.microsoft.z3.Native
+import com.microsoft.z3.enumerations._
 import scala.collection.mutable.{Set=>MutableSet}
 import java.math.BigInteger
 
@@ -17,18 +19,26 @@ object Z3Context {
   import AstPrintMode._
 }
 
-sealed class Z3Context(val config: Z3Config) {
-  val ptr : Long = Z3Wrapper.mkContextRC(config.ptr)
+sealed class Z3Context(val config: Map[String, String]) {
+  val ptr: Long = Z3Wrapper.creation_lock.synchronized {
+    val cfgPtr = Native.mkConfig()
+    for ((key, value) <- config) Native.setParamValue(cfgPtr, key, value)
+    val ptr = Native.mkContextRc(cfgPtr)
+    Native.delConfig(cfgPtr)
+    ptr
+  }
 
   Z3Wrapper.registerContext(ptr, this)
 
-  val astQueue       = new Z3RefCountQueue[Z3ASTLike]()
-  val astvectorQueue = new Z3RefCountQueue[Z3ASTVector]()
-  val modelQueue     = new Z3RefCountQueue[Z3Model]()
-  val solverQueue    = new Z3RefCountQueue[Z3Solver](5)
-  val tacticQueue    = new Z3RefCountQueue[Z3Tactic]()
+  val astQueue       = new Z3RefCountQueue[Z3ASTLike]
+  val astVectorQueue = new Z3RefCountQueue[Z3ASTVector]
+  val interpQueue    = new Z3RefCountQueue[Z3FuncInterp]
+  val entryQueue     = new Z3RefCountQueue[Z3FuncInterpEntry]
+  val modelQueue     = new Z3RefCountQueue[Z3Model]
+  val solverQueue    = new Z3RefCountQueue[Z3Solver]
+  val tacticQueue    = new Z3RefCountQueue[Z3Tactic]
 
-  def this(params : (String,Any)*) = this(new Z3Config(params : _*))
+  def this(params: (String,Any)*) = this(Map[String, Any](params : _*).mapValues(_.toString))
 
   private var deleted : Boolean = false
   override def finalize() : Unit = {
@@ -40,12 +50,14 @@ sealed class Z3Context(val config: Z3Config) {
       astQueue.clearQueue()
       modelQueue.clearQueue()
       solverQueue.clearQueue()
-      astvectorQueue.clearQueue()
+      astVectorQueue.clearQueue()
       tacticQueue.clearQueue()
+      interpQueue.clearQueue()
+      entryQueue.clearQueue()
 
       Z3Wrapper.unregisterContext(this.ptr)
 
-      Z3Wrapper.delContext(this.ptr)
+      Native.delContext(this.ptr)
       deleted = true
     }
   }
@@ -56,47 +68,46 @@ sealed class Z3Context(val config: Z3Config) {
 
   @deprecated("Use interrupt instead", "")
   def softCheckCancel() : Unit = {
-    Z3Wrapper.interrupt(this.ptr)
-  }
-
-  override def toString : String = {
-    Z3Wrapper.contextToString(this.ptr)
+    Native.interrupt(this.ptr)
   }
 
   def astToString(ast: Z3AST) : String = {
-    Z3Wrapper.astToString(this.ptr, ast.ptr)
+    Native.astToString(this.ptr, ast.ptr)
   }
 
   def funcDeclToString(funcDecl: Z3FuncDecl) : String = {
-    Z3Wrapper.funcDeclToString(this.ptr, funcDecl.ptr)
+    Native.funcDeclToString(this.ptr, funcDecl.ptr)
   }
 
   def sortToString(sort: Z3Sort) : String = {
-    Z3Wrapper.sortToString(this.ptr, sort.ptr)
+    Native.sortToString(this.ptr, sort.ptr)
   }
 
   def patternToString(pattern: Z3Pattern) : String = {
-    Z3Wrapper.patternToString(this.ptr, pattern.ptr)
+    Native.patternToString(this.ptr, pattern.ptr)
   }
 
   def modelToString(model: Z3Model) : String = {
-    Z3Wrapper.modelToString(this.ptr, model.ptr)
+    Native.modelToString(this.ptr, model.ptr)
   }
 
   def benchmarkToSMTLIBString(name : String, logic : String, status : String, attributes : String, assumptions : Seq[Z3AST], formula : Z3AST) : String = {
-    Z3Wrapper.benchmarkToSMTLIBString(this.ptr, name, logic, status, attributes, assumptions.size, toPtrArray(assumptions), formula.ptr)
+    Native.benchmarkToSmtlibString(this.ptr, name, logic, status, attributes, assumptions.size, toPtrArray(assumptions), formula.ptr)
   }
 
   def updateParamValue(paramID: String, paramValue: String) : Unit = {
-    Z3Wrapper.updateParamValue(this.ptr, paramID, paramValue)
+    Native.updateParamValue(this.ptr, paramID, paramValue)
   }
 
   private val usedIntSymbols : MutableSet[Int] = MutableSet.empty
   private var lastUsed : Int = -1
 
+  def mkSymbol(i: Int) : Z3Symbol = mkIntSymbol(i)
+  def mkSymbol(s: String) : Z3Symbol = mkStringSymbol(s)
+
   def mkIntSymbol(i: Int) : Z3Symbol = {
     usedIntSymbols += i
-    new Z3Symbol(Z3Wrapper.mkIntSymbol(this.ptr, i), this)
+    new Z3Symbol(Native.mkIntSymbol(this.ptr, i), this)
   }
 
   def mkFreshIntSymbol : Z3Symbol = {
@@ -111,7 +122,7 @@ sealed class Z3Context(val config: Z3Config) {
   private val usedStringSymbols : MutableSet[String] = MutableSet.empty
   def mkStringSymbol(s: String) : Z3Symbol = {
     usedStringSymbols += s
-    new Z3Symbol(Z3Wrapper.mkStringSymbol(this.ptr, s), this)
+    new Z3Symbol(Native.mkStringSymbol(this.ptr, s), this)
   }
 
   def mkFreshStringSymbol(s: String) : Z3Symbol = {
@@ -126,57 +137,12 @@ sealed class Z3Context(val config: Z3Config) {
     }
   }
 
-  /*
-  def isArrayValue(ast: Z3AST) : Option[Int] = {
-    val numEntriesPtr = new Z3Wrapper.IntPtr()
-    val result = Z3Wrapper.isArrayValue(this.ptr, ast.ptr, numEntriesPtr)
-    if (result) {
-      Some(numEntriesPtr.value)
-    } else {
-      None
-    }
-  }
-
-  @deprecated("use `getArrayValue' in `Z3Model' instead")
-  def getArrayValue(ast: Z3AST) : Option[(Map[Z3AST, Z3AST], Z3AST)] = isArrayValue(ast) match {
-    case None => None
-    case Some(numEntries) => {
-      // val indices = (0 until numEntries).map(_ => new Z3AST((new Pointer(0L)).ptr, this)).toList
-      // val values  = (0 until numEntries).map(_ => new Z3AST((new Pointer(0L)).ptr, this)).toList
-      val indArray = new Array[Long](numEntries)
-      val valArray = new Array[Long](numEntries)
-      val elseValuePtr = new Pointer(0L)
-
-      // println("indices before : " + indArray.toList.mkString(", "))
-      // println("values  before : " + valArray.toList.mkString(", "))
-      // println("else    before : " + elseValuePtr.ptr)
-
-      Z3Wrapper.getArrayValue(this.ptr, ast.ptr, numEntries, indArray, valArray, elseValuePtr)
-
-      // println("indices after : " + indArray.toList.mkString(", "))
-      // println("values  after : " + valArray.toList.mkString(", "))
-      // println("else    after : " + elseValuePtr.ptr)
-
-      val elseValue = new Z3AST(elseValuePtr.ptr, this)
-      val map = Map((indArray.map(new Z3AST(_, this)) zip valArray.map(new Z3AST(_, this))): _*)
-      Some((map, elseValue))
-    }
-  }
-
-  @deprecated("use `getSetValue' in `Z3Model' instead")
-  def getSetValue(ast: Z3AST) : Option[Set[Z3AST]] = getArrayValue(ast) match {
-    case None => None
-    case Some((map, elseValue)) =>
-      Some(map.filter(pair => getBoolValue(pair._2) == Some(true)).keySet.toSet)
-  }
-  */
-
   def isEqSort(s1: Z3Sort, s2: Z3Sort) : Boolean = {
-    Z3Wrapper.isEqSort(this.ptr, s1.ptr, s2.ptr)
+    Native.isEqSort(this.ptr, s1.ptr, s2.ptr)
   }
 
   def mkUninterpretedSort(s: Z3Symbol) : Z3Sort = {
-    new Z3Sort(Z3Wrapper.mkUninterpretedSort(this.ptr, s.ptr), this)
+    new Z3Sort(Native.mkUninterpretedSort(this.ptr, s.ptr), this)
   }
 
   def mkUninterpretedSort(s : String) : Z3Sort = {
@@ -184,15 +150,15 @@ sealed class Z3Context(val config: Z3Config) {
   }
 
   def mkBoolSort() : Z3Sort = {
-    new Z3Sort(Z3Wrapper.mkBoolSort(this.ptr), this)
+    new Z3Sort(Native.mkBoolSort(this.ptr), this)
   }
 
   def mkIntSort() : Z3Sort = {
-    new Z3Sort(Z3Wrapper.mkIntSort(this.ptr), this)
+    new Z3Sort(Native.mkIntSort(this.ptr), this)
   }
 
   def mkRealSort() : Z3Sort = {
-    new Z3Sort(Z3Wrapper.mkRealSort(this.ptr), this)
+    new Z3Sort(Native.mkRealSort(this.ptr), this)
   }
   
   import Z3Context.{ADTSortReference,RecursiveType,RegularSort}
@@ -230,12 +196,12 @@ sealed class Z3Context(val config: Z3Config) {
           case RecursiveType(idx) => idx
         }).toArray
 
-        val consPtr = Z3Wrapper.mkConstructor(this.ptr, consSym.ptr, testSym.ptr, fieldSyms.size, fieldSyms, fieldSorts, fieldRefs)
+        val consPtr = Native.mkConstructor(this.ptr, consSym.ptr, testSym.ptr, fieldSyms.size, fieldSyms, fieldSorts, fieldRefs)
         (consPtr, fieldSyms.size)
       })
 
       val consArr = constructors.map(_._1).toArray
-      val consList = Z3Wrapper.mkConstructorList(this.ptr, consArr.length, consArr)
+      val consList = Native.mkConstructorList(this.ptr, consArr.length, consArr)
       consListList = consList :: consListList
       consScalaList = constructors.toList :: consScalaList
     }
@@ -243,22 +209,23 @@ sealed class Z3Context(val config: Z3Config) {
     symbolList   = symbolList.reverse
     consListList = consListList.reverse
     consScalaList = consScalaList.reverse
-    
-    val newSorts: Array[Long] = Z3Wrapper.mkDatatypes(this.ptr, typeCount, toPtrArray(symbolList), consListList.toArray)
 
-    consListList.foreach(cl => Z3Wrapper.delConstructorList(this.ptr, cl))
-    
+    val newSorts = new Array[Long](typeCount)
+    Native.mkDatatypes(this.ptr, typeCount, toPtrArray(symbolList), newSorts, consListList.toArray)
+
+    consListList.foreach(cl => Native.delConstructorList(this.ptr, cl))
+
     for((sort, consLst) <- (newSorts zip consScalaList)) yield {
       val zipped = for (cons <- consLst) yield {
-        val consFunPtr = new Pointer(0L)
-        val testFunPtr = new Pointer(0L)
+        val consFunPtr = new Native.LongPtr()
+        val testFunPtr = new Native.LongPtr()
 
-        val selectors: Array[Long] = if(cons._2 > 0) new Array[Long](cons._2) else null
+        val selectors: Array[Long] = if (cons._2 > 0) new Array[Long](cons._2) else new Array[Long](0)
 
-        Z3Wrapper.queryConstructor(this.ptr, cons._1, cons._2, consFunPtr, testFunPtr, selectors)
+        Native.queryConstructor(this.ptr, cons._1, cons._2, consFunPtr, testFunPtr, selectors)
 
-        val consFun = new Z3FuncDecl(consFunPtr.ptr, cons._2, this)
-        val testFun = new Z3FuncDecl(testFunPtr.ptr, 1, this)
+        val consFun = new Z3FuncDecl(consFunPtr.value, cons._2, this)
+        val testFun = new Z3FuncDecl(testFunPtr.value, 1, this)
         (consFun, (testFun, if(cons._2 > 0) selectors.map(new Z3FuncDecl(_, 1, this)).toList else Nil))
       }
 
@@ -270,22 +237,22 @@ sealed class Z3Context(val config: Z3Config) {
   }
 
   def isEqAST(t1: Z3AST, t2: Z3AST) : Boolean = {
-    Z3Wrapper.isEqAST(this.ptr, t1.ptr, t2.ptr)
+    Native.isEqAst(this.ptr, t1.ptr, t2.ptr)
   }
 
   def mkApp(funcDecl: Z3FuncDecl, args: Z3AST*) : Z3AST = {
     if(funcDecl.arity != args.size)
       throw new IllegalArgumentException("Calling mkApp with wrong number of arguments.")
 
-    new Z3AST(Z3Wrapper.mkApp(this.ptr, funcDecl.ptr, args.size, toPtrArray(args)), this)
+    new Z3AST(Native.mkApp(this.ptr, funcDecl.ptr, args.size, toPtrArray(args)), this)
   }
 
   def isEqFuncDecl(fd1: Z3FuncDecl, fd2: Z3FuncDecl) : Boolean = {
-    Z3Wrapper.isEqFuncDecl(this.ptr, fd1.ptr, fd2.ptr)
+    Native.isEqFuncDecl(this.ptr, fd1.ptr, fd2.ptr)
   }
 
   def mkConst(symbol: Z3Symbol, sort: Z3Sort) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkConst(this.ptr, symbol.ptr, sort.ptr), this)
+    new Z3AST(Native.mkConst(this.ptr, symbol.ptr, sort.ptr), this)
   }
 
   def mkConst(s: String, sort: Z3Sort) : Z3AST = {
@@ -309,7 +276,7 @@ sealed class Z3Context(val config: Z3Config) {
   }
 
   def mkFuncDecl(symbol: Z3Symbol, domainSorts: Seq[Z3Sort], rangeSort: Z3Sort) : Z3FuncDecl = {
-    new Z3FuncDecl(Z3Wrapper.mkFuncDecl(this.ptr, symbol.ptr, domainSorts.size, toPtrArray(domainSorts), rangeSort.ptr), domainSorts.size, this)
+    new Z3FuncDecl(Native.mkFuncDecl(this.ptr, symbol.ptr, domainSorts.size, toPtrArray(domainSorts), rangeSort.ptr), domainSorts.size, this)
   }
 
   def mkFuncDecl(symbol: Z3Symbol, domainSort: Z3Sort, rangeSort: Z3Sort) : Z3FuncDecl = {
@@ -325,7 +292,7 @@ sealed class Z3Context(val config: Z3Config) {
   }
 
   def mkFreshConst(prefix: String, sort: Z3Sort) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkFreshConst(this.ptr, prefix, sort.ptr), this)
+    new Z3AST(Native.mkFreshConst(this.ptr, prefix, sort.ptr), this)
   }
 
   def mkFreshIntConst(prefix: String) : Z3AST = {
@@ -337,19 +304,19 @@ sealed class Z3Context(val config: Z3Config) {
   }
 
   def mkFreshFuncDecl(prefix: String, domainSorts: Seq[Z3Sort], rangeSort: Z3Sort) : Z3FuncDecl = {
-    new Z3FuncDecl(Z3Wrapper.mkFreshFuncDecl(this.ptr, prefix, domainSorts.size, toPtrArray(domainSorts), rangeSort.ptr), domainSorts.size, this)
+    new Z3FuncDecl(Native.mkFreshFuncDecl(this.ptr, prefix, domainSorts.size, toPtrArray(domainSorts), rangeSort.ptr), domainSorts.size, this)
   }
 
   def mkTrue() : Z3AST = {
-    new Z3AST(Z3Wrapper.mkTrue(this.ptr), this)
+    new Z3AST(Native.mkTrue(this.ptr), this)
   }
 
   def mkFalse() : Z3AST = {
-    new Z3AST(Z3Wrapper.mkFalse(this.ptr), this)
+    new Z3AST(Native.mkFalse(this.ptr), this)
   }
 
   def mkEq(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkEq(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkEq(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkDistinct(args: Z3AST*) : Z3AST = {
@@ -358,28 +325,28 @@ sealed class Z3Context(val config: Z3Config) {
     } else if(args.size == 1) {
       mkTrue
     } else {
-      new Z3AST(Z3Wrapper.mkDistinct(this.ptr, args.length, toPtrArray(args)), this)
+      new Z3AST(Native.mkDistinct(this.ptr, args.length, toPtrArray(args)), this)
     }
   }
 
   def mkNot(ast: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkNot(this.ptr, ast.ptr), this)
+    new Z3AST(Native.mkNot(this.ptr, ast.ptr), this)
   }
 
   def mkITE(t1: Z3AST, t2: Z3AST, t3: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkITE(this.ptr, t1.ptr, t2.ptr, t3.ptr), this)
+    new Z3AST(Native.mkIte(this.ptr, t1.ptr, t2.ptr, t3.ptr), this)
   }
 
   def mkIff(t1: Z3AST, t2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkIff(this.ptr, t1.ptr, t2.ptr), this)
+    new Z3AST(Native.mkIff(this.ptr, t1.ptr, t2.ptr), this)
   }
 
   def mkImplies(t1: Z3AST, t2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkImplies(this.ptr, t1.ptr, t2.ptr), this)
+    new Z3AST(Native.mkImplies(this.ptr, t1.ptr, t2.ptr), this)
   }
 
   def mkXor(t1: Z3AST, t2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkXor(this.ptr, t1.ptr, t2.ptr), this)
+    new Z3AST(Native.mkXor(this.ptr, t1.ptr, t2.ptr), this)
   }
 
   def mkAnd(args: Z3AST*) : Z3AST = {
@@ -388,7 +355,7 @@ sealed class Z3Context(val config: Z3Config) {
     } else if(args.size == 1) {
       new Z3AST(args(0).ptr, this)
     } else {
-      new Z3AST(Z3Wrapper.mkAnd(this.ptr, args.length, toPtrArray(args)), this)
+      new Z3AST(Native.mkAnd(this.ptr, args.length, toPtrArray(args)), this)
     }
   }
 
@@ -398,7 +365,7 @@ sealed class Z3Context(val config: Z3Config) {
     } else if(args.size == 1) {
       new Z3AST(args(0).ptr, this)
     } else {
-      new Z3AST(Z3Wrapper.mkOr(this.ptr, args.length, toPtrArray(args)), this)
+      new Z3AST(Native.mkOr(this.ptr, args.length, toPtrArray(args)), this)
     }
   }
 
@@ -408,7 +375,7 @@ sealed class Z3Context(val config: Z3Config) {
     } else if(args.size == 1) {
       new Z3AST(args(0).ptr, this)
     } else {
-      new Z3AST(Z3Wrapper.mkAdd(this.ptr, args.length, toPtrArray(args)), this)
+      new Z3AST(Native.mkAdd(this.ptr, args.length, toPtrArray(args)), this)
     }
   }
 
@@ -418,7 +385,7 @@ sealed class Z3Context(val config: Z3Config) {
     } else if(args.size == 1) {
       new Z3AST(args(0).ptr, this)
     } else {
-      new Z3AST(Z3Wrapper.mkMul(this.ptr, args.length, toPtrArray(args)), this)
+      new Z3AST(Native.mkMul(this.ptr, args.length, toPtrArray(args)), this)
     }
   }
 
@@ -428,87 +395,87 @@ sealed class Z3Context(val config: Z3Config) {
     } else if(args.size == 1) {
       new Z3AST(args(0).ptr, this)
     } else {
-      new Z3AST(Z3Wrapper.mkSub(this.ptr, args.length, toPtrArray(args)), this)
+      new Z3AST(Native.mkSub(this.ptr, args.length, toPtrArray(args)), this)
     }
   }
 
   def mkUnaryMinus(ast: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkUnaryMinus(this.ptr, ast.ptr), this)
+    new Z3AST(Native.mkUnaryMinus(this.ptr, ast.ptr), this)
   }
 
   def mkDiv(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkDiv(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkDiv(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkMod(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkMod(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkMod(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkRem(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkRem(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkRem(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkPower(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkPower(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkPower(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkLT(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkLT(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkLt(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkLE(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkLE(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkLe(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkGT(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkGT(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkGt(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkGE(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkGE(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkGe(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkInt2Real(ast: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkInt2Real(this.ptr, ast.ptr), this)
+    new Z3AST(Native.mkInt2real(this.ptr, ast.ptr), this)
   }
 
   def mkReal2Int(ast: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkReal2Int(this.ptr, ast.ptr), this)
+    new Z3AST(Native.mkReal2int(this.ptr, ast.ptr), this)
   }
 
   def mkIsInt(ast: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkIsInt(this.ptr, ast.ptr), this)
+    new Z3AST(Native.mkIsInt(this.ptr, ast.ptr), this)
   }
 
   def mkArraySort(domain: Z3Sort, range: Z3Sort) : Z3Sort = {
-    new Z3Sort(Z3Wrapper.mkArraySort(this.ptr, domain.ptr, range.ptr), this)
+    new Z3Sort(Native.mkArraySort(this.ptr, domain.ptr, range.ptr), this)
   }
 
   def mkSelect(array: Z3AST, index: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkSelect(this.ptr, array.ptr, index.ptr), this)
+    new Z3AST(Native.mkSelect(this.ptr, array.ptr, index.ptr), this)
   }
 
   def mkStore(array: Z3AST, index: Z3AST, value: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkStore(this.ptr, array.ptr, index.ptr, value.ptr), this)
+    new Z3AST(Native.mkStore(this.ptr, array.ptr, index.ptr, value.ptr), this)
   }
 
   def mkConstArray(sort: Z3Sort, value: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkConstArray(this.ptr, sort.ptr, value.ptr), this)
+    new Z3AST(Native.mkConstArray(this.ptr, sort.ptr, value.ptr), this)
   }
 
   def mkArrayDefault(array: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkArrayDefault(this.ptr, array.ptr), this)
+    new Z3AST(Native.mkArrayDefault(this.ptr, array.ptr), this)
   }
 
-  def mkTupleSort(name : Z3Symbol, sorts : Z3Sort*) : (Z3Sort,Z3FuncDecl,Seq[Z3FuncDecl]) = {
+  def mkTupleSort(name: Z3Symbol, sorts: Z3Sort*) : (Z3Sort,Z3FuncDecl,Seq[Z3FuncDecl]) = {
     require(sorts.size > 0)
     val sz = sorts.size
-    val consPtr = new Pointer(0L)
+    val consPtr = new Native.LongPtr()
     val projFuns = new Array[Long](sz)
     val fieldNames = sorts.map(s => mkFreshStringSymbol(name + "-field")).toArray
-    val sortPtr = Z3Wrapper.mkTupleSort(this.ptr, name.ptr, sz, fieldNames.map(_.ptr), sorts.map(_.ptr).toArray, consPtr, projFuns)
+    val sortPtr = Native.mkTupleSort(this.ptr, name.ptr, sz, fieldNames.map(_.ptr), sorts.map(_.ptr).toArray, consPtr, projFuns)
     val newSort = new Z3Sort(sortPtr, this)
-    val consFuncDecl = new Z3FuncDecl(consPtr.ptr, sz, this)
+    val consFuncDecl = new Z3FuncDecl(consPtr.value, sz, this)
     val projFuncDecls = projFuns.map(ptr => new Z3FuncDecl(ptr, 1, this)).toSeq
     (newSort, consFuncDecl, projFuncDecls)
   }
@@ -516,23 +483,23 @@ sealed class Z3Context(val config: Z3Config) {
   def mkTupleSort(name : String, sorts : Z3Sort*) : (Z3Sort,Z3FuncDecl,Seq[Z3FuncDecl]) = mkTupleSort(mkStringSymbol(name), sorts : _*)
 
   def mkSetSort(underlying: Z3Sort) : Z3Sort = {
-    new Z3Sort(Z3Wrapper.mkSetSort(this.ptr, underlying.ptr), this)
+    new Z3Sort(Native.mkSetSort(this.ptr, underlying.ptr), this)
   }
 
   def mkEmptySet(sort: Z3Sort) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkEmptySet(this.ptr, sort.ptr), this)
+    new Z3AST(Native.mkEmptySet(this.ptr, sort.ptr), this)
   }
 
   def mkFullSet(sort: Z3Sort) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkFullSet(this.ptr, sort.ptr), this)
+    new Z3AST(Native.mkFullSet(this.ptr, sort.ptr), this)
   }
 
   def mkSetAdd(set: Z3AST, elem: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkSetAdd(this.ptr, set.ptr, elem.ptr), this)
+    new Z3AST(Native.mkSetAdd(this.ptr, set.ptr, elem.ptr), this)
   }
 
   def mkSetDel(set: Z3AST, elem: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkSetDel(this.ptr, set.ptr, elem.ptr), this)
+    new Z3AST(Native.mkSetDel(this.ptr, set.ptr, elem.ptr), this)
   }
 
   def mkSetUnion(args: Z3AST*) : Z3AST = {
@@ -541,7 +508,7 @@ sealed class Z3Context(val config: Z3Config) {
     } else if(args.size == 1) {
       new Z3AST(args(0).ptr, this)
     } else {
-      new Z3AST(Z3Wrapper.mkSetUnion(this.ptr, args.length, toPtrArray(args)), this)
+      new Z3AST(Native.mkSetUnion(this.ptr, args.length, toPtrArray(args)), this)
     }
   }
 
@@ -551,54 +518,54 @@ sealed class Z3Context(val config: Z3Config) {
     } else if(args.size == 1) {
       new Z3AST(args(0).ptr, this)
     } else {
-      new Z3AST(Z3Wrapper.mkSetIntersect(this.ptr, args.length, toPtrArray(args)), this)
+      new Z3AST(Native.mkSetIntersect(this.ptr, args.length, toPtrArray(args)), this)
     }
   }
 
   def mkSetDifference(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkSetDifference(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkSetDifference(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkSetComplement(ast: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkSetComplement(this.ptr, ast.ptr), this)
+    new Z3AST(Native.mkSetComplement(this.ptr, ast.ptr), this)
   }
 
   def mkSetMember(elem: Z3AST, set: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkSetMember(this.ptr, elem.ptr, set.ptr), this)
+    new Z3AST(Native.mkSetMember(this.ptr, elem.ptr, set.ptr), this)
   }
 
   def mkSetSubset(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkSetSubset(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkSetSubset(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkInt(value: Int, sort: Z3Sort) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkInt(this.ptr, value, sort.ptr), this)
+    new Z3AST(Native.mkInt(this.ptr, value, sort.ptr), this)
   }
   
   def mkReal(numerator: Int, denominator: Int) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkReal(this.ptr, numerator, denominator), this)
+    new Z3AST(Native.mkReal(this.ptr, numerator, denominator), this)
   }
 
   def mkNumeral(value: String, sort: Z3Sort) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkNumeral(this.ptr, value, sort.ptr), this)
+    new Z3AST(Native.mkNumeral(this.ptr, value, sort.ptr), this)
   }
 
   def mkPattern(args: Z3AST*) : Z3Pattern = {
-    new Z3Pattern(Z3Wrapper.mkPattern(this.ptr, args.size, toPtrArray(args)), this)
+    new Z3Pattern(Native.mkPattern(this.ptr, args.size, toPtrArray(args)), this)
   }
 
   def mkBound(index: Int, sort: Z3Sort) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkBound(this.ptr, index, sort.ptr), this)
+    new Z3AST(Native.mkBound(this.ptr, index, sort.ptr), this)
   }
 
-  def mkForAll(weight: Int, patterns: Seq[Z3Pattern], decls: Seq[(Z3Symbol,Z3Sort)], body: Z3AST) : Z3AST = mkQuantifier(true, weight, patterns, decls, body)
+  def mkForall(weight: Int, patterns: Seq[Z3Pattern], decls: Seq[(Z3Symbol,Z3Sort)], body: Z3AST) : Z3AST = mkQuantifier(true, weight, patterns, decls, body)
 
   def mkExists(weight: Int, patterns: Seq[Z3Pattern], decls: Seq[(Z3Symbol,Z3Sort)], body: Z3AST) : Z3AST = mkQuantifier(false, weight, patterns, decls, body)
 
   def mkQuantifier(isForAll: Boolean, weight: Int, patterns: Seq[Z3Pattern], decls: Seq[(Z3Symbol,Z3Sort)], body: Z3AST) : Z3AST = {
     val (declSyms, declSorts) = decls.unzip
     new Z3AST(
-      Z3Wrapper.mkQuantifier(
+      Native.mkQuantifier(
         this.ptr,
         isForAll,
         weight,
@@ -613,155 +580,155 @@ sealed class Z3Context(val config: Z3Config) {
   }
 
   def mkBVSort(size: Int) : Z3Sort = {
-    new Z3Sort(Z3Wrapper.mkBVSort(this.ptr, size), this)
+    new Z3Sort(Native.mkBvSort(this.ptr, size), this)
   }
 
   def mkBVNot(ast: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkBVNot(this.ptr, ast.ptr), this)
+    new Z3AST(Native.mkBvnot(this.ptr, ast.ptr), this)
   }
 
   def mkBVRedAnd(ast: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkBVRedAnd(this.ptr, ast.ptr), this)
+    new Z3AST(Native.mkBvredand(this.ptr, ast.ptr), this)
   }
 
   def mkBVRedOr(ast: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkBVRedOr(this.ptr, ast.ptr), this)
+    new Z3AST(Native.mkBvredor(this.ptr, ast.ptr), this)
   }
 
   def mkBVAnd(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkBVAnd(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkBvand(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkBVOr(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkBVOr(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkBvor(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkBVXor(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkBVXor(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkBvxor(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkBVNand(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkBVNand(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkBvnand(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkBVNor(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkBVNor(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkBvnor(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkBVXnor(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkBVXnor(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkBvxnor(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkBVNeg(ast: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkBVNeg(this.ptr, ast.ptr), this)
+    new Z3AST(Native.mkBvneg(this.ptr, ast.ptr), this)
   }
 
   def mkBVAdd(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkBVAdd(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkBvadd(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkBVSub(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkBVSub(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkBvsub(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkBVMul(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkBVMul(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkBvmul(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkBVUdiv(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkBVUdiv(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkBvudiv(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkBVSdiv(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkBVSdiv(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkBvsdiv(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkBVUrem(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkBVUrem(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkBvurem(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkBVSrem(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkBVSrem(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkBvsrem(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkBVSmod(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkBVSmod(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkBvsmod(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkBVUlt(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkBVUlt(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkBvult(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkBVSlt(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkBVSlt(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkBvslt(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkBVUle(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkBVUle(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkBvule(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkBVSle(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkBVSle(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkBvsle(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkBVUgt(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkBVUgt(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkBvugt(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkBVSgt(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkBVSgt(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkBvsgt(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkBVUge(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkBVUge(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkBvuge(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkBVSge(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkBVSge(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkBvsge(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkConcat(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkConcat(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkConcat(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkExtract(high: Int, low: Int, ast: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkExtract(this.ptr, high, low, ast.ptr), this)
+    new Z3AST(Native.mkExtract(this.ptr, high, low, ast.ptr), this)
   }
 
   def mkSignExt(extraSize: Int, ast: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkSignExt(this.ptr, extraSize, ast.ptr), this)
+    new Z3AST(Native.mkSignExt(this.ptr, extraSize, ast.ptr), this)
   }
 
   def mkZeroExt(extraSize: Int, ast: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkZeroExt(this.ptr, extraSize, ast.ptr), this)
+    new Z3AST(Native.mkZeroExt(this.ptr, extraSize, ast.ptr), this)
   }
 
   def mkBVShl(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkBVShl(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkBvshl(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkBVLshr(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkBVLshr(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkBvlshr(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkBVAshr(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkBVAshr(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkBvashr(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkExtRotateLeft(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkExtRotateLeft(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkExtRotateLeft(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkExtRotateRight(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkExtRotateRight(this.ptr, ast1.ptr, ast2.ptr), this)
+    new Z3AST(Native.mkExtRotateRight(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def mkBVAddNoOverflow(ast1: Z3AST, ast2: Z3AST, isSigned: Boolean) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkBVAddNoOverflow(this.ptr, ast1.ptr, ast2.ptr, isSigned), this)
+    new Z3AST(Native.mkBvaddNoOverflow(this.ptr, ast1.ptr, ast2.ptr, isSigned), this)
   }
 
   def getSymbolKind(symbol: Z3Symbol) : Z3SymbolKind[_] = {
-    Z3Wrapper.getSymbolKind(this.ptr, symbol.ptr) match {
+    Native.getSymbolKind(this.ptr, symbol.ptr) match {
       case 0 => Z3IntSymbol(getSymbolInt(symbol))
       case 1 => Z3StringSymbol(getSymbolString(symbol))
       case other => error("Z3_get_symbol_kind returned an unknown value : " + other)
@@ -769,133 +736,342 @@ sealed class Z3Context(val config: Z3Config) {
   }
 
   private[z3] def getSymbolInt(symbol: Z3Symbol) : Int = {
-    Z3Wrapper.getSymbolInt(this.ptr, symbol.ptr)
+    Native.getSymbolInt(this.ptr, symbol.ptr)
   }
 
   private[z3] def getSymbolString(symbol: Z3Symbol) : String = {
-    Z3Wrapper.getSymbolString(this.ptr, symbol.ptr)
+    Native.getSymbolString(this.ptr, symbol.ptr)
   }
 
   def getASTKind(ast: Z3AST) : Z3ASTKind = {
-    Z3Wrapper.getASTKind(this.ptr, ast.ptr) match {
-      case 0 =>
+    Z3_ast_kind.fromInt(Native.getAstKind(this.ptr, ast.ptr)) match {
+      case Z3_ast_kind.Z3_NUMERAL_AST =>
         if (getSort(ast).isRealSort) getNumeralReal(ast)
         else getNumeralInt(ast)
 
-      case 1 => {
+      case Z3_ast_kind.Z3_APP_AST =>
         val numArgs = getAppNumArgs(ast)
         val args = (Seq.tabulate(numArgs)){ i => getAppArg(ast, i) }
         Z3AppAST(getAppDecl(ast, numArgs), args)
-      }
-      case 2 => {
+
+      case Z3_ast_kind.Z3_VAR_AST =>
         val index = getIndexValue(ast)
         Z3VarAST(index)
-      }
-      case 3 => {
+
+      case Z3_ast_kind.Z3_QUANTIFIER_AST =>
         val body = getQuantifierBody(ast)
         val forall = isQuantifierForall(ast)
         val numVars = getQuantifierNumBound(ast)
         val varSymbols = (0 to numVars-1).map(getQuantifierBoundName(ast, _))
-        val varNames = varSymbols.map(x => getSymbolKind(x) match { case Z3IntSymbol(x) => "#" + x.toString(); case Z3StringSymbol(s) => s})
+        val varNames = varSymbols.map(x => getSymbolKind(x) match {
+          case Z3IntSymbol(x) => "#" + x.toString()
+          case Z3StringSymbol(s) => s
+        })
         Z3QuantifierAST(forall, varNames, body)
-      }
+
+      case Z3_ast_kind.Z3_SORT_AST =>
+        Z3SortAST(getSort(ast))
+
+      case Z3_ast_kind.Z3_FUNC_DECL_AST =>
+        val arity = Native.getDomainSize(this.ptr, ast.ptr)
+        Z3FuncDeclAST(new Z3FuncDecl(ast.ptr, arity, this))
+
       case _ => Z3UnknownAST
     }
   }
 
   def getIndexValue(ast: Z3AST) : Int = {
-    return Z3Wrapper.getIndexValue(this.ptr, ast.ptr)
+    return Native.getIndexValue(this.ptr, ast.ptr)
   }
 
   def isQuantifierForall(ast: Z3AST) : Boolean = {
-    return Z3Wrapper.isQuantifierForall(this.ptr, ast.ptr)
+    return Native.isQuantifierForall(this.ptr, ast.ptr)
   }
 
   def getQuantifierBody(ast: Z3AST) : Z3AST = {
-    return new Z3AST(Z3Wrapper.getQuantifierBody(this.ptr, ast.ptr), this)
+    return new Z3AST(Native.getQuantifierBody(this.ptr, ast.ptr), this)
   }
 
   def getQuantifierBoundName(ast: Z3AST, i: Int) : Z3Symbol = {
-    return new Z3Symbol(Z3Wrapper.getQuantifierBoundName(this.ptr, ast.ptr, i), this)
+    return new Z3Symbol(Native.getQuantifierBoundName(this.ptr, ast.ptr, i), this)
   }
 
   def getQuantifierNumBound(ast: Z3AST) : Int = {
-    return Z3Wrapper.getQuantifierNumBound(this.ptr, ast.ptr)
+    return Native.getQuantifierNumBound(this.ptr, ast.ptr)
   }
 
   def getDeclKind(funcDecl: Z3FuncDecl) : Z3DeclKind.Value = {
     import Z3DeclKind._
 
-    Z3Wrapper.getDeclKind(this.ptr, funcDecl.ptr) match {
-      case  0 => OpTrue 
-      case  1 => OpFalse 
-      case  2 => OpEq 
-      case  3 => OpDistinct 
-      case  4 => OpITE 
-      case  5 => OpAnd 
-      case  6 => OpOr 
-      case  7 => OpIff 
-      case  8 => OpXor 
-      case  9 => OpNot 
-      case 10 => OpImplies 
-      case 11 => OpANum 
-      case 12 => OpLE 
-      case 13 => OpGE 
-      case 14 => OpLT 
-      case 15 => OpGT 
-      case 16 => OpAdd 
-      case 17 => OpSub 
-      case 18 => OpUMinus 
-      case 19 => OpMul 
-      case 20 => OpDiv 
-      case 21 => OpIDiv 
-      case 22 => OpRem 
-      case 23 => OpMod 
-      case 24 => OpToReal 
-      case 25 => OpToInt 
-      case 26 => OpIsInt 
-      case 27 => OpStore 
-      case 28 => OpSelect 
-      case 29 => OpConstArray 
-      case 30 => OpArrayDefault 
-      case 31 => OpArrayMap 
-      case 32 => OpSetUnion 
-      case 33 => OpSetIntersect 
-      case 34 => OpSetDifference 
-      case 35 => OpSetComplement 
-      case 36 => OpSetSubset 
-      case 37 => OpAsArray 
-      case 1000 => OpUninterpreted
-      case 9999 => Other 
+    val kind = Native.getDeclKind(this.ptr, funcDecl.ptr)
+    if (kind == 9999) Other else (Z3_decl_kind.fromInt(kind) match {
+      case Z3_decl_kind.Z3_OP_TRUE  => OpTrue 
+      case Z3_decl_kind.Z3_OP_FALSE => OpFalse 
+      case Z3_decl_kind.Z3_OP_EQ => OpEq 
+      case Z3_decl_kind.Z3_OP_DISTINCT => OpDistinct 
+      case Z3_decl_kind.Z3_OP_ITE => OpITE 
+      case Z3_decl_kind.Z3_OP_AND => OpAnd 
+      case Z3_decl_kind.Z3_OP_OR => OpOr 
+      case Z3_decl_kind.Z3_OP_IFF => OpIff 
+      case Z3_decl_kind.Z3_OP_XOR => OpXor 
+      case Z3_decl_kind.Z3_OP_NOT => OpNot 
+      case Z3_decl_kind.Z3_OP_IMPLIES => OpImplies 
+      case Z3_decl_kind.Z3_OP_OEQ => OpOEq
+      case Z3_decl_kind.Z3_OP_INTERP => OpInterp
+
+      case Z3_decl_kind.Z3_OP_ANUM => OpANum 
+      case Z3_decl_kind.Z3_OP_AGNUM => OpAGNum 
+      case Z3_decl_kind.Z3_OP_LE => OpLE 
+      case Z3_decl_kind.Z3_OP_GE => OpGE 
+      case Z3_decl_kind.Z3_OP_LT => OpLT 
+      case Z3_decl_kind.Z3_OP_GT => OpGT 
+      case Z3_decl_kind.Z3_OP_ADD => OpAdd 
+      case Z3_decl_kind.Z3_OP_SUB => OpSub 
+      case Z3_decl_kind.Z3_OP_UMINUS => OpUMinus 
+      case Z3_decl_kind.Z3_OP_MUL => OpMul 
+      case Z3_decl_kind.Z3_OP_DIV => OpDiv 
+      case Z3_decl_kind.Z3_OP_IDIV => OpIDiv 
+      case Z3_decl_kind.Z3_OP_REM => OpRem 
+      case Z3_decl_kind.Z3_OP_MOD => OpMod 
+      case Z3_decl_kind.Z3_OP_TO_REAL => OpToReal 
+      case Z3_decl_kind.Z3_OP_TO_INT => OpToInt 
+      case Z3_decl_kind.Z3_OP_IS_INT => OpIsInt 
+      case Z3_decl_kind.Z3_OP_POWER => OpPower 
+
+      case Z3_decl_kind.Z3_OP_STORE => OpStore 
+      case Z3_decl_kind.Z3_OP_SELECT => OpSelect 
+      case Z3_decl_kind.Z3_OP_CONST_ARRAY => OpConstArray 
+      case Z3_decl_kind.Z3_OP_ARRAY_MAP => OpArrayMap
+      case Z3_decl_kind.Z3_OP_ARRAY_DEFAULT => OpArrayDefault
+      case Z3_decl_kind.Z3_OP_SET_UNION => OpSetUnion 
+      case Z3_decl_kind.Z3_OP_SET_INTERSECT => OpSetIntersect 
+      case Z3_decl_kind.Z3_OP_SET_DIFFERENCE => OpSetDifference 
+      case Z3_decl_kind.Z3_OP_SET_COMPLEMENT => OpSetComplement 
+      case Z3_decl_kind.Z3_OP_SET_SUBSET => OpSetSubset
+      case Z3_decl_kind.Z3_OP_AS_ARRAY => OpAsArray 
+      case Z3_decl_kind.Z3_OP_ARRAY_EXT => OpArrayExt 
+
+      case Z3_decl_kind.Z3_OP_BNUM => OpBNum
+      case Z3_decl_kind.Z3_OP_BIT1 => OpBit1
+      case Z3_decl_kind.Z3_OP_BIT0 => OpBit0
+      case Z3_decl_kind.Z3_OP_BNEG => OpBNeg
+      case Z3_decl_kind.Z3_OP_BADD => OpBAdd
+      case Z3_decl_kind.Z3_OP_BSUB => OpBSub
+      case Z3_decl_kind.Z3_OP_BMUL => OpBMul
+
+      case Z3_decl_kind.Z3_OP_BSDIV => OpBSDiv
+      case Z3_decl_kind.Z3_OP_BUDIV => OpBUDiv
+      case Z3_decl_kind.Z3_OP_BSREM => OpBSRem
+      case Z3_decl_kind.Z3_OP_BUREM => OpBURem
+      case Z3_decl_kind.Z3_OP_BSMOD => OpBSMod
+
+      case Z3_decl_kind.Z3_OP_ULEQ => OpULE
+      case Z3_decl_kind.Z3_OP_SLEQ => OpSLE
+      case Z3_decl_kind.Z3_OP_UGEQ => OpUGE
+      case Z3_decl_kind.Z3_OP_SGEQ => OpSGE
+      case Z3_decl_kind.Z3_OP_ULT => OpULT
+      case Z3_decl_kind.Z3_OP_SLT => OpSLT
+      case Z3_decl_kind.Z3_OP_UGT => OpUGT
+      case Z3_decl_kind.Z3_OP_SGT => OpSGT
+
+      case Z3_decl_kind.Z3_OP_BAND => OpBAnd
+      case Z3_decl_kind.Z3_OP_BOR => OpBOr
+      case Z3_decl_kind.Z3_OP_BNOT => OpBNot
+      case Z3_decl_kind.Z3_OP_BXOR => OpBXor
+      case Z3_decl_kind.Z3_OP_BNAND => OpBNand
+      case Z3_decl_kind.Z3_OP_BNOR => OpBNor
+      case Z3_decl_kind.Z3_OP_BXNOR => OpBXnor
+
+      case Z3_decl_kind.Z3_OP_CONCAT => OpConcat
+      case Z3_decl_kind.Z3_OP_SIGN_EXT => OpSignExt
+      case Z3_decl_kind.Z3_OP_ZERO_EXT => OpZeroExt
+      case Z3_decl_kind.Z3_OP_EXTRACT => OpExtract
+      case Z3_decl_kind.Z3_OP_REPEAT => OpRepeat
+
+      case Z3_decl_kind.Z3_OP_BREDOR => OpBRedOr
+      case Z3_decl_kind.Z3_OP_BREDAND => OpBRedAnd
+      case Z3_decl_kind.Z3_OP_BCOMP => OpBComp
+
+      case Z3_decl_kind.Z3_OP_BSHL => OpBShl
+      case Z3_decl_kind.Z3_OP_BLSHR => OpBLshr
+      case Z3_decl_kind.Z3_OP_BASHR => OpBAshr
+      case Z3_decl_kind.Z3_OP_ROTATE_LEFT => OpRotateLeft
+      case Z3_decl_kind.Z3_OP_ROTATE_RIGHT => OpRotateRight
+      case Z3_decl_kind.Z3_OP_EXT_ROTATE_LEFT => OpExtRotateLeft
+      case Z3_decl_kind.Z3_OP_EXT_ROTATE_RIGHT => OpExtRotateRight
+
+      case Z3_decl_kind.Z3_OP_INT2BV => OpIntToBV
+      case Z3_decl_kind.Z3_OP_BV2INT => OpBVToInt
+      case Z3_decl_kind.Z3_OP_CARRY => OpCarry
+      case Z3_decl_kind.Z3_OP_XOR3 => OpXor3
+
+      case Z3_decl_kind.Z3_OP_PR_UNDEF => OpPrUndef
+      case Z3_decl_kind.Z3_OP_PR_TRUE => OpPrTrue
+      case Z3_decl_kind.Z3_OP_PR_ASSERTED => OpPrAsserted
+      case Z3_decl_kind.Z3_OP_PR_GOAL => OpPrGoal
+      case Z3_decl_kind.Z3_OP_PR_MODUS_PONENS => OpPrModusPonens
+      case Z3_decl_kind.Z3_OP_PR_REFLEXIVITY => OpPrReflexivity
+      case Z3_decl_kind.Z3_OP_PR_SYMMETRY => OpPrSymmetry
+      case Z3_decl_kind.Z3_OP_PR_TRANSITIVITY => OpPrTransitivity
+      case Z3_decl_kind.Z3_OP_PR_TRANSITIVITY_STAR => OpPrTransitivityStar
+      case Z3_decl_kind.Z3_OP_PR_MONOTONICITY => OpPrMonotonicity
+      case Z3_decl_kind.Z3_OP_PR_QUANT_INTRO => OpPrQuantIntro
+      case Z3_decl_kind.Z3_OP_PR_DISTRIBUTIVITY => OpPrDistributivity
+      case Z3_decl_kind.Z3_OP_PR_AND_ELIM => OpPrAndElim
+      case Z3_decl_kind.Z3_OP_PR_NOT_OR_ELIM => OpPrNotOrElim
+      case Z3_decl_kind.Z3_OP_PR_REWRITE => OpPrRewrite
+      case Z3_decl_kind.Z3_OP_PR_REWRITE_STAR => OpPrRewriteStar
+      case Z3_decl_kind.Z3_OP_PR_PULL_QUANT => OpPrPullQuant
+      case Z3_decl_kind.Z3_OP_PR_PULL_QUANT_STAR => OpPrPullQuantStar
+      case Z3_decl_kind.Z3_OP_PR_PUSH_QUANT => OpPrPushQuant
+      case Z3_decl_kind.Z3_OP_PR_ELIM_UNUSED_VARS => OpPrElimUnusedVars
+      case Z3_decl_kind.Z3_OP_PR_DER => OpPrDER
+      case Z3_decl_kind.Z3_OP_PR_QUANT_INST => OpPrQuantInst
+      case Z3_decl_kind.Z3_OP_PR_HYPOTHESIS => OpPrHypothesis
+      case Z3_decl_kind.Z3_OP_PR_LEMMA => OpPrLemma
+      case Z3_decl_kind.Z3_OP_PR_UNIT_RESOLUTION => OpPrUnitResolution
+      case Z3_decl_kind.Z3_OP_PR_IFF_TRUE => OpPrIffTrue
+      case Z3_decl_kind.Z3_OP_PR_IFF_FALSE => OpPrIffFalse
+      case Z3_decl_kind.Z3_OP_PR_COMMUTATIVITY => OpPrCommutativity
+      case Z3_decl_kind.Z3_OP_PR_DEF_AXIOM => OpPrDefAxiom
+      case Z3_decl_kind.Z3_OP_PR_DEF_INTRO => OpPrDefIntro
+      case Z3_decl_kind.Z3_OP_PR_APPLY_DEF => OpPrApplyDef
+      case Z3_decl_kind.Z3_OP_PR_IFF_OEQ => OpPrIffOEq
+      case Z3_decl_kind.Z3_OP_PR_NNF_POS => OpPrNNFPos
+      case Z3_decl_kind.Z3_OP_PR_NNF_NEG => OpPrNNFNeg
+      case Z3_decl_kind.Z3_OP_PR_NNF_STAR => OpPrNNFStar
+      case Z3_decl_kind.Z3_OP_PR_CNF_STAR => OpPrCNFStar
+      case Z3_decl_kind.Z3_OP_PR_SKOLEMIZE => OpPrSkolemize
+      case Z3_decl_kind.Z3_OP_PR_MODUS_PONENS_OEQ => OpPrModusPonensOEq
+      case Z3_decl_kind.Z3_OP_PR_TH_LEMMA => OpPrThLemma
+      case Z3_decl_kind.Z3_OP_PR_HYPER_RESOLVE => OpPrHyperResolve
+
+      case Z3_decl_kind.Z3_OP_RA_STORE => OpRAStore
+      case Z3_decl_kind.Z3_OP_RA_EMPTY => OpRAEmpty
+      case Z3_decl_kind.Z3_OP_RA_IS_EMPTY => OpRAIsEmpty
+      case Z3_decl_kind.Z3_OP_RA_JOIN => OpRAJoin
+      case Z3_decl_kind.Z3_OP_RA_UNION => OpRAUnion
+      case Z3_decl_kind.Z3_OP_RA_WIDEN => OpRAWiden
+      case Z3_decl_kind.Z3_OP_RA_PROJECT => OpRAProject
+      case Z3_decl_kind.Z3_OP_RA_FILTER => OpRAFilter
+      case Z3_decl_kind.Z3_OP_RA_NEGATION_FILTER => OpRANegationFilter
+      case Z3_decl_kind.Z3_OP_RA_RENAME => OpRARename
+      case Z3_decl_kind.Z3_OP_RA_COMPLEMENT => OpRAComplement
+      case Z3_decl_kind.Z3_OP_RA_SELECT => OpRASelect
+      case Z3_decl_kind.Z3_OP_RA_CLONE => OpRAClone
+      case Z3_decl_kind.Z3_OP_FD_CONSTANT => OpFdConstant
+      case Z3_decl_kind.Z3_OP_FD_LT => OpFdLT
+
+      case Z3_decl_kind.Z3_OP_SEQ_UNIT => OpSeqUnit
+      case Z3_decl_kind.Z3_OP_SEQ_EMPTY => OpSeqEmpty
+      case Z3_decl_kind.Z3_OP_SEQ_CONCAT => OpSeqConcat
+      case Z3_decl_kind.Z3_OP_SEQ_PREFIX => OpSeqPrefix
+      case Z3_decl_kind.Z3_OP_SEQ_SUFFIX => OpSeqSuffix
+      case Z3_decl_kind.Z3_OP_SEQ_CONTAINS => OpSeqContains
+      case Z3_decl_kind.Z3_OP_SEQ_EXTRACT => OpSeqExtract
+      case Z3_decl_kind.Z3_OP_SEQ_REPLACE => OpSeqReplace
+      case Z3_decl_kind.Z3_OP_SEQ_AT => OpSeqAt
+      case Z3_decl_kind.Z3_OP_SEQ_LENGTH => OpSeqLength
+      case Z3_decl_kind.Z3_OP_SEQ_INDEX => OpSeqIndex
+      case Z3_decl_kind.Z3_OP_SEQ_TO_RE => OpSeqToRE
+      case Z3_decl_kind.Z3_OP_SEQ_IN_RE => OpSeqInRE
+
+      case Z3_decl_kind.Z3_OP_RE_PLUS => OpREPlus
+      case Z3_decl_kind.Z3_OP_RE_STAR => OpREStar
+      case Z3_decl_kind.Z3_OP_RE_OPTION => OpREOption
+      case Z3_decl_kind.Z3_OP_RE_CONCAT => OpREConcat
+      case Z3_decl_kind.Z3_OP_RE_UNION => OpREUnion
+
+      case Z3_decl_kind.Z3_OP_LABEL => OpLabel
+      case Z3_decl_kind.Z3_OP_LABEL_LIT => OpLabelLit
+
+      case Z3_decl_kind.Z3_OP_DT_CONSTRUCTOR => OpDTConstructor
+      case Z3_decl_kind.Z3_OP_DT_RECOGNISER => OpDTRecogniser
+      case Z3_decl_kind.Z3_OP_DT_ACCESSOR => OpDTAccessor
+      case Z3_decl_kind.Z3_OP_DT_UPDATE_FIELD => OpDTUpdateField
+
+      case Z3_decl_kind.Z3_OP_PB_AT_MOST => OpPBAtMost
+      case Z3_decl_kind.Z3_OP_PB_LE => OpPBLE
+      case Z3_decl_kind.Z3_OP_PB_GE => OpPBGE
+
+      case Z3_decl_kind.Z3_OP_FPA_RM_NEAREST_TIES_TO_EVEN => OpFPARmNearestTiesToEven
+      case Z3_decl_kind.Z3_OP_FPA_RM_NEAREST_TIES_TO_AWAY => OpFPARmNearestTiesToAway
+      case Z3_decl_kind.Z3_OP_FPA_RM_TOWARD_POSITIVE => OpFPARmTowardPositive
+      case Z3_decl_kind.Z3_OP_FPA_RM_TOWARD_NEGATIVE => OpFPARmTowardNegative
+      case Z3_decl_kind.Z3_OP_FPA_RM_TOWARD_ZERO => OpFPARmTowardZero
+
+      case Z3_decl_kind.Z3_OP_FPA_NUM => OpFPANum
+      case Z3_decl_kind.Z3_OP_FPA_PLUS_INF => OpFPAPlusInf
+      case Z3_decl_kind.Z3_OP_FPA_MINUS_INF => OpFPAMinusInf
+      case Z3_decl_kind.Z3_OP_FPA_NAN => OpFPANaN
+      case Z3_decl_kind.Z3_OP_FPA_PLUS_ZERO => OpFPAPlusZero
+      case Z3_decl_kind.Z3_OP_FPA_MINUS_ZERO => OpFPAMinusZero
+
+      case Z3_decl_kind.Z3_OP_FPA_ADD => OpFPAAdd
+      case Z3_decl_kind.Z3_OP_FPA_SUB => OpFPASub
+      case Z3_decl_kind.Z3_OP_FPA_NEG => OpFPANeg
+      case Z3_decl_kind.Z3_OP_FPA_MUL => OpFPAMul
+      case Z3_decl_kind.Z3_OP_FPA_DIV => OpFPADiv
+      case Z3_decl_kind.Z3_OP_FPA_REM => OpFPARem
+      case Z3_decl_kind.Z3_OP_FPA_ABS => OpFPAAbs
+      case Z3_decl_kind.Z3_OP_FPA_MIN => OpFPAMin
+      case Z3_decl_kind.Z3_OP_FPA_MAX => OpFPAMax
+      case Z3_decl_kind.Z3_OP_FPA_FMA => OpFPAFMA
+      case Z3_decl_kind.Z3_OP_FPA_SQRT => OpFPASqrt
+      case Z3_decl_kind.Z3_OP_FPA_ROUND_TO_INTEGRAL => OpFPARoundToIntegral
+
+      case Z3_decl_kind.Z3_OP_FPA_EQ => OpFPAEq
+      case Z3_decl_kind.Z3_OP_FPA_LT => OpFPALT
+      case Z3_decl_kind.Z3_OP_FPA_GT => OpFPAGT
+      case Z3_decl_kind.Z3_OP_FPA_LE => OpFPALE
+      case Z3_decl_kind.Z3_OP_FPA_GE => OpFPAGE
+      case Z3_decl_kind.Z3_OP_FPA_IS_NAN => OpFPAIsNaN
+      case Z3_decl_kind.Z3_OP_FPA_IS_INF => OpFPAIsInf
+      case Z3_decl_kind.Z3_OP_FPA_IS_ZERO => OpFPAIsZero
+      case Z3_decl_kind.Z3_OP_FPA_IS_NORMAL => OpFPAIsNormal
+      case Z3_decl_kind.Z3_OP_FPA_IS_SUBNORMAL => OpFPAIsSubnormal
+      case Z3_decl_kind.Z3_OP_FPA_IS_NEGATIVE => OpFPAIsNegative
+      case Z3_decl_kind.Z3_OP_FPA_IS_POSITIVE => OpFPAIsPositive
+
+      case Z3_decl_kind.Z3_OP_FPA_FP => OpFPAFP
+      case Z3_decl_kind.Z3_OP_FPA_TO_FP => OpFPAToFP
+      case Z3_decl_kind.Z3_OP_FPA_TO_FP_UNSIGNED => OpFPAToFPUnsigned
+      case Z3_decl_kind.Z3_OP_FPA_TO_UBV => OpFPAToUBV
+      case Z3_decl_kind.Z3_OP_FPA_TO_SBV => OpFPAToSBV
+      case Z3_decl_kind.Z3_OP_FPA_TO_REAL => OpFPAToReal
+
+      case Z3_decl_kind.Z3_OP_FPA_TO_IEEE_BV => OpFPAToIEEEBV
+
+      case Z3_decl_kind.Z3_OP_UNINTERPRETED => OpUninterpreted
       case other => error("Unhandled int code for Z3KindDecl: " + other)
-    }
+    })
   }
 
   def getAppDecl(ast: Z3AST, arity: Int = -1) : Z3FuncDecl = {
-    val ad = Z3Wrapper.getAppDecl(this.ptr, ast.ptr)
-    val ary = if(arity > -1) arity else Z3Wrapper.getDomainSize(this.ptr, ad)
+    val ad = Native.getAppDecl(this.ptr, ast.ptr)
+    val ary = if(arity > -1) arity else Native.getDomainSize(this.ptr, ad)
     new Z3FuncDecl(ad, ary, this)
   }
 
   private def getAppNumArgs(ast: Z3AST) : Int = {
-    Z3Wrapper.getAppNumArgs(this.ptr, ast.ptr)
+    Native.getAppNumArgs(this.ptr, ast.ptr)
   }
 
   private def getAppArg(ast: Z3AST, i: Int) : Z3AST = {
-    new Z3AST(Z3Wrapper.getAppArg(this.ptr, ast.ptr, i), this)
+    new Z3AST(Native.getAppArg(this.ptr, ast.ptr, i), this)
   }
 
   def getDeclName(fd: Z3FuncDecl) : Z3Symbol = {
-    new Z3Symbol(Z3Wrapper.getDeclName(this.ptr, fd.ptr), this)
+    new Z3Symbol(Native.getDeclName(this.ptr, fd.ptr), this)
   }
 
   // TODO arity
   def getDeclFuncDeclParameter(fd: Z3FuncDecl, idx: Int, arity: Int = 1) : Z3FuncDecl = {
-    new Z3FuncDecl(Z3Wrapper.getDeclFuncDeclParameter(this.ptr, fd.ptr, idx), arity, this)
+    new Z3FuncDecl(Native.getDeclFuncDeclParameter(this.ptr, fd.ptr, idx), arity, this)
   }
 
   def getSort(ast: Z3AST) : Z3Sort = {
-    new Z3Sort(Z3Wrapper.getSort(this.ptr, ast.ptr), this)
+    new Z3Sort(Native.getSort(this.ptr, ast.ptr), this)
   }
 
   def getDomainSize(funcDecl: Z3FuncDecl) : Int = funcDecl.arity
@@ -904,16 +1080,16 @@ sealed class Z3Context(val config: Z3Config) {
     if(funcDecl.arity <= i)
       throw new IllegalArgumentException("Calling getDomain with too large index.")
 
-    new Z3Sort(Z3Wrapper.getDomain(this.ptr, funcDecl.ptr, i), this)
+    new Z3Sort(Native.getDomain(this.ptr, funcDecl.ptr, i), this)
   }
 
   def getRange(funcDecl: Z3FuncDecl) : Z3Sort = {
-    new Z3Sort(Z3Wrapper.getRange(this.ptr, funcDecl.ptr), this)
+    new Z3Sort(Native.getRange(this.ptr, funcDecl.ptr), this)
   }
 
   def getNumeralInt(ast: Z3AST) : Z3NumeralIntAST = {
-    val ip = new Z3Wrapper.IntPtr
-    val res = Z3Wrapper.getNumeralInt(this.ptr, ast.ptr, ip)
+    val ip = new Native.IntPtr
+    val res = Native.getNumeralInt(this.ptr, ast.ptr, ip)
     if(res)
       Z3NumeralIntAST(Some(ip.value))
     else
@@ -921,164 +1097,52 @@ sealed class Z3Context(val config: Z3Config) {
   }
 
   def getNumeralReal(ast: Z3AST) : Z3NumeralRealAST = {
-    val numZ3AST = new Z3AST(Z3Wrapper.getNumerator(this.ptr, ast.ptr), this)
-    val denZ3AST = new Z3AST(Z3Wrapper.getDenominator(this.ptr, ast.ptr), this)
-    val num = new BigInt(new BigInteger(Z3Wrapper.getNumeralString(this.ptr, numZ3AST.ptr)))
-    val den = new BigInt(new BigInteger(Z3Wrapper.getNumeralString(this.ptr, denZ3AST.ptr)))
+    val numZ3AST = new Z3AST(Native.getNumerator(this.ptr, ast.ptr), this)
+    val denZ3AST = new Z3AST(Native.getDenominator(this.ptr, ast.ptr), this)
+    val num = new BigInt(new BigInteger(Native.getNumeralString(this.ptr, numZ3AST.ptr)))
+    val den = new BigInt(new BigInteger(Native.getNumeralString(this.ptr, denZ3AST.ptr)))
     Z3NumeralRealAST(num, den)
   }
 
   def getBoolValue(ast: Z3AST) : Option[Boolean] = {
-    val res = i2ob(Z3Wrapper.getBoolValue(this.ptr, ast.ptr))
+    val res = i2ob(Native.getBoolValue(this.ptr, ast.ptr))
     res
-  }
-
-  // This is deprecated, we don't want to go directly through Contexts for
-  // this, but via Solver
-
-  private lazy val globalSolver = mkSolver()
-
-  @deprecated("You should go through Z3Solver via mkSolver first", "")
-  def push() : Unit = {
-    globalSolver.push()
-  }
-
-  @deprecated("You should go through Z3Solver via mkSolver first", "")
-  def pop(numScopes : Int = 1) : Unit = {
-    globalSolver.pop(numScopes)
-  }
-
-  @deprecated("You should go through Z3Solver via mkSolver first", "")
-  def getNumScopes() : Int = {
-    globalSolver.getNumScopes()
-  }
-
-  @deprecated("You should go through Z3Solver via mkSolver first", "")
-  def assertCnstr(ast: Z3AST) : Unit = {
-    globalSolver.assertCnstr(ast)
-  }
-
-  @deprecated("You should go through Z3Solver via mkSolver first", "")
-  def assertCnstr(tree : dsl.Tree[dsl.BoolSort]) : Unit = {
-    globalSolver.assertCnstr(tree.ast(this))
-  }
-
-  @deprecated("You should go through Z3Solver via mkSolver first", "")
-  def check() : Option[Boolean] = {
-    globalSolver.check()
-  }
-
-  @deprecated("You should go through Z3Solver via mkSolver first", "")
-  def checkAndGetModel() : (Option[Boolean],Z3Model) = {
-    globalSolver.checkAndGetModel()
-  }
-
-  @deprecated("You should go through Z3Solver via mkSolver first", "")
-  def checkAssumptions(assumptions: Z3AST*) : (Option[Boolean],Z3Model,Seq[Z3AST]) = {
-    val res   = globalSolver.checkAssumptions(assumptions : _*)
-    val model = if (res != Some(false)) globalSolver.getModel() else null
-    val core  = if (res != Some(true)) globalSolver.getUnsatCore().toSeq else Seq()
-
-    (res, model, core)
-  }
-
-  @deprecated("You should go through Z3Solver via mkSolver first", "")
-  def checkAndGetAllModels(): Iterator[Z3Model] = {
-    globalSolver.checkAndGetAllModels()
-  }
-
-  @deprecated("You should go through Z3Solver via mkSolver first", "")
-  def checkAndGetAllEventualModels(): Iterator[(Option[Boolean], Z3Model)] = {
-    globalSolver.checkAndGetAllEventualModels()
-  }
-
-  @deprecated("You should use Z3Solver.getReasonUnknown", "")
-  def getSearchFailure : Z3SearchFailure = {
-    Z3Wrapper.getSearchFailure(this.ptr) match {
-      case 0 => Z3NoFailure
-      case 1 => Z3Unknown
-      case 2 => Z3Timeout
-      case 3 => Z3MemoutWatermark
-      case 4 => Z3Canceled
-      case 5 => Z3NumConflicts
-      case 6 => Z3IncompleteTheory
-      case 7 => Z3Quantifiers
-      case _ => Z3Timeout
-    }
-  }
-
-  def mkLabel(symbol: Z3Symbol, polarity: Boolean, ast: Z3AST) : Z3AST = {
-    new Z3AST(Z3Wrapper.mkLabel(this.ptr, symbol.ptr, polarity, ast.ptr), this)
-  }
-
-//  def getRelevantLabels : Z3Literals = {
-//    new Z3Literals(Z3Wrapper.getRelevantLabels(this.ptr), this)
-//  }
-
-  def getRelevantLiterals : Z3Literals = {
-    new Z3Literals(Z3Wrapper.getRelevantLiterals(this.ptr), this)
-  }
-
-  def getGuessedLiterals : Z3Literals = {
-    new Z3Literals(Z3Wrapper.getGuessedLiterals(this.ptr), this)
-  }
-
-// in Z3Literals instead
-//  def delLiterals(lbls: Z3Literals) : Unit = {
-//    Z3Wrapper.delLiterals(this.ptr, lbls.ptr)
-//  }
-
-  def getNumLiterals(lbls: Z3Literals) : Int = {
-    Z3Wrapper.getNumLiterals(this.ptr, lbls.ptr)
-  }
-
-//  def getLabelSymbol(lbls: Z3Literals, idx: Int) : Z3Symbol = {
-//    new Z3Symbol(Z3Wrapper.getLabelSymbol(this.ptr, lbls.ptr, idx), this)
-//  }
-
-  def getLiteral(lbls: Z3Literals, idx: Int) : Z3AST = {
-    new Z3AST(Z3Wrapper.getLiteral(this.ptr, lbls.ptr, idx), this)
-  }
-
-  def disableLiteral(lbls: Z3Literals, idx: Int) : Unit = {
-    Z3Wrapper.disableLiteral(this.ptr, lbls.ptr, idx)
-  }
-
-  def blockLiterals(lbls: Z3Literals) : Unit = {
-    Z3Wrapper.blockLiterals(this.ptr, lbls.ptr)
   }
 
   // Parser interface
   private def parseSMTLIB(file: Boolean, str: String) : Unit = {
     if(file) {
-      Z3Wrapper.parseSMTLIBFile(this.ptr, str, 0, null, null, 0, null, null)
+      Native.parseSmtlibFile(this.ptr, str, 0, null, null, 0, null, null)
     } else {
-      Z3Wrapper.parseSMTLIBString(this.ptr, str, 0, null, null, 0, null, null)
+      Native.parseSmtlibString(this.ptr, str, 0, null, null, 0, null, null)
     }
   }
+
   private def parseSMTLIB2(file: Boolean, str: String) : Z3AST = {
     if(file) {
-      new Z3AST(Z3Wrapper.parseSMTLIB2File(this.ptr, str, 0, null, null, 0, null, null), this)
+      new Z3AST(Native.parseSmtlib2File(this.ptr, str, 0, null, null, 0, null, null), this)
     } else {
-      new Z3AST(Z3Wrapper.parseSMTLIB2String(this.ptr, str, 0, null, null, 0, null, null), this)
+      new Z3AST(Native.parseSmtlib2String(this.ptr, str, 0, null, null, 0, null, null), this)
     }
   }
+
   private def parseSMTLIB(file: Boolean, str: String, sorts: Map[Z3Symbol,Z3Sort], decls: Map[Z3Symbol,Z3FuncDecl]) : Unit = {
     val (sortNames, z3Sorts) = sorts.unzip
     val (declNames, z3Decls) = decls.unzip
     if(file) {
-      Z3Wrapper.parseSMTLIBFile(this.ptr, str, sorts.size, toPtrArray(sortNames), toPtrArray(z3Sorts), decls.size, toPtrArray(declNames), toPtrArray(z3Decls))
+      Native.parseSmtlibFile(this.ptr, str, sorts.size, toPtrArray(sortNames), toPtrArray(z3Sorts), decls.size, toPtrArray(declNames), toPtrArray(z3Decls))
     } else {
-      Z3Wrapper.parseSMTLIBString(this.ptr, str, sorts.size, toPtrArray(sortNames), toPtrArray(z3Sorts), decls.size, toPtrArray(declNames), toPtrArray(z3Decls))
+      Native.parseSmtlibString(this.ptr, str, sorts.size, toPtrArray(sortNames), toPtrArray(z3Sorts), decls.size, toPtrArray(declNames), toPtrArray(z3Decls))
     }
   }
+
   private def parseSMTLIB2(file: Boolean, str: String, sorts: Map[Z3Symbol,Z3Sort], decls: Map[Z3Symbol,Z3FuncDecl]) : Z3AST = {
     val (sortNames, z3Sorts) = sorts.unzip
     val (declNames, z3Decls) = decls.unzip
     if(file) {
-      new Z3AST(Z3Wrapper.parseSMTLIB2File(this.ptr, str, sorts.size, toPtrArray(sortNames), toPtrArray(z3Sorts), decls.size, toPtrArray(declNames), toPtrArray(z3Decls)), this)
+      new Z3AST(Native.parseSmtlib2File(this.ptr, str, sorts.size, toPtrArray(sortNames), toPtrArray(z3Sorts), decls.size, toPtrArray(declNames), toPtrArray(z3Decls)), this)
     } else {
-      new Z3AST(Z3Wrapper.parseSMTLIB2String(this.ptr, str, sorts.size, toPtrArray(sortNames), toPtrArray(z3Sorts), decls.size, toPtrArray(declNames), toPtrArray(z3Decls)), this)
+      new Z3AST(Native.parseSmtlib2String(this.ptr, str, sorts.size, toPtrArray(sortNames), toPtrArray(z3Sorts), decls.size, toPtrArray(declNames), toPtrArray(z3Decls)), this)
     }
   }
 
@@ -1122,12 +1186,12 @@ sealed class Z3Context(val config: Z3Config) {
   def getSMTLIBFormulas : Iterator[Z3AST] = {
     val ctx = this
     new Iterator[Z3AST] {
-      val total : Int = Z3Wrapper.getSMTLIBNumFormulas(ctx.ptr)
+      val total : Int = Native.getSmtlibNumFormulas(ctx.ptr)
       var returned : Int = 0
 
       override def hasNext : Boolean = (returned < total)
       override def next() : Z3AST = {
-        val toReturn = new Z3AST(Z3Wrapper.getSMTLIBFormula(ctx.ptr, returned), ctx)
+        val toReturn = new Z3AST(Native.getSmtlibFormula(ctx.ptr, returned), ctx)
         returned += 1
         toReturn
       }
@@ -1138,12 +1202,12 @@ sealed class Z3Context(val config: Z3Config) {
   def getSMTLIBAssumptions : Iterator[Z3AST] = {
     val ctx = this
     new Iterator[Z3AST] {
-      val total : Int = Z3Wrapper.getSMTLIBNumAssumptions(ctx.ptr)
+      val total : Int = Native.getSmtlibNumAssumptions(ctx.ptr)
       var returned : Int = 0
 
       override def hasNext : Boolean = (returned < total)
       override def next() : Z3AST = {
-        val toReturn = new Z3AST(Z3Wrapper.getSMTLIBAssumption(ctx.ptr, returned), ctx)
+        val toReturn = new Z3AST(Native.getSmtlibAssumption(ctx.ptr, returned), ctx)
         returned += 1
         toReturn
       }
@@ -1154,14 +1218,14 @@ sealed class Z3Context(val config: Z3Config) {
   def getSMTLIBDecls : Iterator[Z3FuncDecl] = {
     val ctx = this
     new Iterator[Z3FuncDecl] {
-      val total : Int = Z3Wrapper.getSMTLIBNumDecls(ctx.ptr)
+      val total : Int = Native.getSmtlibNumDecls(ctx.ptr)
       var returned : Int = 0
 
       override def hasNext : Boolean = (returned < total)
       override def next() : Z3FuncDecl = {
-        val fdPtr = Z3Wrapper.getSMTLIBDecl(ctx.ptr, returned)
-        val arity = Z3Wrapper.getDomainSize(ctx.ptr, fdPtr)
-        val toReturn = new Z3FuncDecl(Z3Wrapper.getSMTLIBDecl(ctx.ptr, returned), arity, ctx)
+        val fdPtr = Native.getSmtlibDecl(ctx.ptr, returned)
+        val arity = Native.getDomainSize(ctx.ptr, fdPtr)
+        val toReturn = new Z3FuncDecl(Native.getSmtlibDecl(ctx.ptr, returned), arity, ctx)
         returned += 1
         toReturn
       }
@@ -1172,12 +1236,12 @@ sealed class Z3Context(val config: Z3Config) {
   def getSMTLIBSorts : Iterator[Z3Sort] = {
     val ctx = this
     new Iterator[Z3Sort] {
-      val total : Int = Z3Wrapper.getSMTLIBNumSorts(ctx.ptr)
+      val total : Int = Native.getSmtlibNumSorts(ctx.ptr)
       var returned : Int = 0
 
       override def hasNext : Boolean = (returned < total)
       override def next() : Z3Sort = {
-        val toReturn = new Z3Sort(Z3Wrapper.getSMTLIBSort(ctx.ptr, returned), ctx)
+        val toReturn = new Z3Sort(Native.getSmtlibSort(ctx.ptr, returned), ctx)
         returned += 1
         toReturn
       }
@@ -1187,7 +1251,7 @@ sealed class Z3Context(val config: Z3Config) {
   def substitute(ast : Z3AST, from : Array[Z3AST], to : Array[Z3AST]) : Z3AST = {
     if (from.length != to.length)
       throw new IllegalArgumentException("from and to must have the same length");
-    return new Z3AST(Z3Wrapper.substitute(this.ptr, ast.ptr, from.length, from.map(_.ptr), to.map(_.ptr)), this);
+    return new Z3AST(Native.substitute(this.ptr, ast.ptr, from.length, from.map(_.ptr), to.map(_.ptr)), this);
   }
 
   def setAstPrintMode(printMode : Z3Context.AstPrintMode.AstPrintMode) = {
@@ -1198,11 +1262,11 @@ sealed class Z3Context(val config: Z3Config) {
       case Z3Context.AstPrintMode.Z3_PRINT_SMTLIB_COMPLIANT => mode = 2
       case Z3Context.AstPrintMode.Z3_PRINT_SMTLIB2_COMPLIANT => mode = 3
     }
-    Z3Wrapper.setAstPrintMode(this.ptr, mode);
+    Native.setAstPrintMode(this.ptr, mode);
   }
 
   def simplifyAst(ast : Z3AST) : Z3AST = {
-    return new Z3AST(Z3Wrapper.simplify(this.ptr, ast.ptr), this);
+    return new Z3AST(Native.simplify(this.ptr, ast.ptr), this);
   }
 
   def mkForAllConst(weight: Int, patterns: Seq[Z3Pattern], bounds: Seq[Z3AST], body: Z3AST) : Z3AST = mkQuantifierConst(true, weight, patterns, bounds, body)
@@ -1211,7 +1275,7 @@ sealed class Z3Context(val config: Z3Config) {
 
   def mkQuantifierConst(isForAll: Boolean, weight: Int, patterns: Seq[Z3Pattern], bounds: Seq[Z3AST], body: Z3AST) : Z3AST = {
     new Z3AST(
-      Z3Wrapper.mkQuantifierConst(
+      Native.mkQuantifierConst(
         this.ptr,
         isForAll,
         weight,
@@ -1225,25 +1289,25 @@ sealed class Z3Context(val config: Z3Config) {
   }
 
   def mkTactic(name: String) : Z3Tactic = {
-    return new Z3Tactic(Z3Wrapper.mkTactic(this.ptr, name), this)
+    return new Z3Tactic(Native.mkTactic(this.ptr, name), this)
   }
 
   def mkTacticAndThen(tactic1: Z3Tactic, tactic2: Z3Tactic) : Z3Tactic = {
-    return new Z3Tactic(Z3Wrapper.tacticAndThen(this.ptr, tactic1.ptr, tactic2.ptr), this)
+    return new Z3Tactic(Native.tacticAndThen(this.ptr, tactic1.ptr, tactic2.ptr), this)
   }
 
   def mkSolver() : Z3Solver = {
-    new Z3Solver(Z3Wrapper.mkSolver(this.ptr), this)
+    new Z3Solver(Native.mkSolver(this.ptr), this)
   }
 
   def mkSolverFromTactic(tactic: Z3Tactic) : Z3Solver = {
-    new Z3Solver(Z3Wrapper.mkSolverFromTactic(this.ptr, tactic.ptr), this)
+    new Z3Solver(Native.mkSolverFromTactic(this.ptr, tactic.ptr), this)
   }
 
   def interrupt() = {
-    Z3Wrapper.interrupt(this.ptr)
+    Native.interrupt(this.ptr)
   }
 
   /** Returns the last error issued by the SMT-LIB parser. */
-  def getSMTLIBError : String = Z3Wrapper.getSMTLIBError(this.ptr)
+  def getSMTLIBError : String = Native.getSmtlibError(this.ptr)
 }

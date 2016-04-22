@@ -1,7 +1,5 @@
 package z3.scala
 
-import z3.Pointer
-
 sealed class Z3Sort private[z3](val ptr: Long, val context: Z3Context) extends Z3ASTLike {
   override def equals(that: Any) : Boolean = {
     that != null && that.isInstanceOf[Z3Sort] && context.isEqSort(this, that.asInstanceOf[Z3Sort])

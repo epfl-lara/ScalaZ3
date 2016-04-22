@@ -1,6 +1,6 @@
 package z3.scala
 
-import z3.Z3Wrapper
+import com.microsoft.z3.Native
 
 trait Z3Object extends Z3Pointer {
   val ptr: Long
@@ -12,10 +12,10 @@ trait Z3Object extends Z3Pointer {
 
 trait Z3ASTLike extends Z3Object {
   final protected[z3] def incRef() {
-    Z3Wrapper.incRef(context.ptr, ptr)
+    Native.incRef(context.ptr, ptr)
   }
 
   final protected[z3] def decRef() {
-    Z3Wrapper.decRef(context.ptr, ptr)
+    Native.decRef(context.ptr, ptr)
   }
 }

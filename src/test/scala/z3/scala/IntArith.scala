@@ -6,7 +6,7 @@ class IntArith extends FunSuite with Matchers {
   import z3.scala._
 
   test("Comfusy-like") {
-    val z3 = new Z3Context(new Z3Config("MODEL" -> true))
+    val z3 = new Z3Context("MODEL" -> true)
     val i = z3.mkIntSort
     val h = z3.mkConst(z3.mkStringSymbol("h"), i)
     val m = z3.mkConst(z3.mkStringSymbol("m"), i)

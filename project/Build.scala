@@ -35,7 +35,6 @@ object ScalaZ3Build extends Build {
   lazy val isWindows = osInf.indexOf("Win") >= 0
   lazy val isMac     = osInf.indexOf("Mac") >= 0
 
-  lazy val z3ApiPath = file("z3") / "src" / "api"
   lazy val z3BuildPath = file("z3") / "build"
   lazy val z3BinaryFiles = Seq(z3BuildPath / z3Name, z3BuildPath / javaZ3Name)
   lazy val z3JarFile = z3BuildPath / "com.microsoft.z3.jar"
@@ -109,13 +108,13 @@ object ScalaZ3Build extends Build {
     if (hashFile.exists && IO.read(hashFile) == initialHash) {
       s.log.info("Checksum matched previous, skipping build...")
     } else {
-      val python = if (("which python2.7" #> file("/dev/null")).! == 0) "python2.7" else "python"
-
       if (isUnix) {
+        val python = if (("which python2.7" #> file("/dev/null")).! == 0) "python2.7" else "python"
+
         exec(python + " scripts/mk_make.py --java", file(".") / "z3", s)
         exec("make", file(".") / "z3" / "build", s)
       } else {
-        s.log.error("Don't know how to compile Z3 on arch: "+osInf+" - "+osArch)
+        error("Don't know how to compile Z3 on arch: "+osInf+" - "+osArch)
       }
 
       val finalHash = computeHash()
@@ -163,7 +162,7 @@ object ScalaZ3Build extends Build {
     }
 
     // First, we look for z3
-    for (file <- (z3BinaryFiles :+ z3JarFile) if !file.exists) sys.error("Could not find Z3 : " + file.absolutePath)
+    for (file <- (z3BinaryFiles :+ z3JarFile) if !file.exists) error("Could not find Z3 : " + file.absolutePath)
     libBinFilePath.getParentFile.mkdirs()
 
     if (isUnix) {
@@ -171,7 +170,6 @@ object ScalaZ3Build extends Build {
            "-shared -Wl,-soname," + soName + " " +
            "-I" + jdkIncludePath.absolutePath + " " +
            "-I" + jdkUnixIncludePath.absolutePath + " " +
-           "-I" + z3ApiPath.absolutePath + " " +
            "-L" + z3BuildPath.absolutePath + " " +
            "-Wall " +
            "-g -lc " +
@@ -184,9 +182,9 @@ object ScalaZ3Build extends Build {
            "-D__int64=\"long long\" " +
            "-I " + "\"" + jdkIncludePath.absolutePath + "\" " +
            "-I " + "\"" + jdkWinIncludePath.absolutePath + "\" " +
-           "-I " + "\"" + z3ApiPath.absolutePath + "\" " +
            "-Wreturn-type " +
            z3BinFilePath.absolutePath + "\" ", s)
+
     } else if (isMac) {
       val frameworkPath = "/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers"
 
@@ -198,13 +196,13 @@ object ScalaZ3Build extends Build {
            "-I" + jdkIncludePath.absolutePath + " " +
            "-I" + jdkMacIncludePath.absolutePath + " " +
            "-I" + frameworkPath + " " +
-           "-I" + z3ApiPath.absolutePath + " " +
            "-L" + z3BuildPath.absolutePath + " " +
            "-g -lc " +
            "-Wl,-rpath,"+extractDir(cs)+" " +
            "-lz3 -fPIC -O2 -fopenmp", s)
+
     } else {
-      s.log.error("Unknown arch: "+osInf+" - "+osArch)
+      error("Unknown arch: "+osInf+" - "+osArch)
     }
   }
 

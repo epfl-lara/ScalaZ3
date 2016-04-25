@@ -94,6 +94,7 @@ object ScalaZ3Build extends Build {
   val z3Task = (streams) map { case s =>
     s.log.info("Compiling Z3 ...")
 
+    val hashFile = file(".") / "z3" / ".build-hash"
     def computeHash(): String = {
       val path = file(".") / "z3"
       hashFiles(listAllFiles(path.asFile).filter { f =>
@@ -104,7 +105,6 @@ object ScalaZ3Build extends Build {
     val initialHash = computeHash()
     s.log.info("New checksum is: " + initialHash)
 
-    val hashFile = file(".") / "z3" / ".build-hash"
     if (hashFile.exists && IO.read(hashFile) == initialHash) {
       s.log.info("Checksum matched previous, skipping build...")
     } else {
@@ -112,6 +112,13 @@ object ScalaZ3Build extends Build {
         val python = if (("which python2.7" #> file("/dev/null")).! == 0) "python2.7" else "python"
 
         exec(python + " scripts/mk_make.py --java", file(".") / "z3", s)
+        exec("make", file(".") / "z3" / "build", s)
+      } else if (isWindows) {
+        if (is64b) exec("python scripts/mk_make.py -x --java", file(".") / "z3", s)
+        if (is64b) exec("python scripts/mk_make.py --java", file(".") / "z3", s)
+        exec("nmake", file(".") / "z3" / "build", s)
+      } else if (isMac) {
+        exec("python scripts/mk_make.py --java", file(".") / "z3", s)
         exec("make", file(".") / "z3" / "build", s)
       } else {
         error("Don't know how to compile Z3 on arch: "+osInf+" - "+osArch)

@@ -37,7 +37,7 @@ sealed class Z3Model private[z3](val ptr: Long, val context: Z3Context) extends 
     }
     val out = new Native.LongPtr()
     val result = Native.modelEval(context.ptr, this.ptr, ast.ptr, completion, out)
-    if (result) {
+    if (result && out.value != 0L) {
       Some(new Z3AST(out.value, context))
     } else {
       None

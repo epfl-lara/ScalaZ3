@@ -15,7 +15,7 @@ You should have Java and SBT 0.13.x installed.
 ./z3 (default location from project base).
 
 2) Run 'sbt package' to create the jar file. It will be in
-'target/scala-2.11/scalaz3\_2.11-2.1.jar' and will contain the shared library
+'target/scala-2.11/scalaz3\_2.11-3.0.jar' and will contain the shared library
 dependencies.
 
 3) For testing, run

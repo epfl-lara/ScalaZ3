@@ -105,31 +105,31 @@ sealed class Z3Model private[z3](val ptr: Long, val context: Z3Context) extends 
     Native.isAsArray(context.ptr, ast.ptr)
   }
 
-  def getArrayValue(ast: Z3AST) : Option[(Map[Z3AST, Z3AST], Z3AST)] = if (!isArrayValue(ast)) None else {
+  def getArrayValue(ast: Z3AST) : Option[(Map[Z3AST, Z3AST], Z3AST)] = if (isArrayValue(ast)) {
     val funcPtr = Native.getAsArrayFuncDecl(context.ptr, ast.ptr)
     val arity = Native.getDomainSize(context.ptr, funcPtr)
     assert(arity == 1, "Arrays with arity > 1 aren't handled by ScalaZ3")
     val funcInterp = new Z3FuncInterp(Native.modelGetFuncInterp(context.ptr, this.ptr, funcPtr), context)
     Some(funcInterp.entries.map { case (args, value) => args.head -> value }.toMap, funcInterp.default)
+  } else {
+    import Z3DeclKind._
+    def rec(ast: Z3AST): Option[(Map[Z3AST, Z3AST], Z3AST)] = context.getASTKind(ast) match {
+      case Z3AppAST(funcDecl, args) => context.getDeclKind(funcDecl) match {
+        case OpStore => rec(args(0)).map { case (mapping, default) =>
+          (mapping + (args(1) -> args(2)), default)
+        }
+        case OpConstArray =>
+          Some(Map.empty, args(0))
+        case _ => None
+      }
+      case _ => None
+    }
+
+    rec(ast)
   }
 
   def getSetValue(ast: Z3AST) : Option[(Set[Z3AST], Boolean)] = {
-    val value = getArrayValue(ast) orElse {
-      import Z3DeclKind._
-      def rec(ast: Z3AST): Option[(Map[Z3AST, Z3AST], Z3AST)] = context.getASTKind(ast) match {
-        case Z3AppAST(funcDecl, args) => context.getDeclKind(funcDecl) match {
-          case OpStore => rec(args(0)).map { case (mapping, default) =>
-            (mapping + (args(1) -> args(2)), default)
-          }
-          case OpConstArray =>
-            Some(Map.empty, args(0))
-          case _ => None
-        }
-        case _ => None
-      }
-
-      rec(ast)
-    }
+    val value = getArrayValue(ast)
 
     value.flatMap { case (mapping, dflt) =>
       evalAs[Boolean](dflt) match {

@@ -19,6 +19,12 @@ class Z3Solver private[z3](val ptr: Long, val context: Z3Context) extends Z3Obje
     Native.solverPush(context.ptr, this.ptr)
   }
 
+  def set(params: Map[String, Any]): Unit = {
+    val z3params = new Z3Params(Native.mkParams(context.ptr), context)
+    for ((k, v) <- params) z3params.set(k, v)
+    Native.solverSetParams(context.ptr, ptr, z3params.ptr)
+  }
+
   var isModelAvailable = false
 
   def assertCnstr(ast: Z3AST) = {

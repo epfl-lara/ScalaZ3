@@ -35,6 +35,7 @@ sealed class Z3Context(val config: Map[String, String]) {
   val interpQueue    = new Z3RefCountQueue[Z3FuncInterp]
   val entryQueue     = new Z3RefCountQueue[Z3FuncInterpEntry]
   val modelQueue     = new Z3RefCountQueue[Z3Model]
+  val paramsQueue    = new Z3RefCountQueue[Z3Params]
   val solverQueue    = new Z3RefCountQueue[Z3Solver]
   val tacticQueue    = new Z3RefCountQueue[Z3Tactic]
 
@@ -1300,7 +1301,11 @@ sealed class Z3Context(val config: Map[String, String]) {
     new Z3Solver(Native.mkSolver(this.ptr), this)
   }
 
-  def mkSolverFromTactic(tactic: Z3Tactic) : Z3Solver = {
+  def mkSimpleSolver() : Z3Solver = {
+    new Z3Solver(Native.mkSimpleSolver(this.ptr), this)
+  }
+
+  def mkSolver(tactic: Z3Tactic) : Z3Solver = {
     new Z3Solver(Native.mkSolverFromTactic(this.ptr, tactic.ptr), this)
   }
 

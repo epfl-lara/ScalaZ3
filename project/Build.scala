@@ -217,7 +217,7 @@ object ScalaZ3Build extends Build {
 
   val newMappingsTask = mappings in (Compile, packageBin) <<= (mappings in (Compile, packageBin), streams) map {
     case (normalFiles, s) =>
-      val newBinaryFiles = (libBinFilePath +: z3BinaryFiles).map { f => f.getAbsoluteFile -> ("lib-bin/" + f.getName) }
+      val newBinaryFiles = (libBinFilePath +: z3BinaryFiles).map { f => f.getAbsoluteFile -> ("lib-bin" + DS + f.getName) }
 
       s.log.info("Bundling binary files:")
       for ((from, to) <- newBinaryFiles) {
@@ -236,7 +236,7 @@ object ScalaZ3Build extends Build {
           val path = Paths.get(outputDir.getAbsolutePath).relativize(Paths.get(f.getAbsolutePath)).toString
           val extensionSplit = path.split("\\.")
           if (extensionSplit.length < 2 || extensionSplit(1) != "class") None else {
-            val classPath = extensionSplit(0).replace("/", ".")
+            val classPath = extensionSplit(0).replace(DS, ".")
             if (z3JavaDepsPrefixes.exists(prefix => classPath.startsWith(prefix))) {
               s.log.info(" - " + classPath)
               Some(f.getAbsoluteFile -> path)

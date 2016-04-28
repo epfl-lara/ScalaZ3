@@ -98,7 +98,7 @@ object ScalaZ3Build extends Build {
     def computeHash(): String = {
       val path = file(".") / "z3"
       hashFiles(listAllFiles(path.asFile).filter { f =>
-        !f.getName.endsWith(".pyc") && !f.isHidden
+        !f.getName.endsWith(".pyc") && !f.isHidden && !f.getName.startsWith(".")
       })
     }
 

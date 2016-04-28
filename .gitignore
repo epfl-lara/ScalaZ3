@@ -2,6 +2,7 @@
 lib-bin/*.so
 lib-bin/*.jnilib
 lib-bin/*dSYM
+lib-bin/*.dll
 
 # sbt specific
 lib_managed

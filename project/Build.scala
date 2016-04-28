@@ -115,7 +115,7 @@ object ScalaZ3Build extends Build {
         exec("make", file(".") / "z3" / "build", s)
       } else if (isWindows) {
         if (is64b) exec("python scripts/mk_make.py -x --java", file(".") / "z3", s)
-        if (is64b) exec("python scripts/mk_make.py --java", file(".") / "z3", s)
+        else exec("python scripts/mk_make.py --java", file(".") / "z3", s)
         exec("nmake", file(".") / "z3" / "build", s)
       } else if (isMac) {
         exec("python scripts/mk_make.py --java", file(".") / "z3", s)

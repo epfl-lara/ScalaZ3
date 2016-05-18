@@ -97,17 +97,19 @@ object ScalaZ3Build extends Build {
   val z3Task = (streams) map { case s =>
     s.log.info("Compiling Z3 ...")
 
-    if (!(file(".") / "z3").asFile.exists) {
+    val z3Path = file(".") / "z3"
+
+    if (!z3Path.asFile.exists) {
       s.log.info("Cloning Z3 source repository ...")
       Git.cloneRepository()
+        .setDirectory(z3Path.asFile)
         .setURI(z3SourceRepo)
         .call()
     }
 
-    val hashFile = file(".") / "z3" / ".build-hash"
+    val hashFile = z3Path / ".build-hash"
     def computeHash(): String = {
-      val path = file(".") / "z3"
-      hashFiles(listAllFiles(path.asFile).filter { f =>
+      hashFiles(listAllFiles(z3Path.asFile).filter { f =>
         !f.getName.endsWith(".pyc") && !f.isHidden && !f.getName.startsWith(".")
       })
     }
@@ -121,15 +123,15 @@ object ScalaZ3Build extends Build {
       if (isUnix) {
         val python = if (("which python2.7" #> file("/dev/null")).! == 0) "python2.7" else "python"
 
-        exec(python + " scripts/mk_make.py --java", file(".") / "z3", s)
-        exec("make", file(".") / "z3" / "build", s)
+        exec(python + " scripts/mk_make.py --java", z3Path, s)
+        exec("make", z3Path / "build", s)
       } else if (isWindows) {
-        if (is64b) exec("python scripts/mk_make.py -x --java", file(".") / "z3", s)
-        else exec("python scripts/mk_make.py --java", file(".") / "z3", s)
-        exec("nmake", file(".") / "z3" / "build", s)
+        if (is64b) exec("python scripts/mk_make.py -x --java", z3Path, s)
+        else exec("python scripts/mk_make.py --java", z3Path, s)
+        exec("nmake", z3Path / "build", s)
       } else if (isMac) {
-        exec("python scripts/mk_make.py --java", file(".") / "z3", s)
-        exec("make", file(".") / "z3" / "build", s)
+        exec("python scripts/mk_make.py --java", z3Path, s)
+        exec("make", z3Path / "build", s)
       } else {
         error("Don't know how to compile Z3 on arch: "+osInf+" - "+osArch)
       }

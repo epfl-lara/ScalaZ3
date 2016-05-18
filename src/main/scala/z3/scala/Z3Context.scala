@@ -464,6 +464,14 @@ sealed class Z3Context(val config: Map[String, String]) {
     new Z3AST(Native.mkConstArray(this.ptr, sort.ptr, value.ptr), this)
   }
 
+  def mkArrayMap(f: Z3FuncDecl, args: Seq[Z3AST]): Z3AST = {
+    new Z3AST(Native.mkMap(this.ptr, f.ptr, args.size, args.map(_.ptr).toArray), this)
+  }
+
+  def mkArrayMap(op: Z3DeclKind, args: Seq[Z3AST]): Z3AST = {
+    mkArrayMap(getFuncDecl(op), args)
+  }
+
   def mkArrayDefault(array: Z3AST) : Z3AST = {
     new Z3AST(Native.mkArrayDefault(this.ptr, array.ptr), this)
   }
@@ -728,6 +736,22 @@ sealed class Z3Context(val config: Map[String, String]) {
     new Z3AST(Native.mkBvaddNoOverflow(this.ptr, ast1.ptr, ast2.ptr, isSigned), this)
   }
 
+  def getFuncDecl(op: Z3DeclKind, sorts: Z3Sort*): Z3FuncDecl = {
+    val app = op match {
+      case OpAdd => mkAdd(sorts.map(mkFreshConst("x", _)) : _*)
+      case OpSub => mkSub(sorts.map(mkFreshConst("x", _)) : _*)
+      case OpUMinus => mkUnaryMinus(mkFreshConst("x", sorts(0)))
+      case OpMul => mkMul(sorts.map(mkFreshConst("x", _)) : _*)
+      case OpDiv => mkDiv(mkFreshConst("a", sorts(0)), mkFreshConst("b", sorts(1)))
+      case _ => error("Unexpected decl kind " + op)
+    }
+
+    getASTKind(app) match {
+      case Z3AppAST(decl, _) => decl
+      case _ => error("Unexpected non-app AST " + app)
+    }
+  }
+
   def getSymbolKind(symbol: Z3Symbol) : Z3SymbolKind[_] = {
     Native.getSymbolKind(this.ptr, symbol.ptr) match {
       case 0 => Z3IntSymbol(getSymbolInt(symbol))
@@ -801,251 +825,9 @@ sealed class Z3Context(val config: Map[String, String]) {
     return Native.getQuantifierNumBound(this.ptr, ast.ptr)
   }
 
-  def getDeclKind(funcDecl: Z3FuncDecl) : Z3DeclKind.Value = {
-    import Z3DeclKind._
-
+  def getDeclKind(funcDecl: Z3FuncDecl) : Z3DeclKind = {
     val kind = Native.getDeclKind(this.ptr, funcDecl.ptr)
-    if (kind == 9999) Other else (Z3_decl_kind.fromInt(kind) match {
-      case Z3_decl_kind.Z3_OP_TRUE  => OpTrue 
-      case Z3_decl_kind.Z3_OP_FALSE => OpFalse 
-      case Z3_decl_kind.Z3_OP_EQ => OpEq 
-      case Z3_decl_kind.Z3_OP_DISTINCT => OpDistinct 
-      case Z3_decl_kind.Z3_OP_ITE => OpITE 
-      case Z3_decl_kind.Z3_OP_AND => OpAnd 
-      case Z3_decl_kind.Z3_OP_OR => OpOr 
-      case Z3_decl_kind.Z3_OP_IFF => OpIff 
-      case Z3_decl_kind.Z3_OP_XOR => OpXor 
-      case Z3_decl_kind.Z3_OP_NOT => OpNot 
-      case Z3_decl_kind.Z3_OP_IMPLIES => OpImplies 
-      case Z3_decl_kind.Z3_OP_OEQ => OpOEq
-      case Z3_decl_kind.Z3_OP_INTERP => OpInterp
-
-      case Z3_decl_kind.Z3_OP_ANUM => OpANum 
-      case Z3_decl_kind.Z3_OP_AGNUM => OpAGNum 
-      case Z3_decl_kind.Z3_OP_LE => OpLE 
-      case Z3_decl_kind.Z3_OP_GE => OpGE 
-      case Z3_decl_kind.Z3_OP_LT => OpLT 
-      case Z3_decl_kind.Z3_OP_GT => OpGT 
-      case Z3_decl_kind.Z3_OP_ADD => OpAdd 
-      case Z3_decl_kind.Z3_OP_SUB => OpSub 
-      case Z3_decl_kind.Z3_OP_UMINUS => OpUMinus 
-      case Z3_decl_kind.Z3_OP_MUL => OpMul 
-      case Z3_decl_kind.Z3_OP_DIV => OpDiv 
-      case Z3_decl_kind.Z3_OP_IDIV => OpIDiv 
-      case Z3_decl_kind.Z3_OP_REM => OpRem 
-      case Z3_decl_kind.Z3_OP_MOD => OpMod 
-      case Z3_decl_kind.Z3_OP_TO_REAL => OpToReal 
-      case Z3_decl_kind.Z3_OP_TO_INT => OpToInt 
-      case Z3_decl_kind.Z3_OP_IS_INT => OpIsInt 
-      case Z3_decl_kind.Z3_OP_POWER => OpPower 
-
-      case Z3_decl_kind.Z3_OP_STORE => OpStore 
-      case Z3_decl_kind.Z3_OP_SELECT => OpSelect 
-      case Z3_decl_kind.Z3_OP_CONST_ARRAY => OpConstArray 
-      case Z3_decl_kind.Z3_OP_ARRAY_MAP => OpArrayMap
-      case Z3_decl_kind.Z3_OP_ARRAY_DEFAULT => OpArrayDefault
-      case Z3_decl_kind.Z3_OP_SET_UNION => OpSetUnion 
-      case Z3_decl_kind.Z3_OP_SET_INTERSECT => OpSetIntersect 
-      case Z3_decl_kind.Z3_OP_SET_DIFFERENCE => OpSetDifference 
-      case Z3_decl_kind.Z3_OP_SET_COMPLEMENT => OpSetComplement 
-      case Z3_decl_kind.Z3_OP_SET_SUBSET => OpSetSubset
-      case Z3_decl_kind.Z3_OP_AS_ARRAY => OpAsArray 
-      case Z3_decl_kind.Z3_OP_ARRAY_EXT => OpArrayExt 
-
-      case Z3_decl_kind.Z3_OP_BNUM => OpBNum
-      case Z3_decl_kind.Z3_OP_BIT1 => OpBit1
-      case Z3_decl_kind.Z3_OP_BIT0 => OpBit0
-      case Z3_decl_kind.Z3_OP_BNEG => OpBNeg
-      case Z3_decl_kind.Z3_OP_BADD => OpBAdd
-      case Z3_decl_kind.Z3_OP_BSUB => OpBSub
-      case Z3_decl_kind.Z3_OP_BMUL => OpBMul
-
-      case Z3_decl_kind.Z3_OP_BSDIV => OpBSDiv
-      case Z3_decl_kind.Z3_OP_BUDIV => OpBUDiv
-      case Z3_decl_kind.Z3_OP_BSREM => OpBSRem
-      case Z3_decl_kind.Z3_OP_BUREM => OpBURem
-      case Z3_decl_kind.Z3_OP_BSMOD => OpBSMod
-
-      case Z3_decl_kind.Z3_OP_ULEQ => OpULE
-      case Z3_decl_kind.Z3_OP_SLEQ => OpSLE
-      case Z3_decl_kind.Z3_OP_UGEQ => OpUGE
-      case Z3_decl_kind.Z3_OP_SGEQ => OpSGE
-      case Z3_decl_kind.Z3_OP_ULT => OpULT
-      case Z3_decl_kind.Z3_OP_SLT => OpSLT
-      case Z3_decl_kind.Z3_OP_UGT => OpUGT
-      case Z3_decl_kind.Z3_OP_SGT => OpSGT
-
-      case Z3_decl_kind.Z3_OP_BAND => OpBAnd
-      case Z3_decl_kind.Z3_OP_BOR => OpBOr
-      case Z3_decl_kind.Z3_OP_BNOT => OpBNot
-      case Z3_decl_kind.Z3_OP_BXOR => OpBXor
-      case Z3_decl_kind.Z3_OP_BNAND => OpBNand
-      case Z3_decl_kind.Z3_OP_BNOR => OpBNor
-      case Z3_decl_kind.Z3_OP_BXNOR => OpBXnor
-
-      case Z3_decl_kind.Z3_OP_CONCAT => OpConcat
-      case Z3_decl_kind.Z3_OP_SIGN_EXT => OpSignExt
-      case Z3_decl_kind.Z3_OP_ZERO_EXT => OpZeroExt
-      case Z3_decl_kind.Z3_OP_EXTRACT => OpExtract
-      case Z3_decl_kind.Z3_OP_REPEAT => OpRepeat
-
-      case Z3_decl_kind.Z3_OP_BREDOR => OpBRedOr
-      case Z3_decl_kind.Z3_OP_BREDAND => OpBRedAnd
-      case Z3_decl_kind.Z3_OP_BCOMP => OpBComp
-
-      case Z3_decl_kind.Z3_OP_BSHL => OpBShl
-      case Z3_decl_kind.Z3_OP_BLSHR => OpBLshr
-      case Z3_decl_kind.Z3_OP_BASHR => OpBAshr
-      case Z3_decl_kind.Z3_OP_ROTATE_LEFT => OpRotateLeft
-      case Z3_decl_kind.Z3_OP_ROTATE_RIGHT => OpRotateRight
-      case Z3_decl_kind.Z3_OP_EXT_ROTATE_LEFT => OpExtRotateLeft
-      case Z3_decl_kind.Z3_OP_EXT_ROTATE_RIGHT => OpExtRotateRight
-
-      case Z3_decl_kind.Z3_OP_INT2BV => OpIntToBV
-      case Z3_decl_kind.Z3_OP_BV2INT => OpBVToInt
-      case Z3_decl_kind.Z3_OP_CARRY => OpCarry
-      case Z3_decl_kind.Z3_OP_XOR3 => OpXor3
-
-      case Z3_decl_kind.Z3_OP_PR_UNDEF => OpPrUndef
-      case Z3_decl_kind.Z3_OP_PR_TRUE => OpPrTrue
-      case Z3_decl_kind.Z3_OP_PR_ASSERTED => OpPrAsserted
-      case Z3_decl_kind.Z3_OP_PR_GOAL => OpPrGoal
-      case Z3_decl_kind.Z3_OP_PR_MODUS_PONENS => OpPrModusPonens
-      case Z3_decl_kind.Z3_OP_PR_REFLEXIVITY => OpPrReflexivity
-      case Z3_decl_kind.Z3_OP_PR_SYMMETRY => OpPrSymmetry
-      case Z3_decl_kind.Z3_OP_PR_TRANSITIVITY => OpPrTransitivity
-      case Z3_decl_kind.Z3_OP_PR_TRANSITIVITY_STAR => OpPrTransitivityStar
-      case Z3_decl_kind.Z3_OP_PR_MONOTONICITY => OpPrMonotonicity
-      case Z3_decl_kind.Z3_OP_PR_QUANT_INTRO => OpPrQuantIntro
-      case Z3_decl_kind.Z3_OP_PR_DISTRIBUTIVITY => OpPrDistributivity
-      case Z3_decl_kind.Z3_OP_PR_AND_ELIM => OpPrAndElim
-      case Z3_decl_kind.Z3_OP_PR_NOT_OR_ELIM => OpPrNotOrElim
-      case Z3_decl_kind.Z3_OP_PR_REWRITE => OpPrRewrite
-      case Z3_decl_kind.Z3_OP_PR_REWRITE_STAR => OpPrRewriteStar
-      case Z3_decl_kind.Z3_OP_PR_PULL_QUANT => OpPrPullQuant
-      case Z3_decl_kind.Z3_OP_PR_PULL_QUANT_STAR => OpPrPullQuantStar
-      case Z3_decl_kind.Z3_OP_PR_PUSH_QUANT => OpPrPushQuant
-      case Z3_decl_kind.Z3_OP_PR_ELIM_UNUSED_VARS => OpPrElimUnusedVars
-      case Z3_decl_kind.Z3_OP_PR_DER => OpPrDER
-      case Z3_decl_kind.Z3_OP_PR_QUANT_INST => OpPrQuantInst
-      case Z3_decl_kind.Z3_OP_PR_HYPOTHESIS => OpPrHypothesis
-      case Z3_decl_kind.Z3_OP_PR_LEMMA => OpPrLemma
-      case Z3_decl_kind.Z3_OP_PR_UNIT_RESOLUTION => OpPrUnitResolution
-      case Z3_decl_kind.Z3_OP_PR_IFF_TRUE => OpPrIffTrue
-      case Z3_decl_kind.Z3_OP_PR_IFF_FALSE => OpPrIffFalse
-      case Z3_decl_kind.Z3_OP_PR_COMMUTATIVITY => OpPrCommutativity
-      case Z3_decl_kind.Z3_OP_PR_DEF_AXIOM => OpPrDefAxiom
-      case Z3_decl_kind.Z3_OP_PR_DEF_INTRO => OpPrDefIntro
-      case Z3_decl_kind.Z3_OP_PR_APPLY_DEF => OpPrApplyDef
-      case Z3_decl_kind.Z3_OP_PR_IFF_OEQ => OpPrIffOEq
-      case Z3_decl_kind.Z3_OP_PR_NNF_POS => OpPrNNFPos
-      case Z3_decl_kind.Z3_OP_PR_NNF_NEG => OpPrNNFNeg
-      case Z3_decl_kind.Z3_OP_PR_NNF_STAR => OpPrNNFStar
-      case Z3_decl_kind.Z3_OP_PR_CNF_STAR => OpPrCNFStar
-      case Z3_decl_kind.Z3_OP_PR_SKOLEMIZE => OpPrSkolemize
-      case Z3_decl_kind.Z3_OP_PR_MODUS_PONENS_OEQ => OpPrModusPonensOEq
-      case Z3_decl_kind.Z3_OP_PR_TH_LEMMA => OpPrThLemma
-      case Z3_decl_kind.Z3_OP_PR_HYPER_RESOLVE => OpPrHyperResolve
-
-      case Z3_decl_kind.Z3_OP_RA_STORE => OpRAStore
-      case Z3_decl_kind.Z3_OP_RA_EMPTY => OpRAEmpty
-      case Z3_decl_kind.Z3_OP_RA_IS_EMPTY => OpRAIsEmpty
-      case Z3_decl_kind.Z3_OP_RA_JOIN => OpRAJoin
-      case Z3_decl_kind.Z3_OP_RA_UNION => OpRAUnion
-      case Z3_decl_kind.Z3_OP_RA_WIDEN => OpRAWiden
-      case Z3_decl_kind.Z3_OP_RA_PROJECT => OpRAProject
-      case Z3_decl_kind.Z3_OP_RA_FILTER => OpRAFilter
-      case Z3_decl_kind.Z3_OP_RA_NEGATION_FILTER => OpRANegationFilter
-      case Z3_decl_kind.Z3_OP_RA_RENAME => OpRARename
-      case Z3_decl_kind.Z3_OP_RA_COMPLEMENT => OpRAComplement
-      case Z3_decl_kind.Z3_OP_RA_SELECT => OpRASelect
-      case Z3_decl_kind.Z3_OP_RA_CLONE => OpRAClone
-      case Z3_decl_kind.Z3_OP_FD_CONSTANT => OpFdConstant
-      case Z3_decl_kind.Z3_OP_FD_LT => OpFdLT
-
-      case Z3_decl_kind.Z3_OP_SEQ_UNIT => OpSeqUnit
-      case Z3_decl_kind.Z3_OP_SEQ_EMPTY => OpSeqEmpty
-      case Z3_decl_kind.Z3_OP_SEQ_CONCAT => OpSeqConcat
-      case Z3_decl_kind.Z3_OP_SEQ_PREFIX => OpSeqPrefix
-      case Z3_decl_kind.Z3_OP_SEQ_SUFFIX => OpSeqSuffix
-      case Z3_decl_kind.Z3_OP_SEQ_CONTAINS => OpSeqContains
-      case Z3_decl_kind.Z3_OP_SEQ_EXTRACT => OpSeqExtract
-      case Z3_decl_kind.Z3_OP_SEQ_REPLACE => OpSeqReplace
-      case Z3_decl_kind.Z3_OP_SEQ_AT => OpSeqAt
-      case Z3_decl_kind.Z3_OP_SEQ_LENGTH => OpSeqLength
-      case Z3_decl_kind.Z3_OP_SEQ_INDEX => OpSeqIndex
-      case Z3_decl_kind.Z3_OP_SEQ_TO_RE => OpSeqToRE
-      case Z3_decl_kind.Z3_OP_SEQ_IN_RE => OpSeqInRE
-
-      case Z3_decl_kind.Z3_OP_RE_PLUS => OpREPlus
-      case Z3_decl_kind.Z3_OP_RE_STAR => OpREStar
-      case Z3_decl_kind.Z3_OP_RE_OPTION => OpREOption
-      case Z3_decl_kind.Z3_OP_RE_CONCAT => OpREConcat
-      case Z3_decl_kind.Z3_OP_RE_UNION => OpREUnion
-
-      case Z3_decl_kind.Z3_OP_LABEL => OpLabel
-      case Z3_decl_kind.Z3_OP_LABEL_LIT => OpLabelLit
-
-      case Z3_decl_kind.Z3_OP_DT_CONSTRUCTOR => OpDTConstructor
-      case Z3_decl_kind.Z3_OP_DT_RECOGNISER => OpDTRecogniser
-      case Z3_decl_kind.Z3_OP_DT_ACCESSOR => OpDTAccessor
-      case Z3_decl_kind.Z3_OP_DT_UPDATE_FIELD => OpDTUpdateField
-
-      case Z3_decl_kind.Z3_OP_PB_AT_MOST => OpPBAtMost
-      case Z3_decl_kind.Z3_OP_PB_LE => OpPBLE
-      case Z3_decl_kind.Z3_OP_PB_GE => OpPBGE
-
-      case Z3_decl_kind.Z3_OP_FPA_RM_NEAREST_TIES_TO_EVEN => OpFPARmNearestTiesToEven
-      case Z3_decl_kind.Z3_OP_FPA_RM_NEAREST_TIES_TO_AWAY => OpFPARmNearestTiesToAway
-      case Z3_decl_kind.Z3_OP_FPA_RM_TOWARD_POSITIVE => OpFPARmTowardPositive
-      case Z3_decl_kind.Z3_OP_FPA_RM_TOWARD_NEGATIVE => OpFPARmTowardNegative
-      case Z3_decl_kind.Z3_OP_FPA_RM_TOWARD_ZERO => OpFPARmTowardZero
-
-      case Z3_decl_kind.Z3_OP_FPA_NUM => OpFPANum
-      case Z3_decl_kind.Z3_OP_FPA_PLUS_INF => OpFPAPlusInf
-      case Z3_decl_kind.Z3_OP_FPA_MINUS_INF => OpFPAMinusInf
-      case Z3_decl_kind.Z3_OP_FPA_NAN => OpFPANaN
-      case Z3_decl_kind.Z3_OP_FPA_PLUS_ZERO => OpFPAPlusZero
-      case Z3_decl_kind.Z3_OP_FPA_MINUS_ZERO => OpFPAMinusZero
-
-      case Z3_decl_kind.Z3_OP_FPA_ADD => OpFPAAdd
-      case Z3_decl_kind.Z3_OP_FPA_SUB => OpFPASub
-      case Z3_decl_kind.Z3_OP_FPA_NEG => OpFPANeg
-      case Z3_decl_kind.Z3_OP_FPA_MUL => OpFPAMul
-      case Z3_decl_kind.Z3_OP_FPA_DIV => OpFPADiv
-      case Z3_decl_kind.Z3_OP_FPA_REM => OpFPARem
-      case Z3_decl_kind.Z3_OP_FPA_ABS => OpFPAAbs
-      case Z3_decl_kind.Z3_OP_FPA_MIN => OpFPAMin
-      case Z3_decl_kind.Z3_OP_FPA_MAX => OpFPAMax
-      case Z3_decl_kind.Z3_OP_FPA_FMA => OpFPAFMA
-      case Z3_decl_kind.Z3_OP_FPA_SQRT => OpFPASqrt
-      case Z3_decl_kind.Z3_OP_FPA_ROUND_TO_INTEGRAL => OpFPARoundToIntegral
-
-      case Z3_decl_kind.Z3_OP_FPA_EQ => OpFPAEq
-      case Z3_decl_kind.Z3_OP_FPA_LT => OpFPALT
-      case Z3_decl_kind.Z3_OP_FPA_GT => OpFPAGT
-      case Z3_decl_kind.Z3_OP_FPA_LE => OpFPALE
-      case Z3_decl_kind.Z3_OP_FPA_GE => OpFPAGE
-      case Z3_decl_kind.Z3_OP_FPA_IS_NAN => OpFPAIsNaN
-      case Z3_decl_kind.Z3_OP_FPA_IS_INF => OpFPAIsInf
-      case Z3_decl_kind.Z3_OP_FPA_IS_ZERO => OpFPAIsZero
-      case Z3_decl_kind.Z3_OP_FPA_IS_NORMAL => OpFPAIsNormal
-      case Z3_decl_kind.Z3_OP_FPA_IS_SUBNORMAL => OpFPAIsSubnormal
-      case Z3_decl_kind.Z3_OP_FPA_IS_NEGATIVE => OpFPAIsNegative
-      case Z3_decl_kind.Z3_OP_FPA_IS_POSITIVE => OpFPAIsPositive
-
-      case Z3_decl_kind.Z3_OP_FPA_FP => OpFPAFP
-      case Z3_decl_kind.Z3_OP_FPA_TO_FP => OpFPAToFP
-      case Z3_decl_kind.Z3_OP_FPA_TO_FP_UNSIGNED => OpFPAToFPUnsigned
-      case Z3_decl_kind.Z3_OP_FPA_TO_UBV => OpFPAToUBV
-      case Z3_decl_kind.Z3_OP_FPA_TO_SBV => OpFPAToSBV
-      case Z3_decl_kind.Z3_OP_FPA_TO_REAL => OpFPAToReal
-
-      case Z3_decl_kind.Z3_OP_FPA_TO_IEEE_BV => OpFPAToIEEEBV
-
-      case Z3_decl_kind.Z3_OP_UNINTERPRETED => OpUninterpreted
-      case other => error("Unhandled int code for Z3KindDecl: " + other)
-    })
+    Z3DeclKind.fromInt(kind)
   }
 
   def getAppDecl(ast: Z3AST, arity: Int = -1) : Z3FuncDecl = {

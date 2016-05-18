@@ -1,5 +1,6 @@
 import sbt._
 import Keys._
+import org.eclipse.jgit.api._
 
 object ScalaZ3Build extends Build {
 
@@ -20,6 +21,8 @@ object ScalaZ3Build extends Build {
   lazy val jdkUnixIncludePath = jdkIncludePath / "linux"
   lazy val jdkMacIncludePath  = jdkIncludePath / "darwin"
   lazy val jdkWinIncludePath  = jdkIncludePath / "win32"
+
+  lazy val z3SourceRepo = "https://github.com/Z3Prover/z3.git"
 
   lazy val osInf: String = Option(System.getProperty("os.name")).getOrElse("")
 
@@ -93,6 +96,13 @@ object ScalaZ3Build extends Build {
 
   val z3Task = (streams) map { case s =>
     s.log.info("Compiling Z3 ...")
+
+    if (!(file(".") / "z3").asFile.exists) {
+      s.log.info("Cloning Z3 source repository ...")
+      Git.cloneRepository()
+        .setURI(z3SourceRepo)
+        .call()
+    }
 
     val hashFile = file(".") / "z3" / ".build-hash"
     def computeHash(): String = {

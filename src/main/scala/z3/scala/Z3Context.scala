@@ -464,12 +464,12 @@ sealed class Z3Context(val config: Map[String, String]) {
     new Z3AST(Native.mkConstArray(this.ptr, sort.ptr, value.ptr), this)
   }
 
-  def mkArrayMap(f: Z3FuncDecl, args: Seq[Z3AST]): Z3AST = {
+  def mkArrayMap(f: Z3FuncDecl, args: Z3AST*): Z3AST = {
     new Z3AST(Native.mkMap(this.ptr, f.ptr, args.size, args.map(_.ptr).toArray), this)
   }
 
-  def mkArrayMap(op: Z3DeclKind, args: Seq[Z3AST]): Z3AST = {
-    mkArrayMap(getFuncDecl(op), args)
+  def mkArrayMap(op: Z3DeclKind, args: Z3AST*): Z3AST = {
+    mkArrayMap(getFuncDecl(op), args : _*)
   }
 
   def mkArrayDefault(array: Z3AST) : Z3AST = {

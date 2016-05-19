@@ -50,29 +50,30 @@ object ScalaZ3Build extends Build {
     "com.microsoft.z3.enumerations"
   )
 
-  def exec(cmd: String, s: TaskStreams): Unit = {
+  def exec(cmd: String, s: TaskStreams): Int = {
     s.log.info("$ "+cmd)
     cmd ! s.log
   }
 
-  def exec(cmd: String, dir: File, s: TaskStreams): Unit = {
+  def exec(cmd: String, dir: File, s: TaskStreams): Int = {
     s.log.info("$ cd " + dir + " && "+cmd)
     Process(cmd, dir) ! s.log
   }
 
-  val z3Key       = TaskKey[Unit]("z3", "Compiles z3 sources")
+  val z3Key       = TaskKey[String]("z3", "Compiles z3 sources")
   val gccKey      = TaskKey[Unit]("gcc", "Compiles the C sources")
   val checksumKey = TaskKey[String]("checksum", "Generates checksum file.")
 
   def listAllFiles(f: File): List[File] =
     f :: (if (f.isDirectory) f.listFiles().toList.flatMap(listAllFiles) else Nil)
 
-  def hashFiles(files: List[File]): String = {
+  def hashFiles(files: List[File], base: String = ""): String = {
     import java.io.{File,InputStream,FileInputStream}
     import java.security.MessageDigest
 
     val algo = MessageDigest.getInstance("MD5")
     algo.reset
+    algo.update(base.getBytes)
 
     for (f <- files.sortBy(_.absolutePath) if !f.isDirectory) {
       val is : InputStream = new FileInputStream(f)
@@ -124,32 +125,38 @@ object ScalaZ3Build extends Build {
 
     if (hashFile.exists && IO.read(hashFile) == initialHash) {
       s.log.info("Checksum matched previous, skipping build...")
+      initialHash
     } else {
-      if (isUnix) {
+      val code = if (isUnix) {
         val python = if (("which python2.7" #> file("/dev/null")).! == 0) "python2.7" else "python"
 
-        exec(python + " scripts/mk_make.py --java", z3Path, s)
-        exec("make", z3Path / "build", s)
+        val i1 = exec(python + " scripts/mk_make.py --java", z3Path, s)
+        if (i1 != 0) i1 else exec("make", z3Path / "build", s)
       } else if (isWindows) {
-        if (is64b) exec("python scripts/mk_make.py -x --java", z3Path, s)
-        else exec("python scripts/mk_make.py --java", z3Path, s)
-        exec("nmake", z3Path / "build", s)
+        val i1 = if (is64b) exec("python scripts/mk_make.py -x --java", z3Path, s)
+          else exec("python scripts/mk_make.py --java", z3Path, s)
+        if (i1 != 0) i1 else exec("nmake", z3Path / "build", s)
       } else if (isMac) {
-        exec("python scripts/mk_make.py --java", z3Path, s)
-        exec("make", z3Path / "build", s)
+        val i1 = exec("python scripts/mk_make.py --java", z3Path, s)
+        if (i1 != 0) i1 else exec("make", z3Path / "build", s)
       } else {
         error("Don't know how to compile Z3 on arch: "+osInf+" - "+osArch)
       }
 
-      val finalHash = computeHash()
-      IO.write(hashFile, finalHash)
+      if (code == 0) {
+        val finalHash = computeHash()
+        IO.write(hashFile, finalHash)
 
-      s.log.info("Wrote checksum " + finalHash + " for z3 build.")
+        s.log.info("Wrote checksum " + finalHash + " for z3 build.")
+        finalHash
+      } else {
+        error("Compilation of Z3 failed... aborting")
+      }
     }
   }
 
-  val checksumTask = (streams, sourceDirectory in Compile) map {
-    case (s, sd) =>
+  val checksumTask = (streams, z3Key, sourceDirectory in Compile) map {
+    case (s, z3checksum, sd) =>
       val checksumFilePath = sd / "java" / "z3" / "LibraryChecksum.java"
 
       val extensions = Set("java", "c", "h", "sbt", "properties")
@@ -161,7 +168,7 @@ object ScalaZ3Build extends Build {
 
       s.log.info("Generating library checksum")
 
-      val md5String = hashFiles(checksumSourcePaths.map(_.asFile))
+      val md5String = hashFiles(checksumSourcePaths.map(_.asFile), z3checksum)
 
       val fw = new java.io.FileWriter(checksumFilePath.asFile)
       val nl = System.getProperty("line.separator")
@@ -228,6 +235,7 @@ object ScalaZ3Build extends Build {
     } else {
       error("Unknown arch: "+osInf+" - "+osArch)
     }
+    () // unit task!
   }
 
   val packageTask = (Keys.`package` in Compile).dependsOn(gccKey)

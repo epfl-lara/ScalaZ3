@@ -23,6 +23,7 @@ object ScalaZ3Build extends Build {
   lazy val jdkWinIncludePath  = jdkIncludePath / "win32"
 
   lazy val z3SourceRepo = "https://github.com/Z3Prover/z3.git"
+  lazy val z3SourceTag = "HEAD"
 
   lazy val osInf: String = Option(System.getProperty("os.name")).getOrElse("")
 
@@ -38,7 +39,8 @@ object ScalaZ3Build extends Build {
   lazy val isWindows = osInf.indexOf("Win") >= 0
   lazy val isMac     = osInf.indexOf("Mac") >= 0
 
-  lazy val z3BuildPath = file("z3") / "build"
+  lazy val z3Path = file(".") / "z3" / z3SourceTag
+  lazy val z3BuildPath = z3Path / "build"
   lazy val z3BinaryFiles = Seq(z3BuildPath / z3Name, z3BuildPath / javaZ3Name)
   lazy val z3JarFile = z3BuildPath / "com.microsoft.z3.jar"
 
@@ -97,13 +99,16 @@ object ScalaZ3Build extends Build {
   val z3Task = (streams) map { case s =>
     s.log.info("Compiling Z3 ...")
 
-    val z3Path = file(".") / "z3"
-
     if (!z3Path.asFile.exists) {
       s.log.info("Cloning Z3 source repository ...")
       Git.cloneRepository()
         .setDirectory(z3Path.asFile)
         .setURI(z3SourceRepo)
+        .call()
+
+      Git.open(z3Path.asFile)
+        .checkout()
+        .setName(z3SourceTag)
         .call()
     }
 

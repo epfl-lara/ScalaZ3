@@ -3,6 +3,7 @@ package z3.java;
 import z3.Z3Wrapper;
 import java.util.Map;
 import com.microsoft.z3.Native;
+import com.microsoft.z3.Z3Exception;
 
 public class Z3Context extends Z3Pointer {
     public static Boolean lbool2Boolean(int v) {
@@ -14,7 +15,7 @@ public class Z3Context extends Z3Pointer {
             return true;
     }
 
-    public Z3Context(Map<String, String> config) {
+    public Z3Context(Map<String, String> config) throws Z3Exception {
         synchronized(Z3Wrapper.creation_lock) {
             long cfgPtr = Native.mkConfig();
             for (Map.Entry<String, String> entry : config.entrySet()) {
@@ -25,172 +26,172 @@ public class Z3Context extends Z3Pointer {
         }
     }
 
-    public void delete() {
+    public void delete() throws Z3Exception {
         Native.delContext(this.value);
         this.value = 0;
     }
 
-    public void updateParamValue(String paramID, String paramValue) {
+    public void updateParamValue(String paramID, String paramValue) throws Z3Exception {
         Native.updateParamValue(this.value, paramID, paramValue);
     }
 
-    public Z3Symbol mkIntSymbol(int i) {
+    public Z3Symbol mkIntSymbol(int i) throws Z3Exception {
         return new Z3Symbol(Native.mkIntSymbol(this.value, i));
     }
 
-    public Z3Symbol mkStringSymbol(String s) {
+    public Z3Symbol mkStringSymbol(String s) throws Z3Exception {
         return new Z3Symbol(Native.mkStringSymbol(this.value, s));
     }
 
-    public boolean isEqSort(Z3Sort s1, Z3Sort s2) {
+    public boolean isEqSort(Z3Sort s1, Z3Sort s2) throws Z3Exception {
         return Native.isEqSort(this.value, s1.value, s2.value);
     }
 
-    public Z3Sort mkUninterpretedSort(Z3Symbol s) {
+    public Z3Sort mkUninterpretedSort(Z3Symbol s) throws Z3Exception {
         return new Z3Sort(Native.mkUninterpretedSort(this.value, s.value));
     }
 
-    public Z3Sort mkBoolSort() {
+    public Z3Sort mkBoolSort() throws Z3Exception {
         return new Z3Sort(Native.mkBoolSort(this.value));
     }
 
-    public Z3Sort mkIntSort() {
+    public Z3Sort mkIntSort() throws Z3Exception {
         return new Z3Sort(Native.mkIntSort(this.value));
     }
 
-    public Z3Sort mkRealSort() {
+    public Z3Sort mkRealSort() throws Z3Exception {
         return new Z3Sort(Native.mkRealSort(this.value));
     }
 
-    public boolean isEqAST(Z3AST t1, Z3AST t2) {
+    public boolean isEqAST(Z3AST t1, Z3AST t2) throws Z3Exception {
         return Native.isEqAst(this.value, t1.value, t2.value);
     }
 
-    public Z3AST mkConst(Z3Symbol symbol, Z3Sort sort) {
+    public Z3AST mkConst(Z3Symbol symbol, Z3Sort sort) throws Z3Exception {
         return new Z3AST(Native.mkConst(this.value, symbol.value, sort.value));
     }
 
-    public Z3AST mkTrue() {
+    public Z3AST mkTrue() throws Z3Exception {
         return new Z3AST(Native.mkTrue(this.value));
     }
 
-    public Z3AST mkFalse() {
+    public Z3AST mkFalse() throws Z3Exception {
         return new Z3AST(Native.mkFalse(this.value));
     }
 
-    public Z3AST mkEq(Z3AST ast1, Z3AST ast2) {
+    public Z3AST mkEq(Z3AST ast1, Z3AST ast2) throws Z3Exception {
         return new Z3AST(Native.mkEq(this.value, ast1.value, ast2.value));
     }
 
-    public Z3AST mkDistinct(Z3AST ... args) {
+    public Z3AST mkDistinct(Z3AST ... args) throws Z3Exception {
         if(args.length == 0)
             throw new IllegalArgumentException("mkDistinct needs at least one argument");
         return new Z3AST(Native.mkDistinct(this.value, args.length, Z3Wrapper.toPtrArray(args)));
     }
 
-    public Z3AST mkNot(Z3AST ast) {
+    public Z3AST mkNot(Z3AST ast) throws Z3Exception {
         return new Z3AST(Native.mkNot(this.value, ast.value));
     }
 
-    public Z3AST mkITE(Z3AST t1, Z3AST t2, Z3AST t3) {
+    public Z3AST mkITE(Z3AST t1, Z3AST t2, Z3AST t3) throws Z3Exception {
         return new Z3AST(Native.mkIte(this.value, t1.value, t2.value, t3.value));
     }
 
-    public Z3AST mkIff(Z3AST t1, Z3AST t2) {
+    public Z3AST mkIff(Z3AST t1, Z3AST t2) throws Z3Exception {
         return new Z3AST(Native.mkIff(this.value, t1.value, t2.value));
     }
 
-    public Z3AST mkImplies(Z3AST t1, Z3AST t2) {
+    public Z3AST mkImplies(Z3AST t1, Z3AST t2) throws Z3Exception {
         return new Z3AST(Native.mkImplies(this.value, t1.value, t2.value));
     }
 
-    public Z3AST mkXor(Z3AST t1, Z3AST t2) {
+    public Z3AST mkXor(Z3AST t1, Z3AST t2) throws Z3Exception {
         return new Z3AST(Native.mkXor(this.value, t1.value, t2.value));
     }
 
-    public Z3AST mkAnd(Z3AST ... args) {
+    public Z3AST mkAnd(Z3AST ... args) throws Z3Exception {
         if(args.length == 0)
             throw new IllegalArgumentException("mkAnd needs at least one argument");
         return new Z3AST(Native.mkAnd(this.value, args.length, Z3Wrapper.toPtrArray(args)));
     }
 
-    public Z3AST mkOr(Z3AST ... args) {
+    public Z3AST mkOr(Z3AST ... args) throws Z3Exception {
         if(args.length == 0)
             throw new IllegalArgumentException("mkOr needs at least one argument");
         return new Z3AST(Native.mkOr(this.value, args.length, Z3Wrapper.toPtrArray(args)));
     }
 
-    public Z3AST mkAdd(Z3AST ... args) {
+    public Z3AST mkAdd(Z3AST ... args) throws Z3Exception {
         if(args.length == 0)
             throw new IllegalArgumentException("mkAdd needs at least one argument");
         return new Z3AST(Native.mkAdd(this.value, args.length, Z3Wrapper.toPtrArray(args)));
     }
 
-    public Z3AST mkMul(Z3AST ... args) {
+    public Z3AST mkMul(Z3AST ... args) throws Z3Exception {
         if(args.length == 0)
             throw new IllegalArgumentException("mkMul needs at least one argument");
         return new Z3AST(Native.mkMul(this.value, args.length, Z3Wrapper.toPtrArray(args)));
     }
 
-    public Z3AST mkSub(Z3AST ... args) {
+    public Z3AST mkSub(Z3AST ... args) throws Z3Exception {
         if(args.length == 0)
             throw new IllegalArgumentException("mkSub needs at least one argument");
         return new Z3AST(Native.mkSub(this.value, args.length, Z3Wrapper.toPtrArray(args)));
     }
 
-    public Z3AST mkUnaryMinus(Z3AST ast) {
+    public Z3AST mkUnaryMinus(Z3AST ast) throws Z3Exception {
         return new Z3AST(Native.mkUnaryMinus(this.value, ast.value));
     }
 
-    public Z3AST mkDiv(Z3AST ast1, Z3AST ast2) {
+    public Z3AST mkDiv(Z3AST ast1, Z3AST ast2) throws Z3Exception {
         return new Z3AST(Native.mkDiv(this.value, ast1.value, ast2.value));
     }
 
-    public Z3AST mkMod(Z3AST ast1, Z3AST ast2) {
+    public Z3AST mkMod(Z3AST ast1, Z3AST ast2) throws Z3Exception {
         return new Z3AST(Native.mkMod(this.value, ast1.value, ast2.value));
     }
 
-    public Z3AST mkRem(Z3AST ast1, Z3AST ast2) {
+    public Z3AST mkRem(Z3AST ast1, Z3AST ast2) throws Z3Exception {
         return new Z3AST(Native.mkRem(this.value, ast1.value, ast2.value));
     }
 
-    public Z3AST mkLT(Z3AST ast1, Z3AST ast2) {
+    public Z3AST mkLT(Z3AST ast1, Z3AST ast2) throws Z3Exception {
         return new Z3AST(Native.mkLt(this.value, ast1.value, ast2.value));
     }
 
-    public Z3AST mkLE(Z3AST ast1, Z3AST ast2) {
+    public Z3AST mkLE(Z3AST ast1, Z3AST ast2) throws Z3Exception {
         return new Z3AST(Native.mkLe(this.value, ast1.value, ast2.value));
     }
 
-    public Z3AST mkGT(Z3AST ast1, Z3AST ast2) {
+    public Z3AST mkGT(Z3AST ast1, Z3AST ast2) throws Z3Exception {
         return new Z3AST(Native.mkGt(this.value, ast1.value, ast2.value));
     }
 
-    public Z3AST mkGE(Z3AST ast1, Z3AST ast2) {
+    public Z3AST mkGE(Z3AST ast1, Z3AST ast2) throws Z3Exception {
         return new Z3AST(Native.mkGe(this.value, ast1.value, ast2.value));
     }
 
-    public Z3AST mkInt2Real(Z3AST ast) {
+    public Z3AST mkInt2Real(Z3AST ast) throws Z3Exception {
         return new Z3AST(Native.mkInt2real(this.value, ast.value));
     }
 
-    public Z3AST mkReal2Int(Z3AST ast) {
+    public Z3AST mkReal2Int(Z3AST ast) throws Z3Exception {
         return new Z3AST(Native.mkReal2int(this.value, ast.value));
     }
 
-    public Z3AST mkIsInt(Z3AST ast) {
+    public Z3AST mkIsInt(Z3AST ast) throws Z3Exception {
         return new Z3AST(Native.mkIsInt(this.value, ast.value));
     }
 
-    public Z3AST mkInt(int value, Z3Sort sort) {
+    public Z3AST mkInt(int value, Z3Sort sort) throws Z3Exception {
         return new Z3AST(Native.mkInt(this.value, value, sort.value));
     }
     
-    public Z3AST mkReal(double value, int numerator, int denominator) {
+    public Z3AST mkReal(double value, int numerator, int denominator) throws Z3Exception {
         return new Z3AST(Native.mkReal(this.value, numerator, denominator));
     }
 
-    public Integer getNumeralInt(Z3AST ast) {
+    public Integer getNumeralInt(Z3AST ast) throws Z3Exception {
         Native.IntPtr ip = new Native.IntPtr();
         boolean res = Native.getNumeralInt(this.value, ast.value, ip);
         if(res)
@@ -199,7 +200,7 @@ public class Z3Context extends Z3Pointer {
             return null;
     }
 
-    public Boolean getBoolValue(Z3AST ast) {
+    public Boolean getBoolValue(Z3AST ast) throws Z3Exception {
         return lbool2Boolean(Native.getBoolValue(this.value, ast.value));
     }
 

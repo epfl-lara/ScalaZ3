@@ -1,6 +1,7 @@
 package z3.java;
 
 import com.microsoft.z3.Native;
+import com.microsoft.z3.Z3Exception;
 
 public class Z3Model extends Z3Pointer {
     private final Z3Context context;
@@ -10,7 +11,7 @@ public class Z3Model extends Z3Pointer {
         this.context = context;
     }
 
-    public Z3AST eval(Z3AST ast, boolean completion) {
+    public Z3AST eval(Z3AST ast, boolean completion) throws Z3Exception {
         if(this.value == 0L) {
             throw new IllegalStateException("The model is not initialized.");
         }
@@ -23,27 +24,27 @@ public class Z3Model extends Z3Pointer {
         }
     }
 
-    public Z3AST eval(Z3AST ast) {
+    public Z3AST eval(Z3AST ast) throws Z3Exception {
         return eval(ast, false);
     }
 
-    public Integer evalAsInt(Z3AST ast) {
+    public Integer evalAsInt(Z3AST ast) throws Z3Exception {
         Z3AST res = this.eval(ast);
         if(res == null) return null;
         return context.getNumeralInt(res);
     }
 
-    public Boolean evalAsBool(Z3AST ast) {
+    public Boolean evalAsBool(Z3AST ast) throws Z3Exception {
         Z3AST res = this.eval(ast);
         if(res == null) return null;
         return context.getBoolValue(res);
     }
 
-    public void incRef() {
+    public void incRef() throws Z3Exception {
         Native.modelIncRef(context.value, this.value);
     }
 
-    public void decRef() {
+    public void decRef() throws Z3Exception {
         Native.modelDecRef(context.value, this.value);
     }
 }

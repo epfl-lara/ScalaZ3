@@ -892,6 +892,24 @@ sealed class Z3Context(val config: Map[String, String]) {
     res
   }
 
+  // XXX: this is a HUGE hack to get around the fact that the Z3 api doesn't
+  //      provide a handle to the absolute value function.
+  def getAbsFuncDecl(): Z3FuncDecl = {
+    val ast = parseSMTLIB2String("""
+      (declare-fun x () Int)
+      (declare-fun y () Int)
+      (assert (= y (abs x)))
+    """)
+
+    getASTKind(ast) match {
+      case Z3AppAST(_, Seq(_, absAst)) => getASTKind(absAst) match {
+        case Z3AppAST(decl, _) => decl
+        case c => error("Unexpected ast kind " + c)
+      }
+      case c => error("Unexpected ast kind " + c)
+    }
+  }
+
   // Parser interface
   private def parseSMTLIB(file: Boolean, str: String) : Unit = {
     if(file) {

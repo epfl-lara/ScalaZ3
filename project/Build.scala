@@ -106,12 +106,12 @@ object ScalaZ3Build extends Build {
         .setDirectory(z3Path.asFile)
         .setURI(z3SourceRepo)
         .call()
-
-      Git.open(z3Path.asFile)
-        .checkout()
-        .setName(z3SourceTag)
-        .call()
     }
+
+    Git.open(z3Path.asFile)
+      .checkout()
+      .setName(z3SourceTag)
+      .call()
 
     val hashFile = z3Path / ".build-hash"
     def computeHash(): String = {

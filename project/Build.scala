@@ -230,7 +230,7 @@ object ScalaZ3Build extends Build {
            "-L" + z3BuildPath.absolutePath + " " +
            "-g -lc " +
            "-Wl,-rpath,"+extractDir(cs)+" " +
-           "-lz3 -fPIC -O2 -fopenmp", s)
+           "-lz3 -fPIC -O2", s)
 
     } else {
       error("Unknown arch: "+osInf+" - "+osArch)

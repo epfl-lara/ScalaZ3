@@ -93,12 +93,20 @@ case class IntConstant(value : Int) extends Tree[IntSort] {
   private[dsl] def build(z3 : Z3Context) = z3.mkInt(value, z3.mkIntSort)
 }
 
+case class CharConstant(value : Char) extends Tree[BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkInt(value, z3.mkBVSort(16))
+}
+
 case class BoolVar() extends Tree[BoolSort] {
   private[dsl] def build(z3 : Z3Context) = z3.mkFreshConst("C", z3.mkBoolSort)
 }
 
 case class IntVar() extends Tree[IntSort] {
   private[dsl] def build(z3 : Z3Context) = z3.mkFreshConst("I", z3.mkIntSort)
+}
+
+case class CharVar() extends Tree[BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkFreshConst("BV", z3.mkBVSort(16))
 }
 
 case class IntSetVar() extends Tree[SetSort] {

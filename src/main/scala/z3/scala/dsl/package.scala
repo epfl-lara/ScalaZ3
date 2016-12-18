@@ -40,6 +40,10 @@ package object dsl {
 
   implicit def intOperandToIntTree(operand : IntOperand) : Tree[IntSort] = operand.tree.asInstanceOf[Tree[IntSort]]
 
+  implicit def charValueToBVTree(value : Char) : Tree[BVSort] = CharConstant(value)
+
+  implicit def charValueToBVOperand(value : Char) : BitVectorOperand = new BitVectorOperand(CharConstant(value))
+
   implicit def bvTreeToBVOperand[T >: BottomSort <: BVSort](tree : Tree[T]) : BitVectorOperand =
     new BitVectorOperand(tree)
 
@@ -77,6 +81,13 @@ package object dsl {
 
     def convert(model : Z3Model, ast : Z3AST) : Int =
       model.evalAs[Int](ast).getOrElse(0)
+  }
+
+  implicit object CharValHandler extends ValHandler[Char] {
+    def mkSort(z3 : Z3Context) : Z3Sort = z3.mkBVSort(16)
+
+    def convert(model : Z3Model, ast : Z3AST) : Char =
+      model.evalAs[Char](ast).getOrElse('\u0000')
   }
 
   /** Instances of this class are used to represent models of Z3 maps, which
@@ -266,6 +277,10 @@ package object dsl {
 
   implicit object DefaultBoolean extends Default[Boolean] {
     val value = true
+  }
+
+  implicit object DefaultChar extends Default[Char] {
+    val value = '\u0000'
   }
 
   implicit def liftDefaultToSet[A : Default] : Default[Set[A]] = {

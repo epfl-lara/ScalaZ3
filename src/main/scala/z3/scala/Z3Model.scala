@@ -18,6 +18,14 @@ object Z3Model {
     else
       model.context.getBoolValue(res.get)
   }
+
+  implicit def ast2char(model: Z3Model, ast: Z3AST): Option[Char] = {
+    val res = model.eval(ast)
+    if (res.isEmpty)
+      None
+    else
+      model.context.getNumeralInt(res.get).value.map(_.toChar)
+  }
 }
 
 sealed class Z3Model private[z3](val ptr: Long, val context: Z3Context) extends Z3Object {

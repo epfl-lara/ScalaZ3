@@ -592,6 +592,14 @@ sealed class Z3Context(val config: Map[String, String]) {
     new Z3Sort(Native.mkBvSort(this.ptr, size), this)
   }
 
+  def mkInt2BV(size: Int, ast: Z3AST) : Z3AST = {
+    new Z3AST(Native.mkInt2bv(this.ptr, size, ast.ptr), this)
+  }
+
+  def mkBV2Int(ast: Z3AST, isSigned: Boolean) : Z3AST = {
+    new Z3AST(Native.mkBv2int(this.ptr, ast.ptr, isSigned), this)
+  }
+
   def mkBVNot(ast: Z3AST) : Z3AST = {
     new Z3AST(Native.mkBvnot(this.ptr, ast.ptr), this)
   }

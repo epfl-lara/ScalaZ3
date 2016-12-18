@@ -177,6 +177,182 @@ case class GE[+A >: BottomSort <: IntSort](left : Tree[A], right : Tree[A]) exte
   private[dsl] def build(z3 : Z3Context) = z3.mkGE(left.ast(z3), right.ast(z3))
 }
 
+case class BVNot[+A >: BottomSort <: BVSort](tree : Tree[A]) extends Tree[BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVNot(tree.ast(z3))
+}
+
+case class BVRedAnd[+A >: BottomSort <: BVSort](tree : Tree[A]) extends Tree[BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVRedAnd(tree.ast(z3))
+}
+
+case class BVRedOr[+A >: BottomSort <: BVSort](tree : Tree[A]) extends Tree[BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVRedOr(tree.ast(z3))
+}
+
+case class BVAnd[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A]) extends BinaryOp[A,BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVAnd(left.ast(z3), right.ast(z3))
+}
+
+case class BVOr[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A]) extends BinaryOp[A,BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVOr(left.ast(z3), right.ast(z3))
+}
+
+case class BVXor[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A]) extends BinaryOp[A,BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVXor(left.ast(z3), right.ast(z3))
+}
+
+case class BVNand[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A]) extends BinaryOp[A,BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVNand(left.ast(z3), right.ast(z3))
+}
+
+case class BVNor[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A]) extends BinaryOp[A,BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVNor(left.ast(z3), right.ast(z3))
+}
+
+case class BVXnor[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A]) extends BinaryOp[A,BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVXnor(left.ast(z3), right.ast(z3))
+}
+
+case class BVNeg[+A >: BottomSort <: BVSort](tree : Tree[A]) extends Tree[BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVNeg(tree.ast(z3))
+}
+
+case class BVAdd[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A]) extends BinaryOp[A,BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVAdd(left.ast(z3), right.ast(z3))
+}
+
+case class BVSub[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A]) extends BinaryOp[A,BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVSub(left.ast(z3), right.ast(z3))
+}
+
+case class BVMul[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A]) extends BinaryOp[A,BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVMul(left.ast(z3), right.ast(z3))
+}
+
+case class BVUdiv[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A]) extends BinaryOp[A,BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVUdiv(left.ast(z3), right.ast(z3))
+}
+
+case class BVSdiv[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A]) extends BinaryOp[A,BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVSdiv(left.ast(z3), right.ast(z3))
+}
+
+case class BVUrem[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A]) extends BinaryOp[A,BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVUrem(left.ast(z3), right.ast(z3))
+}
+
+case class BVSrem[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A]) extends BinaryOp[A,BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVSrem(left.ast(z3), right.ast(z3))
+}
+
+case class BVSmod[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A]) extends BinaryOp[A,BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVSmod(left.ast(z3), right.ast(z3))
+}
+
+case class BVUlt[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A]) extends BinaryPred[BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVUlt(left.ast(z3), right.ast(z3))
+}
+
+case class BVSlt[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A]) extends BinaryPred[BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVSlt(left.ast(z3), right.ast(z3))
+}
+
+case class BVUle[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A]) extends BinaryPred[BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVUle(left.ast(z3), right.ast(z3))
+}
+
+case class BVSle[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A]) extends BinaryPred[BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVSle(left.ast(z3), right.ast(z3))
+}
+
+case class BVUgt[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A]) extends BinaryPred[BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVUgt(left.ast(z3), right.ast(z3))
+}
+
+case class BVSgt[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A]) extends BinaryPred[BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVSgt(left.ast(z3), right.ast(z3))
+}
+
+case class BVUge[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A]) extends BinaryPred[BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVUge(left.ast(z3), right.ast(z3))
+}
+
+case class BVSge[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A]) extends BinaryPred[BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVSge(left.ast(z3), right.ast(z3))
+}
+
+case class Concat[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A]) extends BinaryOp[A,BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkConcat(left.ast(z3), right.ast(z3))
+}
+
+case class Extract[+A >: BottomSort <: BVSort](high: Int, low: Int, tree : Tree[A]) extends Tree[BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkExtract(high, low, tree.ast(z3))
+}
+
+case class SignExt[+A >: BottomSort <: BVSort](extraSize: Int, tree : Tree[A]) extends Tree[BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkSignExt(extraSize, tree.ast(z3))
+}
+
+case class ZeroExt[+A >: BottomSort <: BVSort](extraSize: Int, tree : Tree[A]) extends Tree[BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkZeroExt(extraSize, tree.ast(z3))
+}
+
+case class Repeat[+A >: BottomSort <: BVSort](count: Int, tree : Tree[A]) extends Tree[BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkRepeat(count, tree.ast(z3))
+}
+
+case class BVShl[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A]) extends BinaryOp[A,BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVShl(left.ast(z3), right.ast(z3))
+}
+
+case class BVLshr[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A]) extends BinaryOp[A,BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVLshr(left.ast(z3), right.ast(z3))
+}
+
+case class BVAshr[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A]) extends BinaryOp[A,BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVAshr(left.ast(z3), right.ast(z3))
+}
+
+case class ExtRotateLeft[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A]) extends BinaryOp[A,BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkExtRotateLeft(left.ast(z3), right.ast(z3))
+}
+
+case class ExtRotateRight[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A]) extends BinaryOp[A,BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkExtRotateRight(left.ast(z3), right.ast(z3))
+}
+
+case class BVAddNoOverflow[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A], isSigned: Boolean) extends BinaryOp[A,BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVAddNoOverflow(left.ast(z3), right.ast(z3), isSigned)
+}
+
+case class BVAddNoUnderflow[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A]) extends BinaryOp[A,BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVAddNoUnderflow(left.ast(z3), right.ast(z3))
+}
+
+case class BVSubNoOverflow[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A]) extends BinaryOp[A,BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVSubNoOverflow(left.ast(z3), right.ast(z3))
+}
+
+case class BVSubNoUnderflow[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A], isSigned: Boolean) extends BinaryOp[A,BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVSubNoUnderflow(left.ast(z3), right.ast(z3), isSigned)
+}
+
+case class BVSDivNoOverflow[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A]) extends BinaryOp[A,BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVSDivNoOverflow(left.ast(z3), right.ast(z3))
+}
+
+case class BVNegNoOverflow[+A >: BottomSort <: BVSort](tree : Tree[A]) extends Tree[BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVNegNoOverflow(tree.ast(z3))
+}
+
+case class BVMulNoOverflow[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A], isSigned: Boolean) extends BinaryOp[A,BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVMulNoOverflow(left.ast(z3), right.ast(z3), isSigned)
+}
+
+case class BVMulNoUnderflow[+A >: BottomSort <: BVSort](left : Tree[A], right : Tree[A]) extends BinaryOp[A,BVSort] {
+  private[dsl] def build(z3 : Z3Context) = z3.mkBVMulNoUnderflow(left.ast(z3), right.ast(z3))
+}
+
 case class SetUnion[+A >: BottomSort <: SetSort](args: Tree[A]*) extends Tree[SetSort] {
   private[dsl] def build(z3 : Z3Context) = z3.mkSetUnion(args.map(_.ast(z3)) : _*)
 }

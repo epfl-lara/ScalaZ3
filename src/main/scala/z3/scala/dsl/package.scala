@@ -40,6 +40,11 @@ package object dsl {
 
   implicit def intOperandToIntTree(operand : IntOperand) : Tree[IntSort] = operand.tree.asInstanceOf[Tree[IntSort]]
 
+  implicit def bvTreeToBVOperand[T >: BottomSort <: BVSort](tree : Tree[T]) : BitVectorOperand =
+    new BitVectorOperand(tree)
+
+  implicit def bvOperandToBVTree(operand : BitVectorOperand) : Tree[BVSort] = operand.tree.asInstanceOf[Tree[BVSort]]
+
   implicit def z3ASTToSetOperand(ast : Z3AST) : SetOperand = {
     // TODO how do we check the type (set of any type?) here?
     new SetOperand(Z3ASTWrapper[SetSort](ast))

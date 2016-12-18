@@ -720,6 +720,10 @@ sealed class Z3Context(val config: Map[String, String]) {
     new Z3AST(Native.mkZeroExt(this.ptr, extraSize, ast.ptr), this)
   }
 
+  def mkRepeat(count: Int, ast: Z3AST) : Z3AST = {
+    new Z3AST(Native.mkRepeat(this.ptr, count, ast.ptr), this)
+  }
+
   def mkBVShl(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
     new Z3AST(Native.mkBvshl(this.ptr, ast1.ptr, ast2.ptr), this)
   }
@@ -742,6 +746,34 @@ sealed class Z3Context(val config: Map[String, String]) {
 
   def mkBVAddNoOverflow(ast1: Z3AST, ast2: Z3AST, isSigned: Boolean) : Z3AST = {
     new Z3AST(Native.mkBvaddNoOverflow(this.ptr, ast1.ptr, ast2.ptr, isSigned), this)
+  }
+
+  def mkBVAddNoUnderflow(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Native.mkBvaddNoUnderflow(this.ptr, ast1.ptr, ast2.ptr), this)
+  }
+
+  def mkBVSubNoOverflow(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Native.mkBvsubNoOverflow(this.ptr, ast1.ptr, ast2.ptr), this)
+  }
+
+  def mkBVSubNoUnderflow(ast1: Z3AST, ast2: Z3AST, isSigned: Boolean) : Z3AST = {
+    new Z3AST(Native.mkBvsubNoUnderflow(this.ptr, ast1.ptr, ast2.ptr, isSigned), this)
+  }
+
+  def mkBVSDivNoOverflow(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Native.mkBvsdivNoOverflow(this.ptr, ast1.ptr, ast2.ptr), this)
+  }
+
+  def mkBVNegNoOverflow(ast: Z3AST) : Z3AST = {
+    new Z3AST(Native.mkBvnegNoOverflow(this.ptr, ast.ptr), this)
+  }
+
+  def mkBVMulNoOverflow(ast1: Z3AST, ast2: Z3AST, isSigned: Boolean) : Z3AST = {
+    new Z3AST(Native.mkBvmulNoOverflow(this.ptr, ast1.ptr, ast2.ptr, isSigned), this)
+  }
+
+  def mkBVMulNoUnderflow(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
+    new Z3AST(Native.mkBvmulNoUnderflow(this.ptr, ast1.ptr, ast2.ptr), this)
   }
 
   def getFuncDecl(op: Z3DeclKind, sorts: Z3Sort*): Z3FuncDecl = {

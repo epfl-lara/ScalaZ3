@@ -100,7 +100,7 @@ class Z3Solver private[z3](val ptr: Long, val context: Z3Context) extends Z3Obje
     (checkAssumptions(assumptions : _*), if (isModelAvailable) getModel() else null, getUnsatCore())
   }
 
-  private[z3] def assertCnstr(tree : dsl.Tree[dsl.BoolSort]) : Unit = {
+  def assertCnstr(tree : dsl.Tree[dsl.BoolSort]) : Unit = {
     assertCnstr(tree.ast(context))
   }
 

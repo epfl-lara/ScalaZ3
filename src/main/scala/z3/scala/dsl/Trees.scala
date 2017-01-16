@@ -1,6 +1,6 @@
 package z3.scala.dsl
 
-import z3.scala.{Z3AST,Z3Context}
+import z3.scala.{Z3AST, Z3Context}
 
 sealed trait TopSort
 sealed trait BoolSort extends TopSort
@@ -25,20 +25,22 @@ sealed trait Tree[+T >: BottomSort <: TopSort] {
   }
 }
 
-/** Instances of Val should never be created manually, but rather always
- * through a ValHandler. The type parameter refers to a Scala type for a
- * value that the user wishes to obtain through a call to choose, find or
- * findAll. */
-abstract class Val[A] extends Tree[BottomSort] {
+/** The type parameter refers to a Scala type for a value that the user
+ * wishes to obtain through a call to choose, find or findAll. */
+class Val[A : ValHandler] {
+  val tree: Tree[_ >: BottomSort <: TopSort] = implicitly[ValHandler[A]].construct
+}
+
+abstract class ValTree[S >: BottomSort <: TopSort] extends Tree[S] {
   import Operands._
 
   // def ===(other : Val[A]) : BoolOperand = {
   //   new BoolOperand(Eq(this, other))
-  // } 
+  // }
 
   //def !==(other : Val[A]) : BoolOperand = {
   //  new BoolOperand(Distinct(this, other))
-  //} 
+  //}
 
   // This is more general.
   def ===(other : Tree[BottomSort]) : BoolOperand = {
@@ -47,7 +49,7 @@ abstract class Val[A] extends Tree[BottomSort] {
 
   def !==(other : Tree[BottomSort]) : BoolOperand = {
     new BoolOperand(Distinct(this, other))
-  } 
+  }
 
   // Unsafe as such. Better would be to have this in Tree itself, and restrict
   // it to trees of array sorts.

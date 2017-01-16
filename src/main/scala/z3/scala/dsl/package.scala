@@ -19,6 +19,11 @@ package object dsl {
 
   implicit def booleanValueToBoolOperand(value : Boolean) : BoolOperand = new BoolOperand(BoolConstant(value))
 
+  implicit def booleanValToBoolTree(value : Val[Boolean]) : Tree[BoolSort] = value.tree.asInstanceOf[Tree[BoolSort]]
+
+  implicit def booleanValToBoolOperand(value : Val[Boolean]) : BoolOperand =
+    new BoolOperand(value.tree.asInstanceOf[Tree[BoolSort]])
+
   implicit def boolTreeToBoolOperand[T >: BottomSort <: BoolSort](tree : Tree[T]) : BoolOperand =
     new BoolOperand(tree)
 
@@ -35,6 +40,11 @@ package object dsl {
 
   implicit def intValueToIntOperand(value : Int) : IntOperand = new IntOperand(IntConstant(value))
 
+  implicit def intValToIntTree(value : Val[Int]) : Tree[IntSort] = value.tree.asInstanceOf[Tree[IntSort]]
+
+  implicit def intValToIntOperand(value : Val[Int]) : IntOperand =
+    new IntOperand(value.tree.asInstanceOf[Tree[IntSort]])
+
   implicit def intTreeToIntOperand[T >: BottomSort <: IntSort](tree : Tree[T]) : IntOperand =
     new IntOperand(tree)
 
@@ -43,6 +53,11 @@ package object dsl {
   implicit def charValueToBVTree(value : Char) : Tree[BVSort] = CharConstant(value)
 
   implicit def charValueToBVOperand(value : Char) : BitVectorOperand = new BitVectorOperand(CharConstant(value))
+
+  implicit def charValToCharTree(value : Val[Char]) : Tree[BVSort] = value.tree.asInstanceOf[Tree[BVSort]]
+
+  implicit def charValToBVOperand(value : Val[Char]) : BitVectorOperand =
+    new BitVectorOperand(value.tree.asInstanceOf[Tree[BVSort]])
 
   implicit def bvTreeToBVOperand[T >: BottomSort <: BVSort](tree : Tree[T]) : BitVectorOperand =
     new BitVectorOperand(tree)
@@ -100,6 +115,8 @@ package object dsl {
 
     def convert(model : Z3Model, ast : Z3AST) : Boolean =
       model.evalAs[Boolean](ast).getOrElse(false)
+
+    override type ValSort = BoolSort
   }
 
   implicit object IntValHandler extends ValHandler[Int] {
@@ -107,6 +124,8 @@ package object dsl {
 
     def convert(model : Z3Model, ast : Z3AST) : Int =
       model.evalAs[Int](ast).getOrElse(0)
+
+    override type ValSort = IntSort
   }
 
   implicit object CharValHandler extends ValHandler[Char] {
@@ -114,6 +133,8 @@ package object dsl {
 
     def convert(model : Z3Model, ast : Z3AST) : Char =
       model.evalAs[Char](ast).getOrElse('\u0000')
+
+    override type ValSort = BVSort
   }
 
   /** Instances of this class are used to represent models of Z3 maps, which
@@ -145,6 +166,8 @@ package object dsl {
         }
       }
     }
+
+    override type ValSort = ArraySort
   }
 
   def choose[T:ValHandler](predicate : Val[T] => Tree[BoolSort]) : T = find(predicate) match {
@@ -156,9 +179,9 @@ package object dsl {
     val z3 = new Z3Context("MODEL" -> true)
     val solver = z3.mkSolver
     val vh = implicitly[ValHandler[T]]
-    val valTree = vh.construct
-    val valAST = valTree.ast(z3)
-    val constraintTree = predicate(valTree)
+    val value = new Val[T]
+    val valAST = value.tree.ast(z3)
+    val constraintTree = predicate(value)
     solver.assertCnstr(constraintTree.ast(z3))
     solver.checkAndGetModel match {
       case (Some(true), m) => {
@@ -177,9 +200,9 @@ package object dsl {
     val z3 = new Z3Context("MODEL" -> true)
     val solver = z3.mkSolver
     val vh = implicitly[ValHandler[T]]
-    val valTree = vh.construct
-    val valAST = valTree.ast(z3)
-    val constraintTree = predicate(valTree)
+    val value = new Val[T]
+    val valAST = value.tree.ast(z3)
+    val constraintTree = predicate(value)
 
     solver.assertCnstr(constraintTree.ast(z3))
     solver.checkAndGetAllModels.map(m => {
@@ -198,11 +221,11 @@ package object dsl {
     val solver = z3.mkSolver
     val vh1 = implicitly[ValHandler[T1]]
     val vh2 = implicitly[ValHandler[T2]]
-    val valTree1 = vh1.construct
-    val valTree2 = vh2.construct
-    val valAST1 = valTree1.ast(z3)
-    val valAST2 = valTree2.ast(z3)
-    val constraintTree = predicate(valTree1,valTree2)
+    val value1 = new Val[T1]
+    val value2 = new Val[T2]
+    val valAST1 = value1.tree.ast(z3)
+    val valAST2 = value2.tree.ast(z3)
+    val constraintTree = predicate(value1,value2)
     solver.assertCnstr(constraintTree.ast(z3))
     solver.checkAndGetModel match {
       case (Some(true), m) => {
@@ -223,11 +246,11 @@ package object dsl {
     val solver = z3.mkSolver
     val vh1 = implicitly[ValHandler[T1]]
     val vh2 = implicitly[ValHandler[T2]]
-    val valTree1 = vh1.construct
-    val valTree2 = vh2.construct
-    val valAST1 = valTree1.ast(z3)
-    val valAST2 = valTree2.ast(z3)
-    val constraintTree = predicate(valTree1, valTree2)
+    val value1 = new Val[T1]
+    val value2 = new Val[T2]
+    val valAST1 = value1.tree.ast(z3)
+    val valAST2 = value2.tree.ast(z3)
+    val constraintTree = predicate(value1, value2)
 
     solver.assertCnstr(constraintTree.ast(z3))
     solver.checkAndGetAllModels.map(m => {
@@ -248,13 +271,13 @@ package object dsl {
     val vh1 = implicitly[ValHandler[T1]]
     val vh2 = implicitly[ValHandler[T2]]
     val vh3 = implicitly[ValHandler[T3]]
-    val valTree1 = vh1.construct
-    val valTree2 = vh2.construct
-    val valTree3 = vh3.construct
-    val valAST1 = valTree1.ast(z3)
-    val valAST2 = valTree2.ast(z3)
-    val valAST3 = valTree3.ast(z3)
-    val constraintTree = predicate(valTree1,valTree2, valTree3)
+    val value1 = new Val[T1]
+    val value2 = new Val[T2]
+    val value3 = new Val[T3]
+    val valAST1 = value1.tree.ast(z3)
+    val valAST2 = value2.tree.ast(z3)
+    val valAST3 = value3.tree.ast(z3)
+    val constraintTree = predicate(value1,value2, value3)
     solver.assertCnstr(constraintTree.ast(z3))
     solver.checkAndGetModel match {
       case (Some(true), m) => {
@@ -278,13 +301,13 @@ package object dsl {
     val vh1 = implicitly[ValHandler[T1]]
     val vh2 = implicitly[ValHandler[T2]]
     val vh3 = implicitly[ValHandler[T3]]
-    val valTree1 = vh1.construct
-    val valTree2 = vh2.construct
-    val valTree3 = vh3.construct
-    val valAST1 = valTree1.ast(z3)
-    val valAST2 = valTree2.ast(z3)
-    val valAST3 = valTree3.ast(z3)
-    val constraintTree = predicate(valTree1, valTree2, valTree3)
+    val value1 = new Val[T1]
+    val value2 = new Val[T2]
+    val value3 = new Val[T3]
+    val valAST1 = value1.tree.ast(z3)
+    val valAST2 = value2.tree.ast(z3)
+    val valAST3 = value3.tree.ast(z3)
+    val constraintTree = predicate(value1, value2, value3)
 
     solver.assertCnstr(constraintTree.ast(z3))
     solver.checkAndGetAllModels.map(m => {

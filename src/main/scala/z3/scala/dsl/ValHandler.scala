@@ -20,9 +20,11 @@ abstract class ValHandler[A : Default] {
   /** Z3 code to construct a sort representing the Scala A type. */
   def mkSort(z3 : Z3Context) : Z3Sort
 
-  /** Constructs a Val[A], i.e. the representation of a variable of type A. */
-  def construct : Val[A] = new Val[A] {
-    def build(z3 : Z3Context) = z3.mkFreshConst("valCst", mkSort(z3))
+  type ValSort >: BottomSort <: TopSort
+
+  /** Constructs a ValTree[A], i.e. the representation of a variable of type A. */
+  def construct: Tree[ValSort] = new ValTree[ValSort] {
+    override def build(z3: Z3Context): Z3AST = z3.mkFreshConst("valCst", mkSort(z3))
   }
 
   def convert(model : Z3Model, ast : Z3AST) : A

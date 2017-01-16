@@ -67,6 +67,32 @@ package object dsl {
 
   implicit def setOperandToSetTree(operand : SetOperand) : Tree[SetSort] = operand.tree.asInstanceOf[Tree[SetSort]]
 
+  // All default values
+
+  implicit object DefaultInt extends Default[Int] {
+    val value = 0
+  }
+
+  implicit object DefaultBoolean extends Default[Boolean] {
+    val value = true
+  }
+
+  implicit object DefaultChar extends Default[Char] {
+    val value = '\u0000'
+  }
+
+  implicit def liftDefaultToSet[A : Default] : Default[Set[A]] = {
+    new Default[Set[A]] {
+      val value = Set.empty[A]
+    }
+  }
+
+  implicit def liftDefaultToFun[A,B : Default] : Default[A=>B] = {
+    new Default[A=>B] {
+      val value = ((a : A) => implicitly[Default[B]].value)
+    }
+  }
+
   // Predefined ValHandler's
 
   implicit object BooleanValHandler extends ValHandler[Boolean] {
@@ -267,32 +293,6 @@ package object dsl {
       val result3 = vh3.convert(m, valAST3)
       (result1,result2,result3)
     })
-  }
-
-  // All default values
-
-  implicit object DefaultInt extends Default[Int] {
-    val value = 0
-  }
-
-  implicit object DefaultBoolean extends Default[Boolean] {
-    val value = true
-  }
-
-  implicit object DefaultChar extends Default[Char] {
-    val value = '\u0000'
-  }
-
-  implicit def liftDefaultToSet[A : Default] : Default[Set[A]] = {
-    new Default[Set[A]] {
-      val value = Set.empty[A]
-    }
-  }
-
-  implicit def liftDefaultToFun[A,B : Default] : Default[A=>B] = {
-    new Default[A=>B] {
-      val value = ((a : A) => implicitly[Default[B]].value)
-    }
   }
 
   implicit def astvectorToSeq(v: Z3ASTVector): Seq[Z3AST] = v.toSeq

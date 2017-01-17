@@ -23,7 +23,7 @@ object ScalaZ3Build extends Build {
   lazy val jdkWinIncludePath  = jdkIncludePath / "win32"
 
   lazy val z3SourceRepo = "https://github.com/Z3Prover/z3.git"
-  lazy val z3SourceTag = "HEAD"
+  lazy val z3SourceTag = "z3-4.5.0"
 
   lazy val osInf: String = Option(System.getProperty("os.name")).getOrElse("")
 

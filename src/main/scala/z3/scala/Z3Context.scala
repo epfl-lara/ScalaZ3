@@ -161,7 +161,7 @@ sealed class Z3Context(val config: Map[String, String]) {
   def mkRealSort() : Z3Sort = {
     new Z3Sort(Native.mkRealSort(this.ptr), this)
   }
-  
+
   import Z3Context.{ADTSortReference,RecursiveType,RegularSort}
 
   def mkADTSorts(defs: Seq[(String, Seq[String], Seq[Seq[(String,ADTSortReference)]])]) : Seq[(Z3Sort, Seq[Z3FuncDecl], Seq[Z3FuncDecl], Seq[Seq[Z3FuncDecl]])] = {
@@ -545,6 +545,82 @@ sealed class Z3Context(val config: Map[String, String]) {
 
   def mkSetSubset(ast1: Z3AST, ast2: Z3AST) : Z3AST = {
     new Z3AST(Native.mkSetSubset(this.ptr, ast1.ptr, ast2.ptr), this)
+  }
+
+  def mkSeqSort(underlying: Z3Sort) : Z3Sort = {
+    new Z3Sort(Native.mkSeqSort(this.ptr, underlying.ptr), this)
+  }
+
+  def mkEmptySeq(sort: Z3Sort): Z3AST = {
+    new Z3AST(Native.mkSeqEmpty(this.ptr, sort.ptr), this)
+  }
+
+  def mkUnitSeq(e: Z3AST): Z3AST = {
+    new Z3AST(Native.mkSeqUnit(this.ptr, e.ptr), this)
+  }
+
+  def mkSeqConcat(args: Z3AST*): Z3AST = {
+    new Z3AST(Native.mkSeqConcat(this.ptr, args.size, toPtrArray(args)), this)
+  }
+
+  def mkSeqLength(e: Z3AST): Z3AST = {
+    new Z3AST(Native.mkSeqLength(this.ptr, e.ptr), this)
+  }
+
+  def mkSeqPrefix(seq1: Z3AST, seq2: Z3AST): Z3AST = {
+    new Z3AST(Native.mkSeqPrefix(this.ptr, seq1.ptr, seq2.ptr), this)
+  }
+
+  def mkSeqSuffix(seq1: Z3AST, seq2: Z3AST): Z3AST = {
+    new Z3AST(Native.mkSeqSuffix(this.ptr, seq1.ptr, seq2.ptr), this)
+  }
+
+  def mkSeqContains(seq1: Z3AST, seq2: Z3AST): Z3AST = {
+    new Z3AST(Native.mkSeqContains(this.ptr, seq1.ptr, seq2.ptr), this)
+  }
+
+  def mkSeqAt(seq: Z3AST, i: Z3AST): Z3AST = {
+    new Z3AST(Native.mkSeqAt(this.ptr, seq.ptr, i.ptr), this)
+  }
+
+  def mkSeqExtract(seq: Z3AST, start: Z3AST, length: Z3AST): Z3AST = {
+    new Z3AST(Native.mkSeqExtract(this.ptr, seq.ptr, start.ptr, length.ptr), this)
+  }
+
+  def mkSeqIndexOf(seq: Z3AST, sub: Z3AST, offset: Z3AST): Z3AST = {
+    new Z3AST(Native.mkSeqIndex(this.ptr, seq.ptr, sub.ptr, offset.ptr), this)
+  }
+
+  def mkSeqReplace(seq: Z3AST, src: Z3AST, dest: Z3AST): Z3AST = {
+    new Z3AST(Native.mkSeqReplace(this.ptr, seq.ptr, src.ptr, dest.ptr), this)
+  }
+
+  def mkSeqToRe(seq: Z3AST): Z3AST = {
+    new Z3AST(Native.mkSeqToRe(this.ptr, seq.ptr), this)
+  }
+
+  def mkSeqInRe(seq: Z3AST, re: Z3AST): Z3AST = {
+    new Z3AST(Native.mkSeqInRe(this.ptr, seq.ptr, re.ptr), this)
+  }
+
+  def mkReStar(re: Z3AST): Z3AST = {
+    new Z3AST(Native.mkReStar(this.ptr, re.ptr), this)
+  }
+
+  def mkRePlus(re: Z3AST): Z3AST = {
+    new Z3AST(Native.mkRePlus(this.ptr, re.ptr), this)
+  }
+
+  def mkReOption(re: Z3AST): Z3AST = {
+    new Z3AST(Native.mkReOption(this.ptr, re.ptr), this)
+  }
+
+  def mkReConcat(args: Z3AST*): Z3AST = {
+    new Z3AST(Native.mkReConcat(this.ptr, args.size, toPtrArray(args)), this)
+  }
+
+  def mkReUnion(args: Z3AST*): Z3AST = {
+    new Z3AST(Native.mkReUnion(this.ptr, args.size, toPtrArray(args)), this)
   }
 
   def mkInt(value: Int, sort: Z3Sort) : Z3AST = {

@@ -1,10 +1,9 @@
-package z3
+package z3.scala
 
 import org.scalatest.{FunSuite, Matchers}
 
 class Core extends FunSuite with Matchers {
-  import z3.scala._
-  import z3.scala.dsl._
+  import dsl._
 
   test("Core") {
     val z3 = new Z3Context("MODEL" -> "true")

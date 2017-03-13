@@ -1,9 +1,9 @@
-package z3
+package z3.scala
 
 import org.scalatest.{FunSuite, Matchers}
 
 class ForComprehension extends FunSuite with Matchers {
-  import z3.scala.dsl._
+  import dsl._
 
   def isPrime(i : Int) : Boolean = {
     ! (2 to i-1).exists(i % _ == 0)

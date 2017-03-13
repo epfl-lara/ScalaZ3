@@ -25,20 +25,20 @@ class Z3Solver private[z3](val ptr: Long, val context: Z3Context) extends Z3Obje
     Native.solverSetParams(context.ptr, ptr, z3params.ptr)
   }
 
-  var isModelAvailable = false
-
   def assertCnstr(ast: Z3AST) = {
     Native.solverAssert(context.ptr, this.ptr, ast.ptr)
   }
+
+  def getAssertions(): Z3ASTVector = {
+    new Z3ASTVector(Native.solverGetAssertions(context.ptr, this.ptr), context)
+  }
+
+  private[this] var isModelAvailable = false
 
   def check() : Option[Boolean] = {
     val res = i2ob(Native.solverCheck(context.ptr, this.ptr))
     isModelAvailable = res != Some(false)
     res
-  }
-
-  def getAssertions(): Z3ASTVector = {
-    new Z3ASTVector(Native.solverGetAssertions(context.ptr, this.ptr), context)
   }
 
   def getModel() : Z3Model = {

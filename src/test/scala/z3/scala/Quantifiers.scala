@@ -1,7 +1,6 @@
-package z3
+package z3.scala
 
 import org.scalatest.{FunSuite, Matchers}
-import z3.scala._
 
 class Quantifiers extends FunSuite with Matchers {
 

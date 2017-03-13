@@ -37,6 +37,7 @@ sealed class Z3Context(val config: Map[String, String]) {
   val modelQueue     = new Z3RefCountQueue[Z3Model]
   val paramsQueue    = new Z3RefCountQueue[Z3Params]
   val solverQueue    = new Z3RefCountQueue[Z3Solver]
+  val optimizerQueue = new Z3RefCountQueue[Z3Optimizer]
   val tacticQueue    = new Z3RefCountQueue[Z3Tactic]
 
   def this(params: (String,Any)*) = this(Map[String, Any](params : _*).mapValues(_.toString))
@@ -51,6 +52,7 @@ sealed class Z3Context(val config: Map[String, String]) {
       astQueue.clearQueue()
       modelQueue.clearQueue()
       solverQueue.clearQueue()
+      optimizerQueue.clearQueue()
       astVectorQueue.clearQueue()
       tacticQueue.clearQueue()
       interpQueue.clearQueue()
@@ -1223,6 +1225,10 @@ sealed class Z3Context(val config: Map[String, String]) {
 
   def mkSolver(tactic: Z3Tactic) : Z3Solver = {
     new Z3Solver(Native.mkSolverFromTactic(this.ptr, tactic.ptr), this)
+  }
+
+  def mkOptimizer() : Z3Optimizer = {
+    new Z3Optimizer(Native.mkOptimize(this.ptr), this)
   }
 
   def interrupt() = {

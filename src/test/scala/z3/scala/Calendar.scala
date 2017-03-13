@@ -1,10 +1,9 @@
-package z3
+package z3.scala
 
 import org.scalatest.{FunSuite, Matchers}
 
-import z3.scala._
-import z3.scala.dsl._
-import z3.scala.dsl.Operands._
+import dsl._
+import dsl.Operands._
 
 class Calendar extends FunSuite with Matchers {
 

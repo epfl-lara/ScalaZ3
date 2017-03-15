@@ -29,6 +29,7 @@ sealed class Z3Context(val config: Map[String, String]) {
   }
 
   Z3Wrapper.registerContext(ptr, this)
+  Native.setInternalErrorHandler(ptr)
 
   val astQueue       = new Z3RefCountQueue[Z3ASTLike]
   val astVectorQueue = new Z3RefCountQueue[Z3ASTVector]

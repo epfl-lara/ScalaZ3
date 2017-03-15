@@ -30,6 +30,7 @@ public final class Z3Wrapper {
 
     private static final String LIB_NAME   = "scalaz3";
     private static final String LIBZ3_NAME = "libz3";
+    private static final String Z3JAVA_NAME = "z3java";
     private static final String LIBZ3JAVA_NAME = "libz3java";
 
     public static Object creation_lock = new Object();
@@ -91,9 +92,16 @@ public final class Z3Wrapper {
           if (os != null && os.indexOf("Win") >= 0) {
             // Under windows, we first load libz3 explicitly, on which ScalaZ3 depends
             debug("Loading libz3");
-            System.loadLibrary(LIBZ3_NAME);
+            try { System.loadLibrary(LIBZ3_NAME); }
+            catch (UnsatisfiedLinkError e) { debug("Failed to load " + LIBZ3_NAME); }
+
+            debug("Loading z3java");
+            try { System.loadLibrary(Z3JAVA_NAME); }
+            catch (UnsatisfiedLinkError e) { debug("Failed to load " + Z3JAVA_NAME); }
+
             debug("Loading libz3java");
-            System.loadLibrary(LIBZ3JAVA_NAME);
+            try { System.loadLibrary(LIBZ3JAVA_NAME); }
+            catch (UnsatisfiedLinkError e) { debug("Failed to load " + LIBZ3JAVA_NAME); }
           }
 
           debug("Loading "+LIB_NAME);

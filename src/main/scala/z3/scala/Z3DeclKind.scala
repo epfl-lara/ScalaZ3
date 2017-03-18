@@ -253,7 +253,8 @@ object OpFPAToReal       extends Z3DeclKind (Z3_decl_kind.Z3_OP_FPA_TO_REAL.toIn
 
 object OpFPAToIEEEBV extends Z3DeclKind (Z3_decl_kind.Z3_OP_FPA_TO_IEEE_BV.toInt) // NEW in ScalaZ3 3.0
 
-object OpUninterpreted extends Z3DeclKind (Z3_decl_kind.Z3_OP_UNINTERPRETED.toInt) 
+object OpInternal extends Z3DeclKind (Z3_decl_kind.Z3_OP_INTERNAL.toInt)
+object OpUninterpreted extends Z3DeclKind (Z3_decl_kind.Z3_OP_UNINTERPRETED.toInt)
 
 object Other extends Z3DeclKind (9999)
 
@@ -502,6 +503,7 @@ object Z3DeclKind {
 
     case Z3_decl_kind.Z3_OP_FPA_TO_IEEE_BV => OpFPAToIEEEBV
 
+    case Z3_decl_kind.Z3_OP_INTERNAL => OpInternal
     case Z3_decl_kind.Z3_OP_UNINTERPRETED => OpUninterpreted
     case other => error("Unhandled int code for Z3KindDecl: " + other)
   }

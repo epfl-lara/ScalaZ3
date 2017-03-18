@@ -626,6 +626,18 @@ sealed class Z3Context(val config: Map[String, String]) {
     new Z3AST(Native.mkReUnion(this.ptr, args.size, toPtrArray(args)), this)
   }
 
+  def mkStringSort(): Z3AST = {
+    new Z3AST(Native.mkStringSort(this.ptr), this)
+  }
+
+  def mkString(s: String): Z3AST = {
+    new Z3AST(Native.mkString(this.ptr, s), this)
+  }
+
+  def getString(ast: Z3AST): String = {
+    Native.getString(this.ptr, ast.ptr)
+  }
+
   def mkInt(value: Int, sort: Z3Sort) : Z3AST = {
     new Z3AST(Native.mkInt(this.ptr, value, sort.ptr), this)
   }

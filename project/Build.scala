@@ -208,13 +208,13 @@ object ScalaZ3Build extends Build {
            "-lz3 -fPIC -O2 -fopenmp", s)
 
     } else if (isWindows) {
-      exec("gcc -std=gnu89 -shared -o " + libBinFilePath.absolutePath + " " +
+      exec("gcc -std=gnu89 -m64 -shared -o " + libBinFilePath.absolutePath + " " +
            "-D_JNI_IMPLEMENTATION_ -Wl,--kill-at " +
            "-D__int64=\"long long\" " +
            "-I " + "\"" + jdkIncludePath.absolutePath + "\" " +
            "-I " + "\"" + jdkWinIncludePath.absolutePath + "\" " +
-           "-Wreturn-type " +
-           z3BinFilePath.absolutePath + "\" ", s)
+           "-I " + "\"" + z3BinFilePath.getParentFile.absolutePath + "\" " +
+           "-Wreturn-type ", s)
 
     } else if (isMac) {
       val frameworkPath = "/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers"

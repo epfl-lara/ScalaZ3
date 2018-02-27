@@ -116,7 +116,7 @@ object ScalaZ3Build extends Build {
     val hashFile = z3Path / ".build-hash"
     def computeHash(): String = {
       hashFiles(listAllFiles(z3Path.asFile).filter { f =>
-        !f.getName.endsWith(".pyc") && !f.isHidden && !f.getName.startsWith(".")
+        !f.getName.endsWith(".pyc") && !f.isHidden && !f.getName.startsWith(".") && !f.getName.endsWith(".a")
       })
     }
 

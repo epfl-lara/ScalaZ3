@@ -47,6 +47,8 @@ public final class Z3Wrapper {
       }
 
       loadFromJar();
+      // We run this to ensure class loading of Native.
+      debug("Z3 version: " + z3VersionString());
     }
 
     private static void debug(String msg) {

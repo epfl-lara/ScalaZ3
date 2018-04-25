@@ -1042,29 +1042,11 @@ sealed class Z3Context(val config: Map[String, String]) {
   }
 
   // Parser interface
-  private def parseSMTLIB(file: Boolean, str: String) : Unit = {
-    if(file) {
-      Native.parseSmtlibFile(this.ptr, str, 0, null, null, 0, null, null)
-    } else {
-      Native.parseSmtlibString(this.ptr, str, 0, null, null, 0, null, null)
-    }
-  }
-
   private def parseSMTLIB2(file: Boolean, str: String) : Z3AST = {
     if(file) {
       new Z3AST(Native.parseSmtlib2File(this.ptr, str, 0, null, null, 0, null, null), this)
     } else {
       new Z3AST(Native.parseSmtlib2String(this.ptr, str, 0, null, null, 0, null, null), this)
-    }
-  }
-
-  private def parseSMTLIB(file: Boolean, str: String, sorts: Map[Z3Symbol,Z3Sort], decls: Map[Z3Symbol,Z3FuncDecl]) : Unit = {
-    val (sortNames, z3Sorts) = sorts.unzip
-    val (declNames, z3Decls) = decls.unzip
-    if(file) {
-      Native.parseSmtlibFile(this.ptr, str, sorts.size, toPtrArray(sortNames), toPtrArray(z3Sorts), decls.size, toPtrArray(declNames), toPtrArray(z3Decls))
-    } else {
-      Native.parseSmtlibString(this.ptr, str, sorts.size, toPtrArray(sortNames), toPtrArray(z3Sorts), decls.size, toPtrArray(declNames), toPtrArray(z3Decls))
     }
   }
 
@@ -1077,26 +1059,6 @@ sealed class Z3Context(val config: Map[String, String]) {
       new Z3AST(Native.parseSmtlib2String(this.ptr, str, sorts.size, toPtrArray(sortNames), toPtrArray(z3Sorts), decls.size, toPtrArray(declNames), toPtrArray(z3Decls)), this)
     }
   }
-
-  /** Uses the SMT-LIB parser to read in a benchmark file.
-   *  @see getSMTLIBFormulas, getSMTLIBAssumptions, getSMTLIBDecls, getSMTLIBSorts, getSMTLIBError
-   */
-  def parseSMTLIBFile(fileName: String) : Unit = parseSMTLIB(true, fileName)
-
-  /** Uses the SMT-LIB parser to read in a benchmark string.
-   *  @see getSMTLIBFormulas, getSMTLIBAssumptions, getSMTLIBDecls, getSMTLIBSorts, getSMTLIBError
-   */
-  def parseSMTLIBString(str: String) : Unit = parseSMTLIB(false, str)
-
-  /** Uses the SMT-LIB parser to read in a benchmark file. The maps are used to override symbols that would otherwise be created by the parser.
-   *  @see getSMTLIBFormulas, getSMTLIBAssumptions, getSMTLIBDecls, getSMTLIBSorts, getSMTLIBError
-   */
-  def parseSMTLIBFile(fileName: String, sorts: Map[Z3Symbol,Z3Sort], decls: Map[Z3Symbol,Z3FuncDecl]) : Unit = parseSMTLIB(true, fileName, sorts, decls)
-
-  /** Uses the SMT-LIB parser to read in a benchmark string. The maps are used to override symbols that would otherwise be created by the parser.
-   *  @see getSMTLIBFormulas, getSMTLIBAssumptions, getSMTLIBDecls, getSMTLIBSorts, getSMTLIBError
-   */
-  def parseSMTLIBString(str: String, sorts: Map[Z3Symbol,Z3Sort], decls: Map[Z3Symbol,Z3FuncDecl]) : Unit = parseSMTLIB(false, str, sorts, decls)
 
   /** Uses the SMT-LIB 2 parser to read in a benchmark file.
    */
@@ -1113,72 +1075,6 @@ sealed class Z3Context(val config: Map[String, String]) {
   /** Uses the SMT-LIB 2 parser to read in a benchmark string. The maps are used to override symbols that would otherwise be created by the parser.
    */
   def parseSMTLIB2String(str: String, sorts: Map[Z3Symbol,Z3Sort], decls: Map[Z3Symbol,Z3FuncDecl]) : Z3AST = parseSMTLIB2(false, str, sorts, decls)
-
-  /** Returns an iterator of the formulas created by the SMT-LIB parser. */
-  def getSMTLIBFormulas : Iterator[Z3AST] = {
-    val ctx = this
-    new Iterator[Z3AST] {
-      val total : Int = Native.getSmtlibNumFormulas(ctx.ptr)
-      var returned : Int = 0
-
-      override def hasNext : Boolean = (returned < total)
-      override def next() : Z3AST = {
-        val toReturn = new Z3AST(Native.getSmtlibFormula(ctx.ptr, returned), ctx)
-        returned += 1
-        toReturn
-      }
-    }
-  }
-
-  /** Returns an iterator of the assumptions created by the SMT-LIB parser. */
-  def getSMTLIBAssumptions : Iterator[Z3AST] = {
-    val ctx = this
-    new Iterator[Z3AST] {
-      val total : Int = Native.getSmtlibNumAssumptions(ctx.ptr)
-      var returned : Int = 0
-
-      override def hasNext : Boolean = (returned < total)
-      override def next() : Z3AST = {
-        val toReturn = new Z3AST(Native.getSmtlibAssumption(ctx.ptr, returned), ctx)
-        returned += 1
-        toReturn
-      }
-    }
-  }
-
-  /** Returns an iterator of the function and constant declarations created by the SMT-LIB parser. */
-  def getSMTLIBDecls : Iterator[Z3FuncDecl] = {
-    val ctx = this
-    new Iterator[Z3FuncDecl] {
-      val total : Int = Native.getSmtlibNumDecls(ctx.ptr)
-      var returned : Int = 0
-
-      override def hasNext : Boolean = (returned < total)
-      override def next() : Z3FuncDecl = {
-        val fdPtr = Native.getSmtlibDecl(ctx.ptr, returned)
-        val arity = Native.getDomainSize(ctx.ptr, fdPtr)
-        val toReturn = new Z3FuncDecl(Native.getSmtlibDecl(ctx.ptr, returned), arity, ctx)
-        returned += 1
-        toReturn
-      }
-    }
-  }
-
-  /** Returns an iterator of the sorts created by the SMT-LIB parser. */
-  def getSMTLIBSorts : Iterator[Z3Sort] = {
-    val ctx = this
-    new Iterator[Z3Sort] {
-      val total : Int = Native.getSmtlibNumSorts(ctx.ptr)
-      var returned : Int = 0
-
-      override def hasNext : Boolean = (returned < total)
-      override def next() : Z3Sort = {
-        val toReturn = new Z3Sort(Native.getSmtlibSort(ctx.ptr, returned), ctx)
-        returned += 1
-        toReturn
-      }
-    }
-  }
 
   def substitute(ast : Z3AST, from : Array[Z3AST], to : Array[Z3AST]) : Z3AST = {
     if (from.length != to.length)
@@ -1247,7 +1143,4 @@ sealed class Z3Context(val config: Map[String, String]) {
   def interrupt() = {
     Native.interrupt(this.ptr)
   }
-
-  /** Returns the last error issued by the SMT-LIB parser. */
-  def getSMTLIBError : String = Native.getSmtlibError(this.ptr)
 }

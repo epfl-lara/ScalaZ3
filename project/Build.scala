@@ -220,10 +220,13 @@ object ScalaZ3Build extends Build {
       val frameworkPath = "/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers"
 
       exec("install_name_tool -id @loader_path/"+z3Name+" "+z3BinFilePath.absolutePath, s)
+      exec("install_name_tool -id @loader_path/"+javaZ3Name+" "+javaZ3BinFilePath.absolutePath, s)
+      // make the dependency to z3 be relative to the caller's location
+      exec("install_name_tool -change "+z3Name+" @loader_path/"+z3Name+" "+javaZ3BinFilePath.absolutePath, s)
 
       exec("gcc -std=gnu89 -o " + libBinFilePath.absolutePath + " " +
            "-dynamiclib" + " " +
-           "-install_name "+extractDir(cs)+soName + " " +
+           "-install_name @loader_path/"+soName + " " +
            "-I" + jdkIncludePath.absolutePath + " " +
            "-I" + jdkMacIncludePath.absolutePath + " " +
            "-I" + frameworkPath + " " +

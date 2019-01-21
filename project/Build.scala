@@ -1,16 +1,26 @@
 import sbt._
-import Keys._
+import sbt.Keys._
 import org.eclipse.jgit.api._
+import scala.sys.process._
 
-object ScalaZ3Build extends Build {
+object ScalaZ3Build {
 
-  lazy val PS               = java.io.File.pathSeparator
-  lazy val DS               = java.io.File.separator
+  lazy val PS = java.io.File.pathSeparator
+  lazy val DS = java.io.File.separator
 
-  lazy val soName           = System.mapLibraryName("scalaz3")
+  lazy val soName = System.mapLibraryName("scalaz3")
 
-  lazy val z3Name     = if (isMac) "libz3.dylib" else if (isWindows) "libz3.dll" else System.mapLibraryName("z3")
-  lazy val javaZ3Name = if (isMac) "libz3java.dylib" else if (isWindows) "libz3java.dll" else System.mapLibraryName("z3java")
+  lazy val z3Name = {
+    if (isMac) "libz3.dylib"
+    else if (isWindows) "libz3.dll"
+    else System.mapLibraryName("z3")
+  }
+
+  lazy val javaZ3Name = {
+    if (isMac) "libz3java.dylib"
+    else if (isWindows) "libz3java.dll"
+    else System.mapLibraryName("z3java")
+  }
 
   lazy val libBinPath        = file("lib-bin")
   lazy val z3BinFilePath     = z3BuildPath / z3Name
@@ -42,21 +52,20 @@ object ScalaZ3Build extends Build {
   lazy val z3Path = file(".") / "z3" / z3SourceTag
   lazy val z3BuildPath = z3Path / "build"
   lazy val z3BinaryFiles = Seq(z3BuildPath / z3Name, z3BuildPath / javaZ3Name)
-  lazy val z3JarFile = z3BuildPath / "com.microsoft.z3.jar"
 
   lazy val z3JavaDepsPrefixes = Seq(
     "com.microsoft.z3.Native",
     "com.microsoft.z3.Z3Exception",
-    "com.microsoft.z3.enumerations"
+    "com.microsoft.z3.enumerations",
   )
 
   def exec(cmd: String, s: TaskStreams): Int = {
-    s.log.info("$ "+cmd)
+    s.log.info("$ " + cmd)
     cmd ! s.log
   }
 
   def exec(cmd: String, dir: File, s: TaskStreams): Int = {
-    s.log.info("$ cd " + dir + " && "+cmd)
+    s.log.info("$ cd " + dir + " && " + cmd)
     Process(cmd, dir) ! s.log
   }
 
@@ -97,8 +106,10 @@ object ScalaZ3Build extends Build {
     strBuf.toString
   }
 
-  val z3Task = (streams) map { case s =>
-    s.log.info("Compiling Z3 ...")
+  lazy val z3JarFile = z3BuildPath / "com.microsoft.z3.jar"
+
+  val z3Task = Def.task {
+    val s = streams.value
 
     if (!z3Path.asFile.exists) {
       s.log.info("Cloning Z3 source repository ...")
@@ -114,19 +125,25 @@ object ScalaZ3Build extends Build {
       .call()
 
     val hashFile = z3Path / ".build-hash"
+
     def computeHash(): String = {
-      hashFiles(listAllFiles(z3Path.asFile).filter { f =>
-        !f.getName.endsWith(".pyc") && !f.isHidden && !f.getName.startsWith(".") && !f.getName.endsWith(".a")
+      hashFiles(listAllFiles((z3Path / "src").asFile).filter { f =>
+        !f.getName.endsWith(".pyc") &&
+        !f.isHidden &&
+        !f.getName.startsWith(".") &&
+        !f.getName.endsWith(".a")
       })
     }
 
     val initialHash = computeHash()
-    s.log.info("New checksum is: " + initialHash)
+    s.log.info("Checksum of Z3 source file: " + initialHash)
 
-    if (hashFile.exists && IO.read(hashFile) == initialHash) {
-      s.log.info("Checksum matched previous, skipping build...")
+    if (hashFile.exists && IO.read(hashFile).trim == initialHash.trim) {
+      s.log.info("Checksum of Z3 source files matched previous, skipping build...")
       initialHash
     } else {
+      s.log.info("Compiling Z3...")
+
       val code = if (isUnix) {
         val python = if (("which python2.7" #> file("/dev/null")).! == 0) "python2.7" else "python"
 
@@ -140,7 +157,7 @@ object ScalaZ3Build extends Build {
         val i1 = exec("python scripts/mk_make.py --java", z3Path, s)
         if (i1 != 0) i1 else exec("make", z3Path / "build", s)
       } else {
-        error("Don't know how to compile Z3 on arch: "+osInf+" - "+osArch)
+        sys.error("Don't know how to compile Z3 on arch: " + osInf + " - " + osArch)
       }
 
       if (code == 0) {
@@ -150,42 +167,48 @@ object ScalaZ3Build extends Build {
         s.log.info("Wrote checksum " + finalHash + " for z3 build.")
         finalHash
       } else {
-        error("Compilation of Z3 failed... aborting")
+        sys.error("Compilation of Z3 failed... aborting")
       }
     }
   }
 
-  val checksumTask = (streams, z3Key, sourceDirectory in Compile) map {
-    case (s, z3checksum, sd) =>
-      val checksumFilePath = sd / "java" / "z3" / "LibraryChecksum.java"
+  val checksumTask = Def.task {
+    val s = streams.value
+    val z3checksum = z3Key.value
+    val sd = (Compile / sourceDirectory).value
 
-      val extensions = Set("java", "c", "h", "sbt", "properties")
+    val checksumFilePath = sd / "java" / "z3" / "LibraryChecksum.java"
 
-      val checksumSourcePaths = listAllFiles(sd.asFile).filter { file =>
-        val pathParts = file.getPath.split(".")
-        pathParts.size > 1 && extensions(pathParts.last)
-      }
+    val extensions = Set("java", "c", "h", "sbt", "properties")
 
-      s.log.info("Generating library checksum")
+    val checksumSourcePaths = listAllFiles(sd.asFile).filter { file =>
+      val pathParts = file.getPath.split(".")
+      pathParts.size > 1 && extensions(pathParts.last)
+    }
 
-      val md5String = hashFiles(checksumSourcePaths.map(_.asFile), z3checksum)
+    s.log.info("Generating library checksum")
 
-      val fw = new java.io.FileWriter(checksumFilePath.asFile)
-      val nl = System.getProperty("line.separator")
-      fw.write("// THIS FILE IS AUTOMATICALLY GENERATED, DO NOT EDIT" + nl)
-      fw.write("package z3;" + nl)
-      fw.write(nl)
-      fw.write("public final class LibraryChecksum {" + nl)
-      fw.write("  public static final String value = \"" + md5String + "\";" + nl)
-      fw.write("}" + nl)
-      fw.close
+    val md5String = hashFiles(checksumSourcePaths.map(_.asFile), z3checksum)
 
-      s.log.info("Wrote checksum " + md5String + " as part of " + checksumFilePath.asFile + ".")
+    val fw = new java.io.FileWriter(checksumFilePath.asFile)
+    val nl = System.getProperty("line.separator")
+    fw.write("// THIS FILE IS AUTOMATICALLY GENERATED, DO NOT EDIT" + nl)
+    fw.write("package z3;" + nl)
+    fw.write(nl)
+    fw.write("public final class LibraryChecksum {" + nl)
+    fw.write("  public static final String value = \"" + md5String + "\";" + nl)
+    fw.write("}" + nl)
+    fw.close
 
-      md5String
+    s.log.info("Wrote checksum " + md5String + " as part of " + checksumFilePath.asFile + ".")
+
+    md5String
   }
 
-  val gccTask = (streams, checksumKey, z3Key).map { case (s, cs, _) =>
+  val gccTask = Def.task {
+    val s = streams.value
+    val cs = checksumKey.value
+
     s.log.info("Compiling dummy C sources ...")
 
     def extractDir(checksum: String): String = {
@@ -193,7 +216,10 @@ object ScalaZ3Build extends Build {
     }
 
     // First, we look for z3
-    for (file <- (z3BinaryFiles :+ z3JarFile) if !file.exists) error("Could not find Z3 : " + file.absolutePath)
+    for (file <- (z3BinaryFiles :+ z3JarFile) if !file.exists) {
+      sys.error("Could not find Z3 : " + file.absolutePath)
+    }
+
     libBinFilePath.getParentFile.mkdirs()
 
     if (isUnix) {
@@ -219,10 +245,10 @@ object ScalaZ3Build extends Build {
     } else if (isMac) {
       val frameworkPath = "/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers"
 
-      exec("install_name_tool -id @loader_path/"+z3Name+" "+z3BinFilePath.absolutePath, s)
-      exec("install_name_tool -id @loader_path/"+javaZ3Name+" "+javaZ3BinFilePath.absolutePath, s)
+      exec("install_name_tool -id @loader_path/" + z3Name + " " + z3BinFilePath.absolutePath, s)
+      exec("install_name_tool -id @loader_path/" + javaZ3Name + " " + javaZ3BinFilePath.absolutePath, s)
       // make the dependency to z3 be relative to the caller's location
-      exec("install_name_tool -change "+z3Name+" @loader_path/"+z3Name+" "+javaZ3BinFilePath.absolutePath, s)
+      exec("install_name_tool -change " + z3Name + " @loader_path/" + z3Name + " " + javaZ3BinFilePath.absolutePath, s)
 
       exec("gcc -std=gnu89 -o " + libBinFilePath.absolutePath + " " +
            "-dynamiclib" + " " +
@@ -232,69 +258,59 @@ object ScalaZ3Build extends Build {
            "-I" + frameworkPath + " " +
            "-L" + z3BuildPath.absolutePath + " " +
            "-g -lc " +
-           "-Wl,-rpath,"+extractDir(cs)+" " +
+           "-Wl,-rpath," + extractDir(cs) + " " +
            "-lz3 -fPIC -O2", s)
 
     } else {
-      error("Unknown arch: "+osInf+" - "+osArch)
+      sys.error("Unknown arch: " + osInf + " - " + osArch)
     }
+
     () // unit task!
   }
 
-  val packageTask = (Keys.`package` in Compile).dependsOn(gccKey)
+  val packageTask = (Compile / Keys.`package`).dependsOn(gccKey)
 
-  val newMappingsTask = mappings in (Compile, packageBin) <<= (mappings in (Compile, packageBin), streams) map {
-    case (normalFiles, s) =>
-      val newBinaryFiles = (libBinFilePath +: z3BinaryFiles).map { f => f.getAbsoluteFile -> ("lib-bin" + DS + f.getName) }
+  val newMappingsTask = Def.task {
+    val s = streams.value
+    val normalFiles = (Compile / packageBin / mappings).value
 
-      s.log.info("Bundling binary files:")
-      for ((from, to) <- newBinaryFiles) {
-        s.log.info(" - "+from+" -> "+to)
-      }
+    val newBinaryFiles = (libBinFilePath +: z3BinaryFiles).map { f =>
+      f.getAbsoluteFile -> ("lib-bin" + DS + f.getName)
+    }
 
-      s.log.info("Bunding relevant java-Z3 files:")
-      val outputDir = new File(System.getProperty("java.io.tmpdir") + DS + "Z3JAR_jars" + DS)
-      outputDir.delete
-      outputDir.mkdirs
-      IO.unzip(z3JarFile, outputDir)
+    s.log.info("Bundling binary files:")
+    for ((from, to) <- newBinaryFiles) {
+      s.log.info(" - " + from+" -> " + to)
+    }
 
-      val z3JavaDepsMappings: Seq[(File, String)] = listAllFiles(outputDir).flatMap { f =>
-        if (f.isDirectory) None else {
-          import java.nio.file.Paths
-          val path = Paths.get(outputDir.getAbsolutePath).relativize(Paths.get(f.getAbsolutePath)).toString
-          val extensionSplit = path.split("\\.")
-          if (extensionSplit.length < 2 || extensionSplit(1) != "class") None else {
-            val classPath = extensionSplit(0).replace(DS, ".")
-            if (z3JavaDepsPrefixes.exists(prefix => classPath.startsWith(prefix))) {
-              s.log.info(" - " + classPath)
-              Some(f.getAbsoluteFile -> path)
-            } else {
-              None
-            }
+    s.log.info("Bundling relevant java-Z3 files:")
+    val outputDir = new File(System.getProperty("java.io.tmpdir") + DS + "Z3JAR_jars" + DS)
+    outputDir.delete
+    outputDir.mkdirs
+    IO.unzip(z3JarFile, outputDir)
+
+    val z3JavaDepsMappings: Seq[(File, String)] = listAllFiles(outputDir).flatMap { f =>
+      if (f.isDirectory) None else {
+        import java.nio.file.Paths
+        val path = Paths.get(outputDir.getAbsolutePath).relativize(Paths.get(f.getAbsolutePath)).toString
+        val extensionSplit = path.split("\\.")
+        if (extensionSplit.length < 2 || extensionSplit(1) != "class") None else {
+          val classPath = extensionSplit(0).replace(DS, ".")
+          if (z3JavaDepsPrefixes.exists(prefix => classPath.startsWith(prefix))) {
+            s.log.info(" - " + classPath)
+            Some(f.getAbsoluteFile -> path)
+          } else {
+            None
           }
         }
       }
+    }
 
-      newBinaryFiles ++ z3JavaDepsMappings ++ normalFiles
+    newBinaryFiles ++ z3JavaDepsMappings ++ normalFiles
   }
 
-  val testClasspath = internalDependencyClasspath in (Test) <<= (artifactPath in (Compile, packageBin)) map {
-    case jar => List(Attributed.blank(jar))
+  val testClasspath = Def.task {
+    val jar = (Compile / packageBin / artifactPath).value
+    Seq(Attributed.blank(jar))
   }
-
-  lazy val root = Project(
-    id = "ScalaZ3",
-    base = file("."),
-    settings = Project.defaultSettings ++ Seq(
-      checksumKey <<= checksumTask,
-      gccKey <<= gccTask,
-      z3Key <<= z3Task,
-      (Keys.`package` in Compile) <<= packageTask,
-      (unmanagedJars in Compile) += Attributed.blank(z3JarFile),
-      (compile in Compile) <<= (compile in Compile) dependsOn (checksumTask),
-      (test in Test) <<= (test in Test) dependsOn (Keys.`package` in Compile),
-      testClasspath,
-      newMappingsTask
-    )
-  )
 }

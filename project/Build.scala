@@ -5,6 +5,9 @@ import scala.sys.process._
 
 object ScalaZ3Build {
 
+  lazy val z3SourceRepo = "https://github.com/Z3Prover/z3.git"
+  lazy val z3SourceTag  = "z3-4.7.1"
+
   lazy val PS = java.io.File.pathSeparator
   lazy val DS = java.io.File.separator
 
@@ -31,9 +34,6 @@ object ScalaZ3Build {
   lazy val jdkUnixIncludePath = jdkIncludePath / "linux"
   lazy val jdkMacIncludePath  = jdkIncludePath / "darwin"
   lazy val jdkWinIncludePath  = jdkIncludePath / "win32"
-
-  lazy val z3SourceRepo = "https://github.com/Z3Prover/z3.git"
-  lazy val z3SourceTag = "z3-4.6.0"
 
   lazy val osInf: String = Option(System.getProperty("os.name")).getOrElse("")
 
@@ -112,7 +112,7 @@ object ScalaZ3Build {
     val s = streams.value
 
     if (!z3Path.asFile.exists) {
-      s.log.info("Cloning Z3 source repository ...")
+      s.log.info(s"Cloning Z3 source repository to $z3Path...")
       Git.cloneRepository()
         .setDirectory(z3Path.asFile)
         .setURI(z3SourceRepo)

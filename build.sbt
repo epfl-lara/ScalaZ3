@@ -3,7 +3,7 @@ import ScalaZ3Build._
 lazy val root = (project in file("."))
   .settings(
     name := "ScalaZ3",
-    version := "4.0",
+    version := "4.7.1",
     organization := "ch.epfl.lara",
     scalacOptions ++= Seq(
       "-deprecation",

@@ -17,7 +17,6 @@ object OpXor      extends Z3DeclKind (Z3_decl_kind.Z3_OP_XOR.toInt)
 object OpNot      extends Z3DeclKind (Z3_decl_kind.Z3_OP_NOT.toInt)
 object OpImplies  extends Z3DeclKind (Z3_decl_kind.Z3_OP_IMPLIES.toInt)
 object OpOEq      extends Z3DeclKind (Z3_decl_kind.Z3_OP_OEQ.toInt)      // NEW in ScalaZ3 3.0
-object OpInterp   extends Z3DeclKind (Z3_decl_kind.Z3_OP_INTERP.toInt)   // NEW in ScalaZ3 3.0
 
 // Arithmetic
 object OpANum   extends Z3DeclKind (Z3_decl_kind.Z3_OP_ANUM.toInt)
@@ -126,7 +125,6 @@ object OpPrNotOrElim        extends Z3DeclKind (Z3_decl_kind.Z3_OP_PR_NOT_OR_ELI
 object OpPrRewrite          extends Z3DeclKind (Z3_decl_kind.Z3_OP_PR_REWRITE.toInt)           // NEW in ScalaZ3 3.0
 object OpPrRewriteStar      extends Z3DeclKind (Z3_decl_kind.Z3_OP_PR_REWRITE_STAR.toInt)      // NEW in ScalaZ3 3.0
 object OpPrPullQuant        extends Z3DeclKind (Z3_decl_kind.Z3_OP_PR_PULL_QUANT.toInt)        // NEW in ScalaZ3 3.0
-object OpPrPullQuantStar    extends Z3DeclKind (Z3_decl_kind.Z3_OP_PR_PULL_QUANT_STAR.toInt)   // NEW in ScalaZ3 3.0
 object OpPrPushQuant        extends Z3DeclKind (Z3_decl_kind.Z3_OP_PR_PUSH_QUANT.toInt)        // NEW in ScalaZ3 3.0
 object OpPrElimUnusedVars   extends Z3DeclKind (Z3_decl_kind.Z3_OP_PR_ELIM_UNUSED_VARS.toInt)  // NEW in ScalaZ3 3.0
 object OpPrDER              extends Z3DeclKind (Z3_decl_kind.Z3_OP_PR_DER.toInt)               // NEW in ScalaZ3 3.0
@@ -143,8 +141,6 @@ object OpPrApplyDef         extends Z3DeclKind (Z3_decl_kind.Z3_OP_PR_APPLY_DEF.
 object OpPrIffOEq           extends Z3DeclKind (Z3_decl_kind.Z3_OP_PR_IFF_OEQ.toInt)           // NEW in ScalaZ3 3.0
 object OpPrNNFPos           extends Z3DeclKind (Z3_decl_kind.Z3_OP_PR_NNF_POS.toInt)           // NEW in ScalaZ3 3.0
 object OpPrNNFNeg           extends Z3DeclKind (Z3_decl_kind.Z3_OP_PR_NNF_NEG.toInt)           // NEW in ScalaZ3 3.0
-object OpPrNNFStar          extends Z3DeclKind (Z3_decl_kind.Z3_OP_PR_NNF_STAR.toInt)          // NEW in ScalaZ3 3.0
-object OpPrCNFStar          extends Z3DeclKind (Z3_decl_kind.Z3_OP_PR_CNF_STAR.toInt)          // NEW in ScalaZ3 3.0
 object OpPrSkolemize        extends Z3DeclKind (Z3_decl_kind.Z3_OP_PR_SKOLEMIZE.toInt)         // NEW in ScalaZ3 3.0
 object OpPrModusPonensOEq   extends Z3DeclKind (Z3_decl_kind.Z3_OP_PR_MODUS_PONENS_OEQ.toInt)  // NEW in ScalaZ3 3.0
 object OpPrThLemma          extends Z3DeclKind (Z3_decl_kind.Z3_OP_PR_TH_LEMMA.toInt)          // NEW in ScalaZ3 3.0
@@ -278,7 +274,6 @@ object Z3DeclKind {
     case Z3_decl_kind.Z3_OP_NOT => OpNot 
     case Z3_decl_kind.Z3_OP_IMPLIES => OpImplies 
     case Z3_decl_kind.Z3_OP_OEQ => OpOEq
-    case Z3_decl_kind.Z3_OP_INTERP => OpInterp
 
     case Z3_decl_kind.Z3_OP_ANUM => OpANum 
     case Z3_decl_kind.Z3_OP_AGNUM => OpAGNum 
@@ -383,7 +378,6 @@ object Z3DeclKind {
     case Z3_decl_kind.Z3_OP_PR_REWRITE => OpPrRewrite
     case Z3_decl_kind.Z3_OP_PR_REWRITE_STAR => OpPrRewriteStar
     case Z3_decl_kind.Z3_OP_PR_PULL_QUANT => OpPrPullQuant
-    case Z3_decl_kind.Z3_OP_PR_PULL_QUANT_STAR => OpPrPullQuantStar
     case Z3_decl_kind.Z3_OP_PR_PUSH_QUANT => OpPrPushQuant
     case Z3_decl_kind.Z3_OP_PR_ELIM_UNUSED_VARS => OpPrElimUnusedVars
     case Z3_decl_kind.Z3_OP_PR_DER => OpPrDER
@@ -400,8 +394,6 @@ object Z3DeclKind {
     case Z3_decl_kind.Z3_OP_PR_IFF_OEQ => OpPrIffOEq
     case Z3_decl_kind.Z3_OP_PR_NNF_POS => OpPrNNFPos
     case Z3_decl_kind.Z3_OP_PR_NNF_NEG => OpPrNNFNeg
-    case Z3_decl_kind.Z3_OP_PR_NNF_STAR => OpPrNNFStar
-    case Z3_decl_kind.Z3_OP_PR_CNF_STAR => OpPrCNFStar
     case Z3_decl_kind.Z3_OP_PR_SKOLEMIZE => OpPrSkolemize
     case Z3_decl_kind.Z3_OP_PR_MODUS_PONENS_OEQ => OpPrModusPonensOEq
     case Z3_decl_kind.Z3_OP_PR_TH_LEMMA => OpPrThLemma

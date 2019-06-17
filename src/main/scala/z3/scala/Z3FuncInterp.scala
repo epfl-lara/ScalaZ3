@@ -18,11 +18,11 @@ private[scala] class Z3FuncInterp (val ptr: Long, val context: Z3Context) extend
     args.mkString("(", ", ", ")") + " -> " + value
   }.mkString(", ") + ", else -> " + default + "]"
 
-  final protected[z3] def incRef() {
+  final protected[z3] def incRef(): Unit = {
     Native.funcInterpIncRef(context.ptr, ptr)
   }
 
-  final protected[z3] def decRef() {
+  final protected[z3] def decRef(): Unit = {
     Native.funcInterpDecRef(context.ptr, ptr)
   }
 

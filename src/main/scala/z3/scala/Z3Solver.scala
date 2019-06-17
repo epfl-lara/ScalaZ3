@@ -69,11 +69,11 @@ class Z3Solver private[z3](val ptr: Long, val context: Z3Context) extends Z3Obje
     Native.solverGetNumScopes(context.ptr, this.ptr)  
   }
 
-  def incRef() {
+  def incRef(): Unit = {
     Native.solverIncRef(context.ptr, this.ptr)
   }
 
-  def decRef() {
+  def decRef(): Unit = {
     Native.solverDecRef(context.ptr, this.ptr)
   }
 

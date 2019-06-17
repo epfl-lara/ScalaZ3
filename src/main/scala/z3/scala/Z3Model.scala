@@ -31,11 +31,11 @@ object Z3Model {
 sealed class Z3Model private[z3](val ptr: Long, val context: Z3Context) extends Z3Object {
   override def toString : String = context.modelToString(this)
 
-  def incRef() {
+  def incRef(): Unit = {
     Native.modelIncRef(context.ptr, this.ptr)
   }
 
-  def decRef() {
+  def decRef(): Unit = {
     Native.modelDecRef(context.ptr, this.ptr)
   }
 

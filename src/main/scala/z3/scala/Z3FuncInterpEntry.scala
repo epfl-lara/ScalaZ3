@@ -13,11 +13,11 @@ private[scala] class Z3FuncInterpEntry(val ptr: Long, val context: Z3Context) ex
     }
   }
 
-  final protected[z3] def incRef() {
+  final protected[z3] def incRef(): Unit = {
     Native.funcEntryIncRef(context.ptr, ptr)
   }
 
-  final protected[z3] def decRef() {
+  final protected[z3] def decRef(): Unit = {
     Native.funcEntryDecRef(context.ptr, ptr)
   }
 

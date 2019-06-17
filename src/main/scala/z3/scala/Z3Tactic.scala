@@ -11,11 +11,11 @@ class Z3Tactic private[z3](val ptr : Long, val context : Z3Context) extends Z3Ob
     }
   }
 
-  def incRef() {
+  def incRef(): Unit = {
     Native.tacticIncRef(context.ptr, this.ptr)
   }
 
-  def decRef() {
+  def decRef(): Unit = {
     Native.tacticDecRef(context.ptr, this.ptr)
   }
 

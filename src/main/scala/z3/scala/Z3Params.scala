@@ -12,11 +12,11 @@ private[scala] class Z3Params(val ptr: Long, val context: Z3Context) extends Z3O
     case _ => throw new Z3Exception("Can't set value " + value + " of type " + value.getClass)
   }
 
-  final protected[z3] def incRef() {
+  final protected[z3] def incRef(): Unit = {
     Native.paramsIncRef(context.ptr, ptr)
   }
 
-  final protected[z3] def decRef() {
+  final protected[z3] def decRef(): Unit = {
     Native.paramsDecRef(context.ptr, ptr)
   }
 

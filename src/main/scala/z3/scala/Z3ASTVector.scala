@@ -4,11 +4,11 @@ import com.microsoft.z3.Native
 
 final class Z3ASTVector private[z3](val ptr: Long, val context: Z3Context) extends Z3Object {
 
-  def incRef() {
+  def incRef(): Unit = {
     Native.astVectorIncRef(context.ptr, this.ptr)
   }
 
-  def decRef() {
+  def decRef(): Unit = {
     Native.astVectorDecRef(context.ptr, this.ptr)
   }
 
@@ -16,7 +16,7 @@ final class Z3ASTVector private[z3](val ptr: Long, val context: Z3Context) exten
     new Z3AST(Native.astVectorGet(context.ptr, this.ptr, i), context)
   }
 
-  def set(i: Int, v: Z3AST) {
+  def set(i: Int, v: Z3AST): Unit = {
     Native.astVectorSet(context.ptr, this.ptr, i, v.ptr)
   }
 

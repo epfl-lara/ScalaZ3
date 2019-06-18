@@ -36,8 +36,8 @@ class Quantifiers extends FunSuite with Matchers {
      * (declare-fun array-of (Type) Type)
      */
     val typeSort = z3.mkUninterpretedSort("Type")
-    val subtype = z3.mkFuncDecl("subtype", List[Z3Sort](typeSort, typeSort).toArray, z3.mkBoolSort)
-    val arrayOf = z3.mkFuncDecl("array-of", List[Z3Sort](typeSort).toArray, typeSort)
+    val subtype = z3.mkFuncDecl("subtype", List[Z3Sort](typeSort, typeSort).toIndexedSeq, z3.mkBoolSort)
+    val arrayOf = z3.mkFuncDecl("array-of", List[Z3Sort](typeSort).toIndexedSeq, typeSort)
 
     val syms @ List(xSym, ySym, zSym) = List("x", "y", "z").map(z3.mkSymbol(_))
     val consts @ List(x, y, z) = syms.map(sym => z3.mkConst(sym, typeSort))

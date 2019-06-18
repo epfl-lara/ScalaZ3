@@ -41,7 +41,8 @@ sealed class Z3Context(val config: Map[String, String]) {
   val optimizerQueue = new Z3RefCountQueue[Z3Optimizer]
   val tacticQueue    = new Z3RefCountQueue[Z3Tactic]
 
-  def this(params: (String,Any)*) = this(Map[String, Any](params : _*).mapValues(_.toString))
+  def this(params: (String, Any)*) =
+    this(params.map { case (s, a) => (s, a.toString) }.toMap)
 
   private var deleted : Boolean = false
   override def finalize() : Unit = {
@@ -219,7 +220,7 @@ sealed class Z3Context(val config: Map[String, String]) {
 
     consListList.foreach(cl => Native.delConstructorList(this.ptr, cl))
 
-    for((sort, consLst) <- (newSorts zip consScalaList)) yield {
+    for((sort, consLst) <- (newSorts.toIndexedSeq zip consScalaList)) yield {
       val zipped = for (cons <- consLst) yield {
         val consFunPtr = new Native.LongPtr()
         val testFunPtr = new Native.LongPtr()
@@ -484,7 +485,7 @@ sealed class Z3Context(val config: Map[String, String]) {
     val sz = sorts.size
     val consPtr = new Native.LongPtr()
     val projFuns = new Array[Long](sz)
-    val fieldNames = sorts.map(s => mkFreshStringSymbol(name + "-field")).toArray
+    val fieldNames = sorts.map(s => mkFreshStringSymbol(s"$name-field")).toArray
     val sortPtr = Native.mkTupleSort(this.ptr, name.ptr, sz, fieldNames.map(_.ptr), sorts.map(_.ptr).toArray, consPtr, projFuns)
     val newSort = new Z3Sort(sortPtr, this)
     val consFuncDecl = new Z3FuncDecl(consPtr.value, sz, this)

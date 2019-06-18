@@ -20,14 +20,14 @@ class Sets extends FunSuite with Matchers {
 
     val s1eval = model.eval(s1)
     val s2eval = model.eval(s2)
-    s1eval should be ('defined)
-    s2eval should be ('defined)
+    s1eval should be (Symbol("defined"))
+    s2eval should be (Symbol("defined"))
     (s1eval,s2eval) match {
       case (Some(se1), Some(se2)) =>
         val s1val = model.getSetValue(se1)
         val s2val = model.getSetValue(se2)
-        s1val should be ('defined)
-        s2val should be ('defined)
+        s1val should be (Symbol("defined"))
+        s2val should be (Symbol("defined"))
         s1val should not equal (s2val)
         //println("Set values :" + s1val + ", " + s2val)
       case _ =>

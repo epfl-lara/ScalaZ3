@@ -1,7 +1,7 @@
-ScalaZ3 for Scala 2.10, 2.11, and 2.12
-======================================
+ScalaZ3
+=======
 
-This is ScalaZ3 for Z3 4.7.1 and Scala 2.10, 2.11, and 2.12.
+This is ScalaZ3 for Z3 4.7.1 and Scala 2.10, 2.11, 2.12, and 2.13.
 
 Compiling ScalaZ3
 -----------------
@@ -14,7 +14,7 @@ Run
 
     sbt +package
 
-to compile Z3 4.7.1 and cross-compile ScalaZ3 for Scala 2.10, 2.11 and 2.12.
+to compile Z3 4.7.1 and cross-compile ScalaZ3 for Scala 2.10, 2.11, 2.12 and 2.13.
 
 The JAR files will be in `target/scala-2.XX/scalaz3_2.XX-4.7.1.jar`
 and will contain the shared library dependencies.
@@ -74,13 +74,13 @@ Using ScalaZ3
 
 ### On a single operating system / architecture
 
-Create a folder named `unmanaged` at the same level as your `build.sbt` file, and copy the JAR file in `target/scala-2.XX/scalaz3_2.XX-3.0.jar` into it.
+Create a folder named `unmanaged` at the same level as your `build.sbt` file, and copy the JAR file in `target/scala-2.XX/scalaz3_2.XX-4.7.1.jar` into it.
 
 Then add, the following lines to your `build.sbt` file:
 
 ```scala
 unmanagedJars in Compile += {
-  baseDirectory.value / "unmanaged" / s"scalaz3_${scalaBinaryVersion.value}-3.0.jar"
+  baseDirectory.value / "unmanaged" / s"scalaz3_${scalaBinaryVersion.value}-4.7.1.jar"
 }
 ```
 
@@ -92,7 +92,7 @@ Make sure to name the resulting JAR files as `scalaz3-[osName]-[osArch]-[scalaBi
 
 - `[osName]` is one of: `mac`, `win`, `unix`.
 - `[osArch]` corresponds to `System.getProperty("sun.arch.data.model")`, ie. `x64`, `fds`, etc.
-- `[scalaBinaryVersion]` is one of: `2.11`, `2.12`, `2.13`.
+- `[scalaBinaryVersion]` is one of: `2.10`, `2.11`, `2.12`, `2.13`.
 
 Create a folder named `unmanaged` at the same level as your `build.sbt` file, and copy the aforementioned JAR files into it.
 

@@ -27,9 +27,9 @@ class Abs extends FunSuite with Matchers {
     result should equal(Some(true))
 
     val array2Ev = model.eval(array2)
-    array2Ev should be ('defined)
+    array2Ev should be (Symbol("defined"))
     val array2Val = model.getArrayValue(array2Ev.get)
-    array2Val should be ('defined)
+    array2Val should be (Symbol("defined"))
     val (valueMap, default) = array2Val.get
     valueMap(z3.mkInt(0, is)) should equal (z3.mkInt(1, is))
     valueMap(z3.mkInt(1, is)) should equal (z3.mkInt(0, is))

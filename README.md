@@ -3,6 +3,9 @@ ScalaZ3
 
 This is ScalaZ3 for Z3 4.7.1 and Scala 2.10, 2.11, 2.12, and 2.13.
 
+[API documentation](https://epfl-lara.github.io/ScalaZ3/z3/index.html)
+-------------------
+
 Compiling ScalaZ3
 -----------------
 

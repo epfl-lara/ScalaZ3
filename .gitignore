@@ -4,6 +4,7 @@ lib-bin/*.dylib
 lib-bin/*.jnilib
 lib-bin/*dSYM
 lib-bin/*.dll
+jars/
 
 # sbt specific
 lib_managed

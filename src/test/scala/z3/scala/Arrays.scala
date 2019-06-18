@@ -32,11 +32,11 @@ class Arrays extends FunSuite with Matchers {
     result should equal(Some(true))
 
     val array1Evaluated = model.eval(array1)
-    array1Evaluated should be ('defined)
+    array1Evaluated should be (Symbol("defined"))
     array1Evaluated match {
       case Some(ae) =>
         val array1Val = model.getArrayValue(ae)
-        array1Val should be ('defined)
+        array1Val should be (Symbol("defined"))
         //println("When evaluated, array1 is: " + array1Val)
         array1Val match {
           case Some((valueMap,default)) =>
@@ -47,11 +47,11 @@ class Arrays extends FunSuite with Matchers {
     }
 
     val array2Evaluated = model.eval(array2)
-    array2Evaluated should be ('defined)
+    array2Evaluated should be (Symbol("defined"))
     array2Evaluated match {
       case Some(ae) => {
         val array2Val = model.getArrayValue(ae)
-        array2Val should be ('defined)
+        array2Val should be (Symbol("defined"))
         //println("When evaluated, array2 is: " + array2Val)
         array2Val match {
           case Some((valueMap,default)) => {

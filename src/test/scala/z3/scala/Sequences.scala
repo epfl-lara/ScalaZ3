@@ -21,8 +21,8 @@ class Sequences extends FunSuite with Matchers {
     val s1eval = model.eval(s1)
     val s2eval = model.eval(s2)
 
-    s1eval should be ('defined)
-    s2eval should be ('defined)
+    s1eval should be (Symbol("defined"))
+    s2eval should be (Symbol("defined"))
   }
 
   test("Different head") {
@@ -61,7 +61,7 @@ class Sequences extends FunSuite with Matchers {
     val s1eval = model.eval(s1)
     val s2eval = model.eval(s2)
 
-    s1eval should be ('defined)
-    s2eval should be ('defined)
+    s1eval should be (Symbol("defined"))
+    s2eval should be (Symbol("defined"))
   }
 }

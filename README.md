@@ -1,4 +1,4 @@
-ScalaZ3
+ScalaZ3 ![Build status](http://laraquad4.epfl.ch:9000/epfl-lara/ScalaZ3/status/master)
 =======
 
 This is ScalaZ3 for Z3 4.7.1 and Scala 2.10, 2.11, 2.12, and 2.13.

@@ -28,3 +28,7 @@ z3/*
 # IDEA project files
 .idea/*
 *.iml
+
+# VSCode and metals
+.metals
+.vscode

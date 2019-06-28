@@ -6,7 +6,7 @@ import scala.sys.process._
 object ScalaZ3Build {
 
   lazy val z3SourceRepo = "https://github.com/Z3Prover/z3.git"
-  lazy val z3SourceTag  = "Z3-4.8.5"
+  lazy val z3SourceTag  = "z3-4.8.10"
 
   lazy val PS = java.io.File.pathSeparator
   lazy val DS = java.io.File.separator

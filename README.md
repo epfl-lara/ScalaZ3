@@ -77,12 +77,12 @@ Using ScalaZ3
 
 ### On a single operating system / architecture
 
-Create a folder named `unmanaged` at the same level as your `build.sbt` file, and copy the JAR file in `target/scala-2.XX/scalaz3_2.XX-4.7.1.jar` into it.
+Create a folder named `unmanaged` at the same level as your `build.sbt` file, and copy the JAR file in `target/scala-2.XX/scalaz3_2.XX-4.7.1.jar` into it, eg. if you are on Scala 2.12, name the file `target/scala-2.12/scalaz3_2.12-4.7.1.jar`.
 
 Then add, the following lines to your `build.sbt` file:
 
 ```scala
-unmanagedJars in Compile += {
+Compile / unmanagedJars += {
   baseDirectory.value / "unmanaged" / s"scalaz3_${scalaBinaryVersion.value}-4.7.1.jar"
 }
 ```
@@ -103,6 +103,7 @@ Add the following lines to your `build.sbt` file:
 
 ```scala
 val osInf = Option(System.getProperty("os.name")).getOrElse("")
+val osArch = System.getProperty("sun.arch.data.model")
 
 val isUnix    = osInf.indexOf("nix") >= 0 || osInf.indexOf("nux") >= 0
 val isWindows = osInf.indexOf("Win") >= 0
@@ -110,7 +111,7 @@ val isMac     = osInf.indexOf("Mac") >= 0
 
 val osName = if (isWindows) "win" else if (isMac) "mac" else "unix"
 
-unmanagedJars in Compile += {
+Compile / unmanagedJars += {
   baseDirectory.value / "unmanaged" / s"scalaz3-$osName-$osArch-${scalaBinaryVersion.value}.jar"
 }
 ```

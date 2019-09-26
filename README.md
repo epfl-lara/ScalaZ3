@@ -77,7 +77,7 @@ Using ScalaZ3
 
 ### On a single operating system / architecture
 
-Create a folder named `unmanaged` at the same level as your `build.sbt` file, and copy the JAR file in `target/scala-2.XX/scalaz3_2.XX-4.7.1.jar` into it, eg. if you are on Scala 2.12, name the file `target/scala-2.12/scalaz3_2.12-4.7.1.jar`.
+Create a folder named `unmanaged` at the same level as your `build.sbt` file, and copy the JAR file in `target/scala-2.XX/scalaz3_2.XX-4.7.1.jar` into it.
 
 Then add, the following lines to your `build.sbt` file:
 

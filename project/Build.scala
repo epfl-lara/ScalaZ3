@@ -148,14 +148,14 @@ object ScalaZ3Build {
         val python = if (("which python2.7" #> file("/dev/null")).! == 0) "python2.7" else "python"
 
         val i1 = exec(python + " scripts/mk_make.py --java", z3Path, s)
-        if (i1 != 0) i1 else exec("make", z3Path / "build", s)
+        if (i1 != 0) i1 else exec("make -j", z3Path / "build", s)
       } else if (isWindows) {
         val i1 = if (is64b) exec("python scripts/mk_make.py -x --java", z3Path, s)
           else exec("python scripts/mk_make.py --java", z3Path, s)
-        if (i1 != 0) i1 else exec("nmake", z3Path / "build", s)
+        if (i1 != 0) i1 else exec("nmake -j", z3Path / "build", s)
       } else if (isMac) {
         val i1 = exec("python scripts/mk_make.py --java", z3Path, s)
-        if (i1 != 0) i1 else exec("make", z3Path / "build", s)
+        if (i1 != 0) i1 else exec("make -j", z3Path / "build", s)
       } else {
         sys.error("Don't know how to compile Z3 on arch: " + osInf + " - " + osArch)
       }

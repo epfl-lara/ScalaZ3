@@ -1,7 +1,7 @@
 ScalaZ3 ![Build status](http://laraquad4.epfl.ch:9000/epfl-lara/ScalaZ3/status/master)
 =======
 
-This is ScalaZ3 for Z3 4.7.1 and Scala 2.10, 2.11, 2.12, and 2.13.
+This is ScalaZ3 for Z3 4.8.10 and Scala 2.10, 2.11, 2.12, and 2.13.
 
 [API documentation](https://epfl-lara.github.io/ScalaZ3/z3/index.html)
 -------------------
@@ -17,9 +17,9 @@ Run
 
     sbt +package
 
-to compile Z3 4.7.1 and cross-compile ScalaZ3 for Scala 2.10, 2.11, 2.12 and 2.13.
+to compile Z3 4.8.10 and cross-compile ScalaZ3 for Scala 2.10, 2.11, 2.12 and 2.13.
 
-The JAR files will be in `target/scala-2.XX/scalaz3_2.XX-4.7.1.jar`
+The JAR files will be in `target/scala-2.XX/scalaz3_2.XX-4.8.10.jar`
 and will contain the shared library dependencies.
 
 For testing, run
@@ -57,7 +57,7 @@ Now navigate to the scalaz3 folder and type:
 
     sbt +package
 
-The JAR files will be in `target/scala-2.XX/scalaz3_2.XX-4.7.1.jar` and will contain the shared library
+The JAR files will be in `target/scala-2.XX/scalaz3_2.XX-4.8.10.jar` and will contain the shared library
 dependencies.
 
 #### Test your package.
@@ -77,13 +77,13 @@ Using ScalaZ3
 
 ### On a single operating system / architecture
 
-Create a folder named `unmanaged` at the same level as your `build.sbt` file, and copy the JAR file in `target/scala-2.XX/scalaz3_2.XX-4.7.1.jar` into it.
+Create a folder named `unmanaged` at the same level as your `build.sbt` file, and copy the JAR file in `target/scala-2.XX/scalaz3_2.XX-4.8.10.jar` into it.
 
 Then add, the following lines to your `build.sbt` file:
 
 ```scala
-Compile / unmanagedJars += {
-  baseDirectory.value / "unmanaged" / s"scalaz3_${scalaBinaryVersion.value}-4.7.1.jar"
+unmanagedJars in Compile += {
+  baseDirectory.value / "unmanaged" / s"scalaz3_${scalaBinaryVersion.value}-4.8.10.jar"
 }
 ```
 

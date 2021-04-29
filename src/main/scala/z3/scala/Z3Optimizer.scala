@@ -67,7 +67,7 @@ class Z3Optimizer private[z3](val ptr: Long, val context: Z3Context) extends Z3O
   private[this] var lastResult: Option[Boolean] = None
 
   def check(): Option[Boolean] = {
-    val res = i2ob(Native.optimizeCheck(context.ptr, this.ptr))
+    val res = i2ob(Native.optimizeCheck(context.ptr, this.ptr, 0, null))
     lastResult = res
     res
   }

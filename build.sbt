@@ -3,15 +3,15 @@ import ScalaZ3Build._
 lazy val root = (project in file("."))
   .settings(
     name := "ScalaZ3",
-    version := "4.7.1",
+    version := "4.8.10",
     organization := "ch.epfl.lara",
     scalacOptions ++= Seq(
       "-deprecation",
       "-unchecked",
       "-feature",
     ),
-    scalaVersion := "2.12.8",
-    crossScalaVersions := Seq("2.10.7", "2.11.12", "2.12.8", "2.13.0"),
+    scalaVersion := "2.12.13",
+    crossScalaVersions := Seq("2.10.7", "2.11.12", "2.12.8", "2.12.13", "2.13.5"),
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "3.0.8" % "test"
     ),
@@ -31,6 +31,7 @@ lazy val root = (project in file("."))
     Compile / compile := ((Compile / compile) dependsOn checksumTask).value,
     Test / test := ((Test / test) dependsOn (Compile / Keys.`package`)).value,
     Test / compile := ((Test / compile) dependsOn (Compile / Keys.`package`)).value,
+    Test / testOnly := ((Test / testOnly) dependsOn (Compile / Keys.`package`)).evaluated,
     Test / internalDependencyClasspath := testClasspath.value,
     Compile / packageBin / mappings := newMappingsTask.value,
   )

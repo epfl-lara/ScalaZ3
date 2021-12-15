@@ -7,7 +7,7 @@ class Optimizer extends FunSuite with Matchers {
   test("Optimizer") {
     val z3 = new Z3Context("MODEL" -> true)
 
-    val is = z3.mkIntSort
+    val is = z3.mkIntSort()
     val x = z3.mkIntConst("x")
     val y = z3.mkIntConst("y")
 
@@ -15,7 +15,7 @@ class Optimizer extends FunSuite with Matchers {
     val a2 = z3.mkLT(x, y)
     val a3 = z3.mkLE(z3.mkAdd(y, x), z3.mkInt(0, is))
 
-    val opt = z3.mkOptimizer
+    val opt = z3.mkOptimizer()
     opt.assertCnstr(z3.mkIff(a3, a1))
     opt.assertCnstr(z3.mkOr(a3, a2))
     opt.assertCnstr(a3,           3)
@@ -23,10 +23,10 @@ class Optimizer extends FunSuite with Matchers {
     opt.assertCnstr(z3.mkNot(a1), 10)
     opt.assertCnstr(z3.mkNot(a2), 3)
 
-    val result = opt.check
+    val result = opt.check()
     result should equal (Some(true))
 
-    val model = opt.getModel
+    val model = opt.getModel()
     val a1eval = model.evalAs[Boolean](a1)
     val a2eval = model.evalAs[Boolean](a2)
     val a3eval = model.evalAs[Boolean](a3)

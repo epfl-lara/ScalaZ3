@@ -26,16 +26,16 @@ class NQueens extends FunSuite with Matchers {
            (columns(i) - columns(j) !== j - i))
 
     /* We assert all of the above */
-    val solver = ctx.mkSolver
+    val solver = ctx.mkSolver()
     solver.assertCnstr(diffCnstr)
     boundsCnstr map (solver.assertCnstr(_))
     diagonalsCnstr map (solver.assertCnstr(_))
 
-    val nbModels = solver.checkAndGetAllModels.size
+    val nbModels = solver.checkAndGetAllModels().size
 
     //println("Total number of models: " + nbModels)
     nbModels should equal (92)
 
-    ctx.delete
+    ctx.delete()
   }
 }

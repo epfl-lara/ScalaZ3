@@ -1,12 +1,15 @@
 import sbt._
 import sbt.Keys._
 import org.eclipse.jgit.api._
+import org.eclipse.jgit.treewalk.filter.PathFilter
+
+import java.io.{FileInputStream, InputStream}
 import scala.sys.process._
 
 object ScalaZ3Build {
 
   lazy val z3SourceRepo = "https://github.com/Z3Prover/z3.git"
-  lazy val z3SourceTag  = "z3-4.7.1"
+  lazy val z3SourceTag  = "z3-4.8.14"
 
   lazy val PS = java.io.File.pathSeparator
   lazy val DS = java.io.File.separator
@@ -123,6 +126,24 @@ object ScalaZ3Build {
       .checkout()
       .setName(z3SourceTag)
       .call()
+
+    val diffs = Git.open(z3Path.asFile)
+      .diff()
+      .setPathFilter(PathFilter.create("src/api/"))
+      .call()
+    if (diffs.isEmpty) {
+      s.log.info(s"Applying mk_abs API patch...")
+      var is: InputStream = null
+      try {
+        is = new FileInputStream(new File("z3_mk_abs.patch"))
+        Git.open(z3Path.asFile)
+          .apply()
+          .setPatch(is)
+          .call()
+      } finally {
+        if (is != null) is.close()
+      }
+    }
 
     val hashFile = z3Path / ".build-hash"
 

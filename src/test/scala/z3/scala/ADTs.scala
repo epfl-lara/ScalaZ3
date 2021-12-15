@@ -7,7 +7,7 @@ class ADTs extends FunSuite with Matchers {
     val ctx = new Z3Context("MODEL" -> true)
 
     toggleWarningMessages(true)
-    val intSort = ctx.mkIntSort
+    val intSort = ctx.mkIntSort()
 
     import Z3Context.{RecursiveType,RegularSort}
 
@@ -83,7 +83,7 @@ class ADTs extends FunSuite with Matchers {
     //// x > 4
     //ctx.assertCnstr(ctx.mkGT(x, ctx.mkInt(4, intSort)))
 
-    val solver = ctx.mkSolver
+    val solver = ctx.mkSolver()
     solver.assertCnstr(t1 === leafCons())
     solver.assertCnstr(nodeValueSelector(t1) === ctx.mkInt(4, intSort))
 
@@ -97,12 +97,12 @@ class ADTs extends FunSuite with Matchers {
 
     //println(ctx.mkImplies(isNode(t2), nodeValueSelector(t2) === ctx.mkInt(12, intSort)))
 
-    val (sol, model) = solver.checkAndGetModel
+    val (sol, model) = solver.checkAndGetModel()
 
     sol should equal(Some(true))
     model.eval(t1) should equal(Some(leafCons()))
 
-    ctx.delete
+    ctx.delete()
   }
 }
 

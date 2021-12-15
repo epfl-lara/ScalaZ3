@@ -9,7 +9,7 @@ class SatSolver extends FunSuite with Matchers {
     case class Literal(name: String, polarity: Boolean)
     type Clause = Set[Literal]
 
-    def DPLL(f : Set[Clause]) : (Boolean, Map[String,Option[Boolean]]) = 
+    def DPLL(f : Set[Clause]) : (Boolean, Map[String,Option[Boolean]]) =
       if(f.isEmpty) (true, Map.empty)
       else if(f.exists(clause => clause.isEmpty)) (false, Map.empty)
       else {
@@ -19,7 +19,7 @@ class SatSolver extends FunSuite with Matchers {
         val literals = f.reduceLeft((a,b) => a ++ b)
         val litMap: _root_.scala.collection.mutable.Map[String,Z3AST] =
           _root_.scala.collection.mutable.Map.empty[String,Z3AST]
-        
+
         literals.foreach(lit => {
           if(!litMap.keySet.contains(lit.name)) {
             val ast = z3.mkBoolConst(z3.mkStringSymbol(lit.name))
@@ -27,11 +27,11 @@ class SatSolver extends FunSuite with Matchers {
           }
         })
 
-        val solver = z3.mkSolver
+        val solver = z3.mkSolver()
 
         f.foreach(clause => {
           if (clause.size > 1) {
-            val nc: Array[Z3AST] = new Array[Z3AST](clause.size) 
+            val nc: Array[Z3AST] = new Array[Z3AST](clause.size)
             var c: Int = 0
             clause.foreach(lit => {
               nc(c) = if(lit.polarity) litMap(lit.name) else z3.mkNot(litMap(lit.name))
@@ -43,12 +43,12 @@ class SatSolver extends FunSuite with Matchers {
             if(singleLit.polarity)
               solver.assertCnstr(litMap(singleLit.name))
             else
-              solver.assertCnstr(z3.mkNot(litMap(singleLit.name))) 
+              solver.assertCnstr(z3.mkNot(litMap(singleLit.name)))
           }
         })
 
         val (result, model) = solver.checkAndGetModel()
-          
+
         result match {
           case None => println("There was an error with Z3."); (false, Map.empty)
           case Some(false) => (false, Map.empty) // formula was unsat
@@ -65,8 +65,8 @@ class SatSolver extends FunSuite with Matchers {
         val scanner = new _root_.java.util.Scanner(line)
           while(scanner.hasNext) {
           tok = scanner.next
-          if (tok != "0") 
-            {if( tok.startsWith("-")) clause += Literal(tok.drop(1), false) else clause += Literal(tok, true)} 
+          if (tok != "0")
+            {if( tok.startsWith("-")) clause += Literal(tok.drop(1), false) else clause += Literal(tok, true)}
           else {
             form += clause
             clause = Set.empty[Literal]

@@ -37,19 +37,20 @@ object OpToReal extends Z3DeclKind (Z3_decl_kind.Z3_OP_TO_REAL.toInt)
 object OpToInt  extends Z3DeclKind (Z3_decl_kind.Z3_OP_TO_INT.toInt)
 object OpIsInt  extends Z3DeclKind (Z3_decl_kind.Z3_OP_IS_INT.toInt)
 object OpPower  extends Z3DeclKind (Z3_decl_kind.Z3_OP_POWER.toInt)  // NEW in ScalaZ3 3.0
+object OpAbs    extends Z3DeclKind (Z3_decl_kind.Z3_OP_ABS.toInt)  // NEW in ScalaZ3 4.8.12
 
 // Arrays & Sets
-object OpStore         extends Z3DeclKind (Z3_decl_kind.Z3_OP_STORE.toInt)        
-object OpSelect        extends Z3DeclKind (Z3_decl_kind.Z3_OP_SELECT.toInt)       
-object OpConstArray    extends Z3DeclKind (Z3_decl_kind.Z3_OP_CONST_ARRAY.toInt)   
-object OpArrayMap      extends Z3DeclKind (Z3_decl_kind.Z3_OP_ARRAY_MAP.toInt)     
-object OpArrayDefault  extends Z3DeclKind (Z3_decl_kind.Z3_OP_ARRAY_DEFAULT.toInt) 
-object OpSetUnion      extends Z3DeclKind (Z3_decl_kind.Z3_OP_SET_UNION.toInt)     
-object OpSetIntersect  extends Z3DeclKind (Z3_decl_kind.Z3_OP_SET_INTERSECT.toInt) 
+object OpStore         extends Z3DeclKind (Z3_decl_kind.Z3_OP_STORE.toInt)
+object OpSelect        extends Z3DeclKind (Z3_decl_kind.Z3_OP_SELECT.toInt)
+object OpConstArray    extends Z3DeclKind (Z3_decl_kind.Z3_OP_CONST_ARRAY.toInt)
+object OpArrayMap      extends Z3DeclKind (Z3_decl_kind.Z3_OP_ARRAY_MAP.toInt)
+object OpArrayDefault  extends Z3DeclKind (Z3_decl_kind.Z3_OP_ARRAY_DEFAULT.toInt)
+object OpSetUnion      extends Z3DeclKind (Z3_decl_kind.Z3_OP_SET_UNION.toInt)
+object OpSetIntersect  extends Z3DeclKind (Z3_decl_kind.Z3_OP_SET_INTERSECT.toInt)
 object OpSetDifference extends Z3DeclKind (Z3_decl_kind.Z3_OP_SET_DIFFERENCE.toInt)
 object OpSetComplement extends Z3DeclKind (Z3_decl_kind.Z3_OP_SET_COMPLEMENT.toInt)
-object OpSetSubset     extends Z3DeclKind (Z3_decl_kind.Z3_OP_SET_SUBSET.toInt)    
-object OpAsArray       extends Z3DeclKind (Z3_decl_kind.Z3_OP_AS_ARRAY.toInt)      
+object OpSetSubset     extends Z3DeclKind (Z3_decl_kind.Z3_OP_SET_SUBSET.toInt)
+object OpAsArray       extends Z3DeclKind (Z3_decl_kind.Z3_OP_AS_ARRAY.toInt)
 object OpArrayExt      extends Z3DeclKind (Z3_decl_kind.Z3_OP_ARRAY_EXT.toInt) // NEW in ScalaZ3 3.0
 
 // Bit-vectors
@@ -262,50 +263,51 @@ object Z3DeclKind {
   }
 
   def fromZ3(kind: Z3_decl_kind): Z3DeclKind = kind match {
-    case Z3_decl_kind.Z3_OP_TRUE  => OpTrue 
-    case Z3_decl_kind.Z3_OP_FALSE => OpFalse 
-    case Z3_decl_kind.Z3_OP_EQ => OpEq 
-    case Z3_decl_kind.Z3_OP_DISTINCT => OpDistinct 
-    case Z3_decl_kind.Z3_OP_ITE => OpITE 
-    case Z3_decl_kind.Z3_OP_AND => OpAnd 
-    case Z3_decl_kind.Z3_OP_OR => OpOr 
-    case Z3_decl_kind.Z3_OP_IFF => OpIff 
-    case Z3_decl_kind.Z3_OP_XOR => OpXor 
-    case Z3_decl_kind.Z3_OP_NOT => OpNot 
-    case Z3_decl_kind.Z3_OP_IMPLIES => OpImplies 
+    case Z3_decl_kind.Z3_OP_TRUE  => OpTrue
+    case Z3_decl_kind.Z3_OP_FALSE => OpFalse
+    case Z3_decl_kind.Z3_OP_EQ => OpEq
+    case Z3_decl_kind.Z3_OP_DISTINCT => OpDistinct
+    case Z3_decl_kind.Z3_OP_ITE => OpITE
+    case Z3_decl_kind.Z3_OP_AND => OpAnd
+    case Z3_decl_kind.Z3_OP_OR => OpOr
+    case Z3_decl_kind.Z3_OP_IFF => OpIff
+    case Z3_decl_kind.Z3_OP_XOR => OpXor
+    case Z3_decl_kind.Z3_OP_NOT => OpNot
+    case Z3_decl_kind.Z3_OP_IMPLIES => OpImplies
     case Z3_decl_kind.Z3_OP_OEQ => OpOEq
 
-    case Z3_decl_kind.Z3_OP_ANUM => OpANum 
-    case Z3_decl_kind.Z3_OP_AGNUM => OpAGNum 
-    case Z3_decl_kind.Z3_OP_LE => OpLE 
-    case Z3_decl_kind.Z3_OP_GE => OpGE 
-    case Z3_decl_kind.Z3_OP_LT => OpLT 
-    case Z3_decl_kind.Z3_OP_GT => OpGT 
-    case Z3_decl_kind.Z3_OP_ADD => OpAdd 
-    case Z3_decl_kind.Z3_OP_SUB => OpSub 
-    case Z3_decl_kind.Z3_OP_UMINUS => OpUMinus 
-    case Z3_decl_kind.Z3_OP_MUL => OpMul 
-    case Z3_decl_kind.Z3_OP_DIV => OpDiv 
-    case Z3_decl_kind.Z3_OP_IDIV => OpIDiv 
-    case Z3_decl_kind.Z3_OP_REM => OpRem 
-    case Z3_decl_kind.Z3_OP_MOD => OpMod 
-    case Z3_decl_kind.Z3_OP_TO_REAL => OpToReal 
-    case Z3_decl_kind.Z3_OP_TO_INT => OpToInt 
-    case Z3_decl_kind.Z3_OP_IS_INT => OpIsInt 
-    case Z3_decl_kind.Z3_OP_POWER => OpPower 
+    case Z3_decl_kind.Z3_OP_ANUM => OpANum
+    case Z3_decl_kind.Z3_OP_AGNUM => OpAGNum
+    case Z3_decl_kind.Z3_OP_LE => OpLE
+    case Z3_decl_kind.Z3_OP_GE => OpGE
+    case Z3_decl_kind.Z3_OP_LT => OpLT
+    case Z3_decl_kind.Z3_OP_GT => OpGT
+    case Z3_decl_kind.Z3_OP_ADD => OpAdd
+    case Z3_decl_kind.Z3_OP_SUB => OpSub
+    case Z3_decl_kind.Z3_OP_UMINUS => OpUMinus
+    case Z3_decl_kind.Z3_OP_MUL => OpMul
+    case Z3_decl_kind.Z3_OP_DIV => OpDiv
+    case Z3_decl_kind.Z3_OP_IDIV => OpIDiv
+    case Z3_decl_kind.Z3_OP_REM => OpRem
+    case Z3_decl_kind.Z3_OP_MOD => OpMod
+    case Z3_decl_kind.Z3_OP_TO_REAL => OpToReal
+    case Z3_decl_kind.Z3_OP_TO_INT => OpToInt
+    case Z3_decl_kind.Z3_OP_IS_INT => OpIsInt
+    case Z3_decl_kind.Z3_OP_POWER => OpPower
+    case Z3_decl_kind.Z3_OP_ABS => OpAbs
 
-    case Z3_decl_kind.Z3_OP_STORE => OpStore 
-    case Z3_decl_kind.Z3_OP_SELECT => OpSelect 
-    case Z3_decl_kind.Z3_OP_CONST_ARRAY => OpConstArray 
+    case Z3_decl_kind.Z3_OP_STORE => OpStore
+    case Z3_decl_kind.Z3_OP_SELECT => OpSelect
+    case Z3_decl_kind.Z3_OP_CONST_ARRAY => OpConstArray
     case Z3_decl_kind.Z3_OP_ARRAY_MAP => OpArrayMap
     case Z3_decl_kind.Z3_OP_ARRAY_DEFAULT => OpArrayDefault
-    case Z3_decl_kind.Z3_OP_SET_UNION => OpSetUnion 
-    case Z3_decl_kind.Z3_OP_SET_INTERSECT => OpSetIntersect 
-    case Z3_decl_kind.Z3_OP_SET_DIFFERENCE => OpSetDifference 
-    case Z3_decl_kind.Z3_OP_SET_COMPLEMENT => OpSetComplement 
+    case Z3_decl_kind.Z3_OP_SET_UNION => OpSetUnion
+    case Z3_decl_kind.Z3_OP_SET_INTERSECT => OpSetIntersect
+    case Z3_decl_kind.Z3_OP_SET_DIFFERENCE => OpSetDifference
+    case Z3_decl_kind.Z3_OP_SET_COMPLEMENT => OpSetComplement
     case Z3_decl_kind.Z3_OP_SET_SUBSET => OpSetSubset
-    case Z3_decl_kind.Z3_OP_AS_ARRAY => OpAsArray 
-    case Z3_decl_kind.Z3_OP_ARRAY_EXT => OpArrayExt 
+    case Z3_decl_kind.Z3_OP_AS_ARRAY => OpAsArray
+    case Z3_decl_kind.Z3_OP_ARRAY_EXT => OpArrayExt
 
     case Z3_decl_kind.Z3_OP_BNUM => OpBNum
     case Z3_decl_kind.Z3_OP_BIT1 => OpBit1

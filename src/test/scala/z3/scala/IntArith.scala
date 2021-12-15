@@ -6,7 +6,7 @@ class IntArith extends FunSuite with Matchers {
 
   test("Comfusy-like") {
     val z3 = new Z3Context("MODEL" -> true)
-    val i = z3.mkIntSort
+    val i = z3.mkIntSort()
     val h = z3.mkConst(z3.mkStringSymbol("h"), i)
     val m = z3.mkConst(z3.mkStringSymbol("m"), i)
     val s = z3.mkConst(z3.mkStringSymbol("s"), i)
@@ -27,18 +27,18 @@ class IntArith extends FunSuite with Matchers {
     val cs3 = z3.mkAnd(z3.mkGE(m, z), z3.mkLT(m, sx))
     val cs4 = z3.mkAnd(z3.mkGE(s, z), z3.mkLT(s, sx))
 
-    val solver = z3.mkSolver
+    val solver = z3.mkSolver()
     solver.assertCnstr(z3.mkAnd(cs1, cs2, cs3, cs4))
 
     // attempting to solve the constraints
-    val (sol, model) = solver.checkAndGetModel
+    val (sol, model) = solver.checkAndGetModel()
 
     sol should equal(Some(true))
     model.evalAs[Int](h) should equal(Some(0))
     model.evalAs[Int](m) should equal(Some(20))
     model.evalAs[Int](s) should equal(Some(34))
 
-    z3.delete
+    z3.delete()
   }
 }
 

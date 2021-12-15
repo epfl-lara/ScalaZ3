@@ -236,7 +236,7 @@ sealed class Z3Context(val config: Map[String, String]) {
 
       val (consFuns, unzippedOnce) = zipped.unzip
       val (testFuns, selectorFunss) = unzippedOnce.unzip
-  
+
       (new Z3Sort(sort, this), consFuns, testFuns, selectorFunss)
     }
   }
@@ -265,7 +265,7 @@ sealed class Z3Context(val config: Map[String, String]) {
   }
 
   def mkIntConst(symbol: Z3Symbol) : Z3AST = {
-    mkConst(symbol, mkIntSort)
+    mkConst(symbol, mkIntSort())
   }
 
   def mkIntConst(s: String) : Z3AST = {
@@ -273,7 +273,7 @@ sealed class Z3Context(val config: Map[String, String]) {
   }
 
   def mkBoolConst(symbol: Z3Symbol) : Z3AST = {
-    mkConst(symbol, mkBoolSort)
+    mkConst(symbol, mkBoolSort())
   }
 
   def mkBoolConst(s: String) : Z3AST = {
@@ -301,11 +301,11 @@ sealed class Z3Context(val config: Map[String, String]) {
   }
 
   def mkFreshIntConst(prefix: String) : Z3AST = {
-    mkFreshConst(prefix, mkIntSort)
+    mkFreshConst(prefix, mkIntSort())
   }
 
   def mkFreshBoolConst(prefix: String) : Z3AST = {
-    mkFreshConst(prefix, mkBoolSort)
+    mkFreshConst(prefix, mkBoolSort())
   }
 
   def mkFreshFuncDecl(prefix: String, domainSorts: Seq[Z3Sort], rangeSort: Z3Sort) : Z3FuncDecl = {
@@ -328,7 +328,7 @@ sealed class Z3Context(val config: Map[String, String]) {
     if(args.size == 0) {
       throw new IllegalArgumentException("mkDistinct needs at least one argument")
     } else if(args.size == 1) {
-      mkTrue
+      mkTrue()
     } else {
       new Z3AST(Native.mkDistinct(this.ptr, args.length, toPtrArray(args)), this)
     }
@@ -442,6 +442,10 @@ sealed class Z3Context(val config: Map[String, String]) {
 
   def mkInt2Real(ast: Z3AST) : Z3AST = {
     new Z3AST(Native.mkInt2real(this.ptr, ast.ptr), this)
+  }
+
+  def mkAbs(ast: Z3AST) : Z3AST = {
+    new Z3AST(Native.mkAbs(this.ptr, ast.ptr), this)
   }
 
   def mkReal2Int(ast: Z3AST) : Z3AST = {
@@ -642,7 +646,7 @@ sealed class Z3Context(val config: Map[String, String]) {
   def mkInt(value: Int, sort: Z3Sort) : Z3AST = {
     new Z3AST(Native.mkInt(this.ptr, value, sort.ptr), this)
   }
-  
+
   def mkReal(numerator: Int, denominator: Int) : Z3AST = {
     new Z3AST(Native.mkReal(this.ptr, numerator, denominator), this)
   }
@@ -875,6 +879,7 @@ sealed class Z3Context(val config: Map[String, String]) {
       case OpUMinus => mkUnaryMinus(mkFreshConst("x", sorts(0)))
       case OpMul => mkMul(sorts.map(mkFreshConst("x", _)) : _*)
       case OpDiv => mkDiv(mkFreshConst("a", sorts(0)), mkFreshConst("b", sorts(1)))
+      case OpAbs => mkAbs(mkFreshConst("x", sorts(0)))
       case _ => error("Unexpected decl kind " + op)
     }
 
@@ -938,23 +943,23 @@ sealed class Z3Context(val config: Map[String, String]) {
   }
 
   def getIndexValue(ast: Z3AST) : Int = {
-    return Native.getIndexValue(this.ptr, ast.ptr)
+    Native.getIndexValue(this.ptr, ast.ptr)
   }
 
   def isQuantifierForall(ast: Z3AST) : Boolean = {
-    return Native.isQuantifierForall(this.ptr, ast.ptr)
+    Native.isQuantifierForall(this.ptr, ast.ptr)
   }
 
   def getQuantifierBody(ast: Z3AST) : Z3AST = {
-    return new Z3AST(Native.getQuantifierBody(this.ptr, ast.ptr), this)
+    new Z3AST(Native.getQuantifierBody(this.ptr, ast.ptr), this)
   }
 
   def getQuantifierBoundName(ast: Z3AST, i: Int) : Z3Symbol = {
-    return new Z3Symbol(Native.getQuantifierBoundName(this.ptr, ast.ptr, i), this)
+    new Z3Symbol(Native.getQuantifierBoundName(this.ptr, ast.ptr, i), this)
   }
 
   def getQuantifierNumBound(ast: Z3AST) : Int = {
-    return Native.getQuantifierNumBound(this.ptr, ast.ptr)
+    Native.getQuantifierNumBound(this.ptr, ast.ptr)
   }
 
   def getDeclKind(funcDecl: Z3FuncDecl) : Z3DeclKind = {
@@ -1024,22 +1029,8 @@ sealed class Z3Context(val config: Map[String, String]) {
     res
   }
 
-  // XXX: this is a HUGE hack to get around the fact that the Z3 api doesn't
-  //      provide a handle to the absolute value function.
   def getAbsFuncDecl(): Z3FuncDecl = {
-    val ast = parseSMTLIB2String("""
-      (declare-fun x () Int)
-      (declare-fun y () Int)
-      (assert (= y (abs x)))
-    """)
-
-    getASTKind(ast) match {
-      case Z3AppAST(_, Seq(_, absAst)) => getASTKind(absAst) match {
-        case Z3AppAST(decl, _) => decl
-        case c => error("Unexpected ast kind " + c)
-      }
-      case c => error("Unexpected ast kind " + c)
-    }
+    getFuncDecl(OpAbs, mkIntSort())
   }
 
   // Parser interface
@@ -1095,7 +1086,7 @@ sealed class Z3Context(val config: Map[String, String]) {
   }
 
   def simplifyAst(ast : Z3AST) : Z3AST = {
-    return new Z3AST(Native.simplify(this.ptr, ast.ptr), this);
+    new Z3AST(Native.simplify(this.ptr, ast.ptr), this);
   }
 
   def mkForAllConst(weight: Int, patterns: Seq[Z3Pattern], bounds: Seq[Z3AST], body: Z3AST) : Z3AST = mkQuantifierConst(true, weight, patterns, bounds, body)
@@ -1118,11 +1109,11 @@ sealed class Z3Context(val config: Map[String, String]) {
   }
 
   def mkTactic(name: String) : Z3Tactic = {
-    return new Z3Tactic(Native.mkTactic(this.ptr, name), this)
+    new Z3Tactic(Native.mkTactic(this.ptr, name), this)
   }
 
   def mkTacticAndThen(tactic1: Z3Tactic, tactic2: Z3Tactic) : Z3Tactic = {
-    return new Z3Tactic(Native.tacticAndThen(this.ptr, tactic1.ptr, tactic2.ptr), this)
+    new Z3Tactic(Native.tacticAndThen(this.ptr, tactic1.ptr, tactic2.ptr), this)
   }
 
   def mkSolver() : Z3Solver = {

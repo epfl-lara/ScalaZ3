@@ -1,0 +1,48 @@
+diff --git a/src/api/api_arith.cpp b/src/api/api_arith.cpp
+index 57f96dd6d..5fe7b8497 100644
+--- a/src/api/api_arith.cpp
++++ b/src/api/api_arith.cpp
+@@ -65,6 +65,7 @@ extern "C" {
+     MK_BINARY_ARITH_OP(Z3_mk_power, OP_POWER);
+     MK_BINARY_ARITH_OP(Z3_mk_mod, OP_MOD);
+     MK_BINARY_ARITH_OP(Z3_mk_rem, OP_REM);
++    MK_UNARY(Z3_mk_abs, mk_c(c)->get_arith_fid(), OP_ABS, SKIP);
+ 
+     Z3_ast Z3_API Z3_mk_div(Z3_context c, Z3_ast n1, Z3_ast n2) {
+         Z3_TRY;
+diff --git a/src/api/api_ast.cpp b/src/api/api_ast.cpp
+index d11ce313e..208269021 100644
+--- a/src/api/api_ast.cpp
++++ b/src/api/api_ast.cpp
+@@ -1041,6 +1041,7 @@ extern "C" {
+             case OP_TO_REAL: return Z3_OP_TO_REAL;
+             case OP_TO_INT: return Z3_OP_TO_INT;
+             case OP_IS_INT: return Z3_OP_IS_INT;
++            case OP_ABS: return Z3_OP_ABS;
+             default:
+                 return Z3_OP_INTERNAL;
+             }
+diff --git a/src/api/z3_api.h b/src/api/z3_api.h
+index d5bd1e11c..703301492 100644
+--- a/src/api/z3_api.h
++++ b/src/api/z3_api.h
+@@ -1032,6 +1032,7 @@ typedef enum {
+     Z3_OP_TO_INT,
+     Z3_OP_IS_INT,
+     Z3_OP_POWER,
++    Z3_OP_ABS,
+ 
+     // Arrays & Sets
+     Z3_OP_STORE = 0x300,
+@@ -2420,6 +2421,11 @@ extern "C" {
+     */
+     Z3_ast Z3_API Z3_mk_add(Z3_context c, unsigned num_args, Z3_ast const args[]);
+ 
++    /**
++       def_API('Z3_mk_abs', AST, (_in(CONTEXT), _in(AST)))
++    */
++    Z3_ast Z3_API Z3_mk_abs(Z3_context c, Z3_ast t1);
++
+     /**
+        \brief Create an AST node representing \ccode{args[0] * ... * args[num_args-1]}.
+ 

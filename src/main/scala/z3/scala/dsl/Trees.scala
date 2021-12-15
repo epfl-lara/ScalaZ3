@@ -88,11 +88,11 @@ sealed trait NAryPred[+A >: BottomSort <: TopSort] extends Tree[BoolSort] {
 }
 
 case class BoolConstant(value : Boolean) extends Tree[BoolSort] {
-  private[dsl] def build(z3 : Z3Context) = if(value) z3.mkTrue else z3.mkFalse
+  private[dsl] def build(z3 : Z3Context) = if(value) z3.mkTrue() else z3.mkFalse()
 }
 
 case class IntConstant(value : Int) extends Tree[IntSort] {
-  private[dsl] def build(z3 : Z3Context) = z3.mkInt(value, z3.mkIntSort)
+  private[dsl] def build(z3 : Z3Context) = z3.mkInt(value, z3.mkIntSort())
 }
 
 case class CharConstant(value : Char) extends Tree[BVSort] {
@@ -100,11 +100,11 @@ case class CharConstant(value : Char) extends Tree[BVSort] {
 }
 
 case class BoolVar() extends Tree[BoolSort] {
-  private[dsl] def build(z3 : Z3Context) = z3.mkFreshConst("C", z3.mkBoolSort)
+  private[dsl] def build(z3 : Z3Context) = z3.mkFreshConst("C", z3.mkBoolSort())
 }
 
 case class IntVar() extends Tree[IntSort] {
-  private[dsl] def build(z3 : Z3Context) = z3.mkFreshConst("I", z3.mkIntSort)
+  private[dsl] def build(z3 : Z3Context) = z3.mkFreshConst("I", z3.mkIntSort())
 }
 
 case class CharVar() extends Tree[BVSort] {
@@ -112,7 +112,7 @@ case class CharVar() extends Tree[BVSort] {
 }
 
 case class IntSetVar() extends Tree[SetSort] {
-  private[dsl] def build(z3 : Z3Context) = z3.mkFreshConst("IS", z3.mkSetSort(z3.mkIntSort))
+  private[dsl] def build(z3 : Z3Context) = z3.mkFreshConst("IS", z3.mkSetSort(z3.mkIntSort()))
 }
 
 case class Eq[+A >: BottomSort <: TopSort](left : Tree[A], right : Tree[A]) extends BinaryPred[A] {
@@ -380,7 +380,7 @@ case class SetSubset[+A >: BottomSort <: SetSort](left : Tree[A], right : Tree[A
 }
 
 case class EmptyIntSet() extends Tree[SetSort] {
-  private [dsl] def build(z3 : Z3Context) = z3.mkEmptySet(z3.mkIntSort)
+  private [dsl] def build(z3 : Z3Context) = z3.mkEmptySet(z3.mkIntSort())
 }
 
 case class SetAdd[+A >: BottomSort <: TopSort](set : Tree[SetSort], elem : Tree[A]) extends Tree[SetSort] {

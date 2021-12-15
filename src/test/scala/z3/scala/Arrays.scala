@@ -7,13 +7,13 @@ class Arrays extends FunSuite with Matchers {
   test("Arrays") {
     val z3 = new Z3Context("MODEL" -> true)
 
-    val is = z3.mkIntSort
+    val is = z3.mkIntSort()
     val intArraySort = z3.mkArraySort(is, is)
     val array1 = z3.mkFreshConst("arr", intArraySort)
     val array2 = z3.mkFreshConst("arr", intArraySort)
     val x = z3.mkFreshConst("x", is)
 
-    val solver = z3.mkSolver
+    val solver = z3.mkSolver()
     // array1 = [ 42, 42, 42, ... ]
     solver.assertCnstr(z3.mkEq(array1,z3.mkConstArray(is, z3.mkInt(42, is))))
     // x = array1[6]
@@ -25,7 +25,7 @@ class Arrays extends FunSuite with Matchers {
     val fourtyTwo = z3.mkFreshConst("ft", is)
     solver.assertCnstr(z3.mkEq(fourtyTwo, z3.mkArrayDefault(array2)))
 
-    val (result, model) = solver.checkAndGetModel
+    val (result, model) = solver.checkAndGetModel()
 
     //println("model is")
     //println(model)
@@ -55,7 +55,7 @@ class Arrays extends FunSuite with Matchers {
         //println("When evaluated, array2 is: " + array2Val)
         array2Val match {
           case Some((valueMap,default)) => {
-            valueMap(z3.mkInt(2, z3.mkIntSort)) should equal (z3.mkInt(0, z3.mkIntSort))
+            valueMap(z3.mkInt(2, z3.mkIntSort())) should equal (z3.mkInt(0, z3.mkIntSort()))
             model.evalAs[Int](default) should equal (Some(42))
           }
           case None =>

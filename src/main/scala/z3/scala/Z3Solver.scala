@@ -66,7 +66,7 @@ class Z3Solver private[z3](val ptr: Long, val context: Z3Context) extends Z3Obje
   }
 
   def getNumScopes() = {
-    Native.solverGetNumScopes(context.ptr, this.ptr)  
+    Native.solverGetNumScopes(context.ptr, this.ptr)
   }
 
   def incRef(): Unit = {
@@ -106,9 +106,9 @@ class Z3Solver private[z3](val ptr: Long, val context: Z3Context) extends Z3Obje
 
   private[z3] def checkAndGetAllModels(): Iterator[Z3Model] = {
     new Iterator[Z3Model] {
-      var constraints: Z3AST = context.mkTrue
+      var constraints: Z3AST = context.mkTrue()
       var nextModel: Option[Option[Z3Model]] = None
-      
+
       override def hasNext: Boolean =  nextModel match {
         case None =>
           // Check whether there are any more models
@@ -119,7 +119,7 @@ class Z3Solver private[z3](val ptr: Long, val context: Z3Context) extends Z3Obje
           val toReturn = (result match {
             case (Some(true), m) =>
               nextModel = Some(Some(m))
-              val newConstraints = m.getConstInterpretations.foldLeft(context.mkTrue){
+              val newConstraints = m.getConstInterpretations.foldLeft(context.mkTrue()){
                 (acc, s) => context.mkAnd(acc, context.mkEq(s._1(), s._2))
               }
               constraints = context.mkAnd(constraints, context.mkNot(newConstraints))
@@ -145,7 +145,7 @@ class Z3Solver private[z3](val ptr: Long, val context: Z3Context) extends Z3Obje
           pop(1)
           val toReturn = (result match {
             case (Some(true), m) =>
-              val newConstraints = m.getConstInterpretations.foldLeft(context.mkTrue){
+              val newConstraints = m.getConstInterpretations.foldLeft(context.mkTrue()){
                 (acc, s) => context.mkAnd(acc, context.mkEq(s._1(), s._2))
               }
               constraints = context.mkAnd(constraints, context.mkNot(newConstraints))
@@ -154,7 +154,7 @@ class Z3Solver private[z3](val ptr: Long, val context: Z3Context) extends Z3Obje
               throw new Exception("Requesting a new model while there are no more models.")
           })
           toReturn
-        case Some(Some(m)) => 
+        case Some(Some(m)) =>
           nextModel = None
           m
         case Some(None) => throw new Exception("Requesting a new model while there are no more models.")
@@ -164,9 +164,9 @@ class Z3Solver private[z3](val ptr: Long, val context: Z3Context) extends Z3Obje
 
   private[z3] def checkAndGetAllEventualModels(): Iterator[(Option[Boolean], Z3Model)] = {
     new Iterator[(Option[Boolean], Z3Model)] {
-      var constraints: Z3AST = context.mkTrue
+      var constraints: Z3AST = context.mkTrue()
       var nextModel: Option[Option[(Option[Boolean],Z3Model)]] = None
-      
+
       override def hasNext: Boolean =  nextModel match {
         case None =>
           // Check whether there are any more models
@@ -180,7 +180,7 @@ class Z3Solver private[z3](val ptr: Long, val context: Z3Context) extends Z3Obje
               false
             case (outcome, m) =>
               nextModel = Some(Some((outcome, m)))
-              val newConstraints = m.getConstInterpretations.foldLeft(context.mkTrue){
+              val newConstraints = m.getConstInterpretations.foldLeft(context.mkTrue()){
                 (acc, s) => context.mkAnd(acc, context.mkEq(s._1(), s._2))
               }
               constraints = context.mkAnd(constraints, context.mkNot(newConstraints))
@@ -202,14 +202,14 @@ class Z3Solver private[z3](val ptr: Long, val context: Z3Context) extends Z3Obje
             case (Some(false), _) =>
               throw new Exception("Requesting a new model while there are no more models.")
             case (outcome, m) =>
-              val newConstraints = m.getConstInterpretations.foldLeft(context.mkTrue){
+              val newConstraints = m.getConstInterpretations.foldLeft(context.mkTrue()){
                 (acc, s) => context.mkAnd(acc, context.mkEq(s._1(), s._2))
               }
               constraints = context.mkAnd(constraints, context.mkNot(newConstraints))
               (outcome, m)
           })
           toReturn
-        case Some(Some((outcome, m))) => 
+        case Some(Some((outcome, m))) =>
           nextModel = None
           (outcome, m)
         case Some(None) => throw new Exception("Requesting a new model while there are no more models.")

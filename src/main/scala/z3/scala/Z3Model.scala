@@ -1,30 +1,44 @@
 package z3.scala
 
+import scala.util.Try
 import com.microsoft.z3.Native
 
 object Z3Model {
-  implicit def ast2int(model: Z3Model, ast: Z3AST): Option[Int] = {
-    val res = model.eval(ast)
-    if (res.isEmpty)
+  private def parseInt(str: String): Option[Int] = {
+    if (str.startsWith("#b"))
+      Try(BigInt(str.drop(2), 2).toInt).toOption
+    else if (str.startsWith("#x"))
+      Try(BigInt(str.drop(2), 16).toInt).toOption
+    else if (str.startsWith("#"))
       None
     else
-      model.context.getNumeralInt(res.get).value
+      Try(Integer.parseInt(str, 10)).toOption
+  }
+
+  implicit def ast2bigint(model: Z3Model, ast: Z3AST): Option[BigInt] = {
+    model.eval(ast) flatMap { res =>
+      model.context.getNumeralInt(res).value.map(BigInt(_)).orElse {
+        Some(BigInt(res.toString, 10))
+      }
+    }
+  }
+
+  implicit def ast2int(model: Z3Model, ast: Z3AST): Option[Int] = {
+    model.eval(ast) flatMap { res =>
+      model.context.getNumeralInt(res).value.orElse(parseInt(res.toString))
+    }
   }
 
   implicit def ast2bool(model: Z3Model, ast: Z3AST): Option[Boolean] = {
-    val res = model.eval(ast)
-    if (res.isEmpty)
-      None
-    else
-      model.context.getBoolValue(res.get)
+    model.eval(ast) flatMap { res =>
+      model.context.getBoolValue(res)
+    }
   }
 
   implicit def ast2char(model: Z3Model, ast: Z3AST): Option[Char] = {
-    val res = model.eval(ast)
-    if (res.isEmpty)
-      None
-    else
-      model.context.getNumeralInt(res.get).value.map(_.toChar)
+    model.eval(ast) flatMap { res =>
+      model.context.getNumeralInt(res).value.map(_.toChar)
+    }
   }
 }
 

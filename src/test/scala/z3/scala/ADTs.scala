@@ -1,8 +1,10 @@
 package z3.scala
 
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class ADTs extends FunSuite with Matchers {
+class ADTs extends AnyFunSuite with Matchers {
+
   test("ADTs") {
     val ctx = new Z3Context("MODEL" -> true)
 

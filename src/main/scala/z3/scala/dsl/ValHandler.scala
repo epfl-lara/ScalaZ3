@@ -14,7 +14,7 @@ abstract class ValHandler[A : Default] {
   // inherit from Default and the implicit ValHandlers would serve as the
   // providers of default values. One argument against that is that Defaults
   // exist outside of the DSL while ValHandlers do not. PS.
-  val default : Default[A] = implicitly[Default[A]]
+  val default : Default[A] = summon[Default[A]]
   private val defaultValue : A = default.value
 
   /** Z3 code to construct a sort representing the Scala A type. */

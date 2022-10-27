@@ -36,5 +36,5 @@ package object scala {
     sys.error(any.toString) // 2.9
   }
 
-  implicit def astvectorToSeq(v: Z3ASTVector): Seq[Z3AST] = v.toSeq
+  given astVectorToSeq: Conversion[Z3ASTVector, Seq[Z3AST]] = _.toSeq
 }

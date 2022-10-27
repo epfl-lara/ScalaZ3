@@ -1,8 +1,9 @@
 package z3.scala
 
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class IntArith extends FunSuite with Matchers {
+class IntArith extends AnyFunSuite with Matchers {
 
   test("Comfusy-like") {
     val z3 = new Z3Context("MODEL" -> true)

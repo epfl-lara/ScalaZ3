@@ -1,8 +1,9 @@
 package z3.scala
 
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class Quantifiers extends FunSuite with Matchers {
+class Quantifiers extends AnyFunSuite with Matchers {
 
   /*
    * (declare-sort Type)

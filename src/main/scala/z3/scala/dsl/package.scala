@@ -3,165 +3,149 @@ package z3.scala
 import scala.language.implicitConversions
 
 package object dsl {
+
   import Operands._
 
   class UnsatisfiableConstraintException extends Exception
-  class SortMismatchException(msg : String) extends Exception("Sort mismatch: " + msg)
 
-  implicit def z3ASTToBoolOperand(ast : Z3AST) : BoolOperand = {
-    if(!ast.getSort.isBoolSort) {
+  class SortMismatchException(msg: String) extends Exception("Sort mismatch: " + msg)
+
+  given z3ASTToBoolOperand: Conversion[Z3AST, BoolOperand] = { ast =>
+    if (!ast.getSort.isBoolSort) {
       throw new SortMismatchException("expected boolean operand, got: " + ast)
     }
     new BoolOperand(Z3ASTWrapper[BoolSort](ast))
   }
 
-  implicit def booleanValueToBoolTree(value : Boolean) : Tree[BoolSort] = BoolConstant(value)
+  given booleanValueToBoolTree: Conversion[Boolean, Tree[BoolSort]] = BoolConstant.apply
 
-  implicit def booleanValueToBoolOperand(value : Boolean) : BoolOperand = new BoolOperand(BoolConstant(value))
+  given booleanValueToBoolOperand: Conversion[Boolean, BoolOperand] = x => new BoolOperand(BoolConstant(x))
 
-  implicit def booleanValToBoolTree(value : Val[Boolean]) : Tree[BoolSort] = value.tree.asInstanceOf[Tree[BoolSort]]
+  given booleanValToBoolTree: Conversion[Val[Boolean], Tree[BoolSort]] = _.tree.asInstanceOf[Tree[BoolSort]]
 
-  implicit def booleanValToBoolOperand(value : Val[Boolean]) : BoolOperand =
-    new BoolOperand(value.tree.asInstanceOf[Tree[BoolSort]])
+  given booleanValToBoolOperand: Conversion[Val[Boolean], BoolOperand] = x => new BoolOperand(x.tree.asInstanceOf[Tree[BoolSort]])
 
-  implicit def boolTreeToBoolOperand[T >: BottomSort <: BoolSort](tree : Tree[T]) : BoolOperand =
-    new BoolOperand(tree)
+  given boolTreeToBoolOperand[T >: BottomSort <: BoolSort]: Conversion[Tree[T], BoolOperand] = new BoolOperand(_)
 
-  implicit def boolOperandToBoolTree(operand : BoolOperand) : Tree[BoolSort] = operand.tree.asInstanceOf[Tree[BoolSort]]
+  given boolOperandToBoolTree: Conversion[BoolOperand, Tree[BoolSort]] = _.tree
 
-  implicit def z3ASTToIntOperand(ast : Z3AST) : IntOperand = {
-    if(!ast.getSort.isIntSort) {
+  given z3ASTToIntOperand: Conversion[Z3AST, IntOperand] = { ast =>
+    if (!ast.getSort.isIntSort) {
       throw new SortMismatchException("expected integer operand, got: " + ast)
     }
     new IntOperand(Z3ASTWrapper[IntSort](ast))
   }
 
-  implicit def intValueToIntTree(value : Int) : Tree[IntSort] = IntConstant(value)
+  given intValueToIntTree: Conversion[Int, Tree[IntSort]] = IntConstant.apply
 
-  implicit def intValueToIntOperand(value : Int) : IntOperand = new IntOperand(IntConstant(value))
+  given intValueToIntOperand: Conversion[Int, IntOperand] = x => new IntOperand(IntConstant(x))
 
-  implicit def intValToIntTree(value : Val[Int]) : Tree[IntSort] = value.tree.asInstanceOf[Tree[IntSort]]
+  given intValToIntTree: Conversion[Val[Int], Tree[IntSort]] = _.tree.asInstanceOf[Tree[IntSort]]
 
-  implicit def intValToIntOperand(value : Val[Int]) : IntOperand =
-    new IntOperand(value.tree.asInstanceOf[Tree[IntSort]])
+  given intValToIntOperand: Conversion[Val[Int], IntOperand] = x => new IntOperand(x.tree.asInstanceOf[Tree[IntSort]])
 
-  implicit def intTreeToIntOperand[T >: BottomSort <: IntSort](tree : Tree[T]) : IntOperand =
-    new IntOperand(tree)
+  given intTreeToIntOperand[T >: BottomSort <: IntSort]: Conversion[Tree[T], IntOperand] = new IntOperand(_)
 
-  implicit def intOperandToIntTree(operand : IntOperand) : Tree[IntSort] = operand.tree.asInstanceOf[Tree[IntSort]]
+  given intOperandToIntTree: Conversion[IntOperand, Tree[IntSort]] = _.tree
 
-  implicit def charValueToBVTree(value : Char) : Tree[BVSort] = CharConstant(value)
+  given charValueToBVTree: Conversion[Char, Tree[BVSort]] = CharConstant.apply
 
-  implicit def charValueToBVOperand(value : Char) : BitVectorOperand = new BitVectorOperand(CharConstant(value))
+  given charValueToBVOperand: Conversion[Char, BitVectorOperand] = x => new BitVectorOperand(CharConstant(x))
 
-  implicit def charValToCharTree(value : Val[Char]) : Tree[BVSort] = value.tree.asInstanceOf[Tree[BVSort]]
+  given charValToCharTree: Conversion[Val[Char], Tree[BVSort]] = _.tree.asInstanceOf[Tree[BVSort]]
 
-  implicit def charValToBVOperand(value : Val[Char]) : BitVectorOperand =
-    new BitVectorOperand(value.tree.asInstanceOf[Tree[BVSort]])
+  given charValToBVOperand: Conversion[Val[Char], BitVectorOperand] = x => new BitVectorOperand(x.tree.asInstanceOf[Tree[BVSort]])
 
-  implicit def bvTreeToBVOperand[T >: BottomSort <: BVSort](tree : Tree[T]) : BitVectorOperand =
-    new BitVectorOperand(tree)
+  given bvTreeToBVOperand[T >: BottomSort <: BVSort]: Conversion[Tree[T], BitVectorOperand] = new BitVectorOperand(_)
 
-  implicit def bvOperandToBVTree(operand : BitVectorOperand) : Tree[BVSort] = operand.tree.asInstanceOf[Tree[BVSort]]
+  given bvOperandToBVTree: Conversion[BitVectorOperand, Tree[BVSort]] = _.tree
 
-  implicit def z3ASTToSetOperand(ast : Z3AST) : SetOperand = {
+  given z3ASTToSetOperand: Conversion[Z3AST, SetOperand] = x =>
     // TODO how do we check the type (set of any type?) here?
-    new SetOperand(Z3ASTWrapper[SetSort](ast))
-  }
+    new SetOperand(Z3ASTWrapper[SetSort](x))
 
-  implicit def intSetValueToSetTree(value : Set[Int]) : Tree[SetSort] = {
-    value.foldLeft[Tree[SetSort]](EmptyIntSet())((set, elem) => SetAdd(set, IntConstant(elem)))
-  }
+  given intSetValueToSetTree: Conversion[Set[Int], Tree[SetSort]] = _.foldLeft[Tree[SetSort]](EmptyIntSet())((set, elem) => SetAdd(set, IntConstant(elem)))
 
-  implicit def intSetValueToSetOperand(value : Set[Int]) : SetOperand = {
-    new SetOperand(intSetValueToSetTree(value))
-  }
+  given intSetValueToSetOperand: Conversion[Set[Int], SetOperand] = x => new SetOperand(intSetValueToSetTree(x))
 
-  implicit def setTreeToSetOperand[T >: BottomSort <: SetSort](tree : Tree[T]) : SetOperand =
-    new SetOperand(tree)
+  given setTreeToSetOperand[T >: BottomSort <: SetSort]: Conversion[Tree[T], SetOperand] = new SetOperand(_)
 
-  implicit def setOperandToSetTree(operand : SetOperand) : Tree[SetSort] = operand.tree.asInstanceOf[Tree[SetSort]]
+  given setOperandToSetTree: Conversion[SetOperand, Tree[SetSort]] = _.tree
 
   // All default values
 
-  implicit object DefaultInt extends Default[Int] {
+  given DefaultInt: Default[Int] with
     val value = 0
-  }
 
-  implicit object DefaultBoolean extends Default[Boolean] {
+  given DefaultBoolean: Default[Boolean] with
     val value = true
-  }
 
-  implicit object DefaultChar extends Default[Char] {
+  given DefaultChar: Default[Char] with
     val value = '\u0000'
-  }
 
-  implicit def liftDefaultToSet[A : Default] : Default[Set[A]] = {
+  given liftDefaultToSet[A: Default]: Default[Set[A]] = {
     new Default[Set[A]] {
       val value = Set.empty[A]
     }
   }
 
-  implicit def liftDefaultToFun[A,B : Default] : Default[A=>B] = {
-    new Default[A=>B] {
-      val value = ((a : A) => implicitly[Default[B]].value)
+  given liftDefaultToFun[A, B: Default]: Default[A => B] = {
+    new Default[A => B] {
+      val value = ((a: A) => summon[Default[B]].value)
     }
   }
 
   // Predefined ValHandler's
 
-  implicit object BooleanValHandler extends ValHandler[Boolean] {
-    def mkSort(z3 : Z3Context) : Z3Sort = z3.mkBoolSort()
+  given BooleanValHandler: ValHandler[Boolean] with
+    def mkSort(z3: Z3Context): Z3Sort = z3.mkBoolSort()
 
-    def convert(model : Z3Model, ast : Z3AST) : Boolean =
+    def convert(model: Z3Model, ast: Z3AST): Boolean =
       model.evalAs[Boolean](ast).getOrElse(false)
 
     override type ValSort = BoolSort
-  }
 
-  implicit object IntValHandler extends ValHandler[Int] {
-    def mkSort(z3 : Z3Context) : Z3Sort = z3.mkIntSort()
+  given IntValHandler: ValHandler[Int] with
+    def mkSort(z3: Z3Context): Z3Sort = z3.mkIntSort()
 
-    def convert(model : Z3Model, ast : Z3AST) : Int =
+    def convert(model: Z3Model, ast: Z3AST): Int =
       model.evalAs[Int](ast).getOrElse(0)
 
     override type ValSort = IntSort
-  }
 
-  implicit object CharValHandler extends ValHandler[Char] {
-    def mkSort(z3 : Z3Context) : Z3Sort = z3.mkBVSort(16)
+  given CharValHandler: ValHandler[Char] with
+    def mkSort(z3: Z3Context): Z3Sort = z3.mkBVSort(16)
 
-    def convert(model : Z3Model, ast : Z3AST) : Char =
+    def convert(model: Z3Model, ast: Z3AST): Char =
       model.evalAs[Char](ast).getOrElse('\u0000')
 
     override type ValSort = BVSort
-  }
 
   /** Instances of this class are used to represent models of Z3 maps, which
    * are typically defined by a finite collection of pairs and a default
    * value. More sophisticated representations à la functional programs that
    * can sometimes be obtained from quantified formulas are not yet
    * supported. PS. */
-  class PointWiseFunction[-A,+B](points: Map[A,B], default: B) extends (A=>B) {
-    def apply(a : A) : B = points.getOrElse(a, default)
+  class PointWiseFunction[-A, +B](points: Map[A, B], default: B) extends (A => B) {
+    def apply(a: A): B = points.getOrElse(a, default)
   }
-  implicit def liftToFuncHandler[A : Default : ValHandler, B : Default : ValHandler] : ValHandler[A=>B] = new ValHandler[A=>B] {
-    private val underlyingA = implicitly[ValHandler[A]]
-    private val underlyingB = implicitly[ValHandler[B]]
 
-    def mkSort(z3 : Z3Context) : Z3Sort =
+  given liftToFuncHandler[A: Default : ValHandler, B: Default : ValHandler]: ValHandler[A => B] = new ValHandler[A => B] {
+    private val underlyingA = summon[ValHandler[A]]
+    private val underlyingB = summon[ValHandler[B]]
+
+    def mkSort(z3: Z3Context): Z3Sort =
       z3.mkArraySort(underlyingA.mkSort(z3), underlyingB.mkSort(z3))
 
-    def convert(model : Z3Model, ast : Z3AST) : (A=>B) = {
+    def convert(model: Z3Model, ast: Z3AST): (A => B) = {
       model.eval(ast) match {
         case None => default.value
         case Some(evaluated) => model.getArrayValue(evaluated) match {
-          case Some((mp,dflt)) => {
-            new PointWiseFunction[A,B](
-              mp.map(kv => (underlyingA.convert(model,kv._1), underlyingB.convert(model,kv._2))),
-              underlyingB.convert(model,dflt)
+          case Some((mp, dflt)) =>
+            new PointWiseFunction[A, B](
+              mp.map(kv => (underlyingA.convert(model, kv._1), underlyingB.convert(model, kv._2))),
+              underlyingB.convert(model, dflt)
             )
-          }
           case None => default.value
         }
       }
@@ -170,36 +154,34 @@ package object dsl {
     override type ValSort = ArraySort
   }
 
-  def choose[T:ValHandler](predicate : Val[T] => Tree[BoolSort]) : T = find(predicate) match {
+  def choose[T: ValHandler](predicate: Val[T] => Tree[BoolSort]): T = find(predicate) match {
     case Some(result) => result
     case None => throw new UnsatisfiableConstraintException
   }
 
-  def find[T:ValHandler](predicate : Val[T] => Tree[BoolSort]) : Option[T] = {
+  def find[T: ValHandler](predicate: Val[T] => Tree[BoolSort]): Option[T] = {
     val z3 = new Z3Context("MODEL" -> true)
     val solver = z3.mkSolver()
-    val vh = implicitly[ValHandler[T]]
+    val vh = summon[ValHandler[T]]
     val value = new Val[T]
     val valAST = value.tree.ast(z3)
     val constraintTree = predicate(value)
     solver.assertCnstr(constraintTree.ast(z3))
     solver.checkAndGetModel() match {
-      case (Some(true), m) => {
+      case (Some(true), m) =>
         val result = vh.convert(m, valAST)
         z3.delete()
         Some(result)
-      }
-      case (_, m) => {
+      case _ =>
         z3.delete()
         None
-      }
     }
   }
 
-  def findAll[T:ValHandler](predicate : Val[T] => Tree[BoolSort]) : Iterator[T] = {
+  def findAll[T: ValHandler](predicate: Val[T] => Tree[BoolSort]): Iterator[T] = {
     val z3 = new Z3Context("MODEL" -> true)
     val solver = z3.mkSolver()
-    val vh = implicitly[ValHandler[T]]
+    val vh = summon[ValHandler[T]]
     val value = new Val[T]
     val valAST = value.tree.ast(z3)
     val constraintTree = predicate(value)
@@ -211,41 +193,39 @@ package object dsl {
     })
   }
 
-  def choose[T1:ValHandler,T2:ValHandler](predicate : (Val[T1],Val[T2]) => Tree[BoolSort]) : (T1,T2) = find(predicate) match {
+  def choose[T1: ValHandler, T2: ValHandler](predicate: (Val[T1], Val[T2]) => Tree[BoolSort]): (T1, T2) = find(predicate) match {
     case Some(p) => p
     case None => throw new UnsatisfiableConstraintException
   }
 
-  def find[T1:ValHandler,T2:ValHandler](predicate : (Val[T1],Val[T2]) => Tree[BoolSort]) : Option[(T1,T2)] = {
+  def find[T1: ValHandler, T2: ValHandler](predicate: (Val[T1], Val[T2]) => Tree[BoolSort]): Option[(T1, T2)] = {
     val z3 = new Z3Context("MODEL" -> true)
     val solver = z3.mkSolver()
-    val vh1 = implicitly[ValHandler[T1]]
-    val vh2 = implicitly[ValHandler[T2]]
+    val vh1 = summon[ValHandler[T1]]
+    val vh2 = summon[ValHandler[T2]]
     val value1 = new Val[T1]
     val value2 = new Val[T2]
     val valAST1 = value1.tree.ast(z3)
     val valAST2 = value2.tree.ast(z3)
-    val constraintTree = predicate(value1,value2)
+    val constraintTree = predicate(value1, value2)
     solver.assertCnstr(constraintTree.ast(z3))
     solver.checkAndGetModel() match {
-      case (Some(true), m) => {
+      case (Some(true), m) =>
         val result1 = vh1.convert(m, valAST1)
         val result2 = vh2.convert(m, valAST2)
         z3.delete()
-        Some((result1,result2))
-      }
-      case (_, m) => {
+        Some((result1, result2))
+      case _ =>
         z3.delete()
         None
-      }
     }
   }
 
-  def findAll[T1:ValHandler,T2:ValHandler](predicate : (Val[T1],Val[T2]) => Tree[BoolSort]) : Iterator[(T1,T2)] = {
+  def findAll[T1: ValHandler, T2: ValHandler](predicate: (Val[T1], Val[T2]) => Tree[BoolSort]): Iterator[(T1, T2)] = {
     val z3 = new Z3Context("MODEL" -> true)
     val solver = z3.mkSolver()
-    val vh1 = implicitly[ValHandler[T1]]
-    val vh2 = implicitly[ValHandler[T2]]
+    val vh1 = summon[ValHandler[T1]]
+    val vh2 = summon[ValHandler[T2]]
     val value1 = new Val[T1]
     val value2 = new Val[T2]
     val valAST1 = value1.tree.ast(z3)
@@ -256,51 +236,49 @@ package object dsl {
     solver.checkAndGetAllModels().map(m => {
       val result1 = vh1.convert(m, valAST1)
       val result2 = vh2.convert(m, valAST2)
-      (result1,result2)
+      (result1, result2)
     })
   }
 
-  def choose[T1:ValHandler,T2:ValHandler,T3:ValHandler](predicate : (Val[T1],Val[T2],Val[T3]) => Tree[BoolSort]) : (T1,T2,T3) = find(predicate) match {
+  def choose[T1: ValHandler, T2: ValHandler, T3: ValHandler](predicate: (Val[T1], Val[T2], Val[T3]) => Tree[BoolSort]): (T1, T2, T3) = find(predicate) match {
     case Some(p) => p
     case None => throw new UnsatisfiableConstraintException
   }
 
-  def find[T1:ValHandler,T2:ValHandler,T3:ValHandler](predicate : (Val[T1],Val[T2],Val[T3]) => Tree[BoolSort]) : Option[(T1,T2,T3)] = {
+  def find[T1: ValHandler, T2: ValHandler, T3: ValHandler](predicate: (Val[T1], Val[T2], Val[T3]) => Tree[BoolSort]): Option[(T1, T2, T3)] = {
     val z3 = new Z3Context("MODEL" -> true)
     val solver = z3.mkSolver()
-    val vh1 = implicitly[ValHandler[T1]]
-    val vh2 = implicitly[ValHandler[T2]]
-    val vh3 = implicitly[ValHandler[T3]]
+    val vh1 = summon[ValHandler[T1]]
+    val vh2 = summon[ValHandler[T2]]
+    val vh3 = summon[ValHandler[T3]]
     val value1 = new Val[T1]
     val value2 = new Val[T2]
     val value3 = new Val[T3]
     val valAST1 = value1.tree.ast(z3)
     val valAST2 = value2.tree.ast(z3)
     val valAST3 = value3.tree.ast(z3)
-    val constraintTree = predicate(value1,value2, value3)
+    val constraintTree = predicate(value1, value2, value3)
     solver.assertCnstr(constraintTree.ast(z3))
     solver.checkAndGetModel() match {
-      case (Some(true), m) => {
+      case (Some(true), m) =>
         val result1 = vh1.convert(m, valAST1)
         val result2 = vh2.convert(m, valAST2)
         val result3 = vh3.convert(m, valAST3)
         z3.delete()
-        Some((result1,result2,result3))
-      }
-      case (_, m) => {
+        Some((result1, result2, result3))
+      case _ =>
         z3.delete()
         None
-      }
     }
   }
 
-  def findAll[T1:ValHandler,T2:ValHandler,T3:ValHandler](predicate : (Val[T1],Val[T2],Val[T3]) => Tree[BoolSort]) : Iterator[(T1,T2,T3)] = {
+  def findAll[T1: ValHandler, T2: ValHandler, T3: ValHandler](predicate: (Val[T1], Val[T2], Val[T3]) => Tree[BoolSort]): Iterator[(T1, T2, T3)] = {
     val z3 = new Z3Context("MODEL" -> true)
     val solver = z3.mkSolver()
 
-    val vh1 = implicitly[ValHandler[T1]]
-    val vh2 = implicitly[ValHandler[T2]]
-    val vh3 = implicitly[ValHandler[T3]]
+    val vh1 = summon[ValHandler[T1]]
+    val vh2 = summon[ValHandler[T2]]
+    val vh3 = summon[ValHandler[T3]]
     val value1 = new Val[T1]
     val value2 = new Val[T2]
     val value3 = new Val[T3]
@@ -314,9 +292,9 @@ package object dsl {
       val result1 = vh1.convert(m, valAST1)
       val result2 = vh2.convert(m, valAST2)
       val result3 = vh3.convert(m, valAST3)
-      (result1,result2,result3)
+      (result1, result2, result3)
     })
   }
 
-  implicit def astvectorToSeq(v: Z3ASTVector): Seq[Z3AST] = v.toSeq
+  given astVectorToSeq: Conversion[Z3ASTVector, Seq[Z3AST]] = _.toSeq
 }

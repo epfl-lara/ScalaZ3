@@ -1,8 +1,9 @@
 package z3.scala
 
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class Abs extends FunSuite with Matchers {
+class Abs extends AnyFunSuite with Matchers {
 
   test("array-map absolute value") {
     val z3 = new Z3Context("MODEL" -> true)

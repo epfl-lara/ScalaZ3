@@ -3,7 +3,7 @@ package z3.scala
 import com.microsoft.z3.Native
 
 object Z3Model {
-  implicit def ast2int(model: Z3Model, ast: Z3AST): Option[Int] = {
+  given ast2int: Conversion[(Z3Model, Z3AST), Option[Int]] = { (model, ast) =>
     val res = model.eval(ast)
     if (res.isEmpty)
       None
@@ -11,7 +11,7 @@ object Z3Model {
       model.context.getNumeralInt(res.get).value
   }
 
-  implicit def ast2bool(model: Z3Model, ast: Z3AST): Option[Boolean] = {
+  given ast2bool: Conversion[(Z3Model, Z3AST), Option[Boolean]] = { (model, ast) =>
     val res = model.eval(ast)
     if (res.isEmpty)
       None
@@ -19,7 +19,7 @@ object Z3Model {
       model.context.getBoolValue(res.get)
   }
 
-  implicit def ast2char(model: Z3Model, ast: Z3AST): Option[Char] = {
+  given ast2char: Conversion[(Z3Model, Z3AST), Option[Char]] = { (model, ast) =>
     val res = model.eval(ast)
     if (res.isEmpty)
       None
@@ -52,9 +52,7 @@ sealed class Z3Model private[z3](val ptr: Long, val context: Z3Context) extends 
     }
   }
 
-  def evalAs[T](input: Z3AST)(implicit converter: (Z3Model, Z3AST) => Option[T]): Option[T] = {
-    converter(this, input)
-  }
+  def evalAs[T](input: Z3AST)(using converter: Conversion[(Z3Model, Z3AST), Option[T]]): Option[T] = converter(this, input)
 
   def getConsts: Iterator[Z3FuncDecl] = {
     val model = this
@@ -151,7 +149,7 @@ sealed class Z3Model private[z3](val ptr: Long, val context: Z3Context) extends 
     }
   }
 
-  def getFuncInterpretation(fd: Z3FuncDecl): Option[(Seq[(Seq[Z3AST], Z3AST)], Z3AST)] = 
+  def getFuncInterpretation(fd: Z3FuncDecl): Option[(Seq[(Seq[Z3AST], Z3AST)], Z3AST)] =
     funcInterpretationMap.get(fd)
 
   locally {

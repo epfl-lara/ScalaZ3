@@ -28,7 +28,7 @@ sealed trait Tree[+T >: BottomSort <: TopSort] {
 /** The type parameter refers to a Scala type for a value that the user
  * wishes to obtain through a call to choose, find or findAll. */
 class Val[A : ValHandler] {
-  val tree: Tree[_ >: BottomSort <: TopSort] = implicitly[ValHandler[A]].construct
+  val tree: Tree[_ >: BottomSort <: TopSort] = summon[ValHandler[A]].construct
 }
 
 abstract class ValTree[S >: BottomSort <: TopSort] extends Tree[S] {

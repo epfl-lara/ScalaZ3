@@ -1,8 +1,9 @@
 package z3.scala
 
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class SatSolver extends FunSuite with Matchers {
+class SatSolver extends AnyFunSuite with Matchers {
   import dsl._
 
   test("Sat solver") {

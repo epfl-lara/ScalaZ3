@@ -1,8 +1,13 @@
 package z3.scala
 
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class Core extends FunSuite with Matchers {
+import z3.scala.dsl.{*, given}
+
+import scala.language.implicitConversions
+
+class Core extends AnyFunSuite with Matchers {
   import dsl._
 
   test("Core") {

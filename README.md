@@ -1,7 +1,7 @@
 ScalaZ3 ![Build status](http://laraquad4.epfl.ch:9000/epfl-lara/ScalaZ3/status/master)
 =======
 
-This is ScalaZ3 for Z3 4.8.14 and Scala 2.10, 2.11, 2.12, and 2.13.
+This is ScalaZ3 for Z3 4.8.14 and Scala 2.13.
 
 [API documentation](https://epfl-lara.github.io/ScalaZ3/z3/index.html)
 -------------------
@@ -15,16 +15,16 @@ You should have Java and SBT 1.5.x installed.
 
 Run
 
-    sbt +package
+    sbt package
 
-to compile Z3 4.8.14 and cross-compile ScalaZ3 for Scala 2.10, 2.11, 2.12 and 2.13.
+to compile Z3 4.8.14 and compile ScalaZ3 for Scala 2.13.
 
-The JAR files will be in `target/scala-2.XX/scalaz3_2.XX-4.8.14.jar`
+The JAR files will be in `target/scala-2.13/scalaz3_2.13-4.8.14.jar`
 and will contain the shared library dependencies.
 
 For testing, run
 
-    sbt +test
+    sbt test
 
 ### Windows
 
@@ -55,9 +55,9 @@ Open the native x64 command prompt (available in the start menu under the Visual
 
 Now navigate to the scalaz3 folder and type:
 
-    sbt +package
+    sbt package
 
-The JAR files will be in `target/scala-2.XX/scalaz3_2.XX-4.8.14.jar` and will contain the shared library
+The JAR files will be in `target/scala-2.13/scalaz3_2.13-4.8.14.jar` and will contain the shared library
 dependencies.
 
 #### Test your package.
@@ -77,13 +77,13 @@ Using ScalaZ3
 
 ### On a single operating system / architecture
 
-Create a folder named `unmanaged` at the same level as your `build.sbt` file, and copy the JAR file in `target/scala-2.XX/scalaz3_2.XX-4.8.14.jar` into it.
+Create a folder named `unmanaged` at the same level as your `build.sbt` file, and copy the JAR file in `target/scala-2.13/scalaz3_2.13-4.8.14.jar` into it.
 
 Then add, the following lines to your `build.sbt` file:
 
 ```scala
 Compile / unmanagedJars += {
-  baseDirectory.value / "unmanaged" / s"scalaz3_${scalaBinaryVersion.value}-4.8.14.jar"
+  baseDirectory.value / "unmanaged" / s"scalaz3_2.13-4.8.14.jar"
 }
 ```
 
@@ -91,11 +91,10 @@ Compile / unmanagedJars += {
 
 If you want to use ScalaZ3 in a project which must support various operating systems and architectures, you will have to compile ScalaZ3 on each of those systems/architectures, following the instructions above.
 
-Make sure to name the resulting JAR files as `scalaz3-[osName]-[osArch]-[scalaBinaryVersion].jar`, where:
+Make sure to name the resulting JAR files as `scalaz3-[osName]-[osArch]-2.13.jar`, where:
 
 - `[osName]` is one of: `mac`, `win`, `unix`.
 - `[osArch]` corresponds to `System.getProperty("sun.arch.data.model")`, ie. `x64`, `fds`, etc.
-- `[scalaBinaryVersion]` is one of: `2.10`, `2.11`, `2.12`, `2.13`.
 
 Create a folder named `unmanaged` at the same level as your `build.sbt` file, and copy the aforementioned JAR files into it.
 
@@ -112,6 +111,6 @@ val isMac     = osInf.indexOf("Mac") >= 0
 val osName = if (isWindows) "win" else if (isMac) "mac" else "unix"
 
 Compile / unmanagedJars += {
-  baseDirectory.value / "unmanaged" / s"scalaz3-$osName-$osArch-${scalaBinaryVersion.value}.jar"
+  baseDirectory.value / "unmanaged" / s"scalaz3-$osName-$osArch-2.13.jar"
 }
 ```

@@ -1,3 +1,5 @@
+.bsp/
+
 # Generated shared lib for various platforms
 lib-bin/*.so
 lib-bin/*.dylib

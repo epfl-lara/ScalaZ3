@@ -104,7 +104,7 @@ class Z3Solver private[z3](val ptr: Long, val context: Z3Context) extends Z3Obje
     assertCnstr(tree.ast(context))
   }
 
-  private[z3] def checkAndGetAllModels(): Iterator[Z3Model] = {
+  def checkAndGetAllModels(): Iterator[Z3Model] = {
     new Iterator[Z3Model] {
       var constraints: Z3AST = context.mkTrue()
       var nextModel: Option[Option[Z3Model]] = None

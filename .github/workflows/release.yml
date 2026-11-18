@@ -1,0 +1,171 @@
+# Publishes ScalaZ3 to Maven Central (ch.epfl.lara:scalaz3_3), through the
+# Central Portal, then tags the release and creates it on GitHub.
+#
+# Triggered manually from the Actions UI (or `gh workflow run release.yml -f
+# version=v5.4.1`), on the branch or commit to release (usually `master`).
+# Given a version vX.Y.Z (or vX.Y.Z-N, for a new build of the same Z3
+# release), which must be `version` in build.sbt with a leading v, it:
+#   1. Tests, signs and publishes that version to Maven Central.
+#   2. Creates an annotated tag vX.Y.Z on the current commit and pushes it.
+#   3. Creates a GitHub release for that tag, with auto-generated notes and
+#      the JAR attached.
+#
+# With mode `upload`, it only uploads the artifacts to the Central Portal
+# (https://central.sonatype.com/publishing/deployments), to inspect them and
+# publish or drop them there; it then creates neither the tag nor the release.
+#
+# A version can't be published twice: when it is already on Maven Central,
+# the workflow skips publishing, and only creates the tag and the release if
+# they are missing (e.g. when a previous run failed after publishing). The
+# tag is annotated, but not signed.
+#
+# Needs, in the `release` environment of the repository:
+# - secrets PGP_SECRET (the ASCII-armored secret key that signs the artifacts,
+#   `gpg --armor --export-secret-keys <fingerprint>`) and PGP_PASSPHRASE,
+# - secrets SONATYPE_USERNAME and SONATYPE_PASSWORD (a user token of the
+#   Central Portal, for an account that can publish to ch.epfl.lara).
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release, with leading v, as in build.sbt (e.g. v5.4.1)'
+        required: true
+      mode:
+        description: 'release: publish, tag and create the GitHub release; upload: only upload to the Central Portal, to inspect it there'
+        type: choice
+        options: [release, upload]
+        default: release
+
+permissions:
+  contents: write # to push the tag and create the release
+
+# Never two publications at once
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Release ${{ inputs.version }} (${{ inputs.mode }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    environment: release
+    env:
+      TAG: ${{ inputs.version }}
+      MODE: ${{ inputs.mode }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v7
+      with:
+        # The tags, to check whether this one already exists
+        fetch-depth: 0
+        fetch-tags: true
+    - name: Setup JDK
+      uses: actions/setup-java@v6
+      with:
+        distribution: temurin
+        java-version: 21
+        cache: sbt
+    - name: Setup sbt
+      uses: sbt/setup-sbt@v1
+    # Downloads sbt and the build's plugins, retrying: Maven Central sometimes answers 404 for
+    # files it has, which would otherwise fail the job.
+    - name: Fetch sbt
+      shell: bash
+      run: |
+        for attempt in 1 2 3; do
+          sbt -batch sbtVersion && exit 0
+          echo "::warning::Fetching sbt failed (attempt $attempt), retrying in 30s"
+          sleep 30
+        done
+        exit 1
+    # The build downloads the Z3 JAR (about 54MB) to z3/; its checksum is in build.sbt.
+    - name: Cache the Z3 JAR
+      uses: actions/cache@v6
+      with:
+        path: z3
+        key: z3-jar-${{ hashFiles('build.sbt') }}
+    - name: Validate the version
+      run: |
+        if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+)?$ ]]; then
+          echo "::error::The version must look like vX.Y.Z or vX.Y.Z-N (got '$TAG')"
+          exit 1
+        fi
+        version=$(sbt -batch -no-colors "print version" | tail -n 1 | tr -d '[:space:]')
+        if [ "$TAG" != "v$version" ]; then
+          echo "::error::The version in build.sbt is $version: set it to ${TAG#v} first, or release v$version"
+          exit 1
+        fi
+        echo "VERSION=$version" >> "$GITHUB_ENV"
+        # A tag of a previous run must be on this commit
+        if git rev-parse -q --verify "refs/tags/$TAG" > /dev/null; then
+          tagged=$(git rev-list -n 1 "$TAG")
+          if [ "$tagged" != "$(git rev-parse HEAD)" ]; then
+            echo "::error::Tag $TAG already exists, on another commit ($tagged)"
+            exit 1
+          fi
+        fi
+    - name: Check whether the version is already published
+      id: published
+      run: |
+        url="https://repo1.maven.org/maven2/ch/epfl/lara/scalaz3_3/$VERSION/scalaz3_3-$VERSION.pom"
+        if curl -sfI "$url" > /dev/null; then
+          echo "::notice::ScalaZ3 $VERSION is already on Maven Central, skipping publishing"
+          echo "already=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "already=false" >> "$GITHUB_OUTPUT"
+        fi
+    - name: Test
+      if: steps.published.outputs.already == 'false'
+      run: sbt -batch test
+    - name: Import the signing key
+      if: steps.published.outputs.already == 'false'
+      id: gpg
+      uses: crazy-max/ghaction-import-gpg@v7
+      with:
+        gpg_private_key: ${{ secrets.PGP_SECRET }}
+        passphrase: ${{ secrets.PGP_PASSPHRASE }}
+    - name: Publish to Maven Central
+      if: steps.published.outputs.already == 'false'
+      run: |
+        if [ "$MODE" = "upload" ]; then
+          sbt -batch publishSigned sonaUpload
+          echo "::notice::ScalaZ3 $VERSION uploaded: publish or drop it in the Central Portal. No tag or release was created."
+        else
+          sbt -batch publishSigned sonaRelease
+          echo "::notice::ScalaZ3 $VERSION released; it shows up on Maven Central within about 30 minutes"
+        fi
+      env:
+        PGP_FINGERPRINT: ${{ steps.gpg.outputs.fingerprint }}
+        PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+        SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+        SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+    - name: Tag the current commit and push the tag
+      if: inputs.mode == 'release'
+      run: |
+        if git rev-parse -q --verify "refs/tags/$TAG" > /dev/null; then
+          echo "Tag $TAG already exists"
+        else
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "ScalaZ3 $VERSION"
+          git push origin "refs/tags/$TAG"
+        fi
+    - name: Create the GitHub release
+      if: inputs.mode == 'release'
+      run: |
+        if gh release view "$TAG" > /dev/null 2>&1; then
+          echo "Release $TAG already exists"
+          exit 0
+        fi
+        sbt -batch package
+        cp target/scala-*/scalaz3_3-"$VERSION".jar .
+        # Notes generated from the pull requests merged since the previous release
+        gh release create "$TAG" \
+          --title "ScalaZ3 $VERSION" \
+          --generate-notes \
+          --verify-tag \
+          scalaz3_3-"$VERSION".jar

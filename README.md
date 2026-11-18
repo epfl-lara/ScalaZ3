@@ -45,8 +45,14 @@ To move to another Z3 release, update `version` and `z3JarSha256` in `build.sbt`
 Using ScalaZ3
 -------------
 
-Create a folder named `unmanaged` at the same level as your `build.sbt` file, and copy
-`scalaz3_3-5.4.1.jar` into it. Then add the following line to your `build.sbt` file:
+Add the following line to your `build.sbt` file:
+
+```scala
+libraryDependencies += "ch.epfl.lara" %% "scalaz3" % "5.4.1"
+```
+
+To use a JAR you built yourself instead, create a folder named `unmanaged` at the same level as
+your `build.sbt` file, copy `scalaz3_3-5.4.1.jar` into it, and add:
 
 ```scala
 Compile / unmanagedJars += baseDirectory.value / "unmanaged" / "scalaz3_3-5.4.1.jar"
@@ -86,3 +92,22 @@ solver.getRlimitCount()    // resources consumed so far
 
 The same is available on `Z3Optimizer`. A default for all solvers can be set per context with
 `new Z3Context("rlimit" -> 1000000)`, or globally with `Z3Context.setGlobalParam("rlimit", 1000000)`.
+
+Releasing
+---------
+
+ScalaZ3 is published to Maven Central as `"ch.epfl.lara" %% "scalaz3" % "5.4.1"`, by the
+[Release workflow](.github/workflows/release.yml):
+
+1. Set `version` in `build.sbt` (and `z3JarSha256`, for a new Z3 release), and merge it. A version
+   can't be published twice: a new build of the same Z3 release gets a suffix, e.g. `5.4.1-1`.
+2. Run the workflow from the Actions tab ("Run workflow" on `master`), or with
+   `gh workflow run release.yml -f version=v5.4.1`, giving the version with a leading `v`. It tests,
+   signs and publishes that version to Maven Central, then tags the commit `v<version>` and creates
+   the GitHub release, with generated notes and the JAR attached.
+
+To check a release before it goes out, choose the mode `upload` instead: it only uploads the
+artifacts to the [Central Portal](https://central.sonatype.com/publishing/deployments), to publish
+or drop them there, and creates neither the tag nor the release.
+
+Locally, `sbt publishSigned` signs the artifacts and stages them in `target/sona-staging`.

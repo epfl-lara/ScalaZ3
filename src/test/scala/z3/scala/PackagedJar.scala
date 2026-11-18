@@ -63,7 +63,7 @@ class PackagedJar extends AnyFunSuite with Matchers {
   }
 
   test("The JAR alone (with the Scala library) is enough to run Z3") {
-    val dir = Files.createTempDirectory("scalaz3-packaged-jar")
+    val dir = Files.createTempDirectory("scalaz3-packaged-jar").toRealPath()
     val main = dir.resolve("Main.java")
     Files.writeString(main,
       """public class Main {
@@ -81,8 +81,14 @@ class PackagedJar extends AnyFunSuite with Matchers {
     val javaBin = Seq("java.exe", "java").map(new File(new File(sys.props("java.home"), "bin"), _))
       .find(_.isFile).getOrElse(fail("No java executable in " + sys.props("java.home"))).getPath
     val nativeAccess = if (scala.util.Properties.isJavaAtLeast("22")) Seq("--enable-native-access=ALL-UNNAMED") else Nil
+    // No library path, so that Z3 can only be loaded from the libraries bundled in the JAR (Z3's
+    // loader tries `System.loadLibrary` first). Whether it then extracts them to its cache or, when
+    // it refuses the cache (e.g. when its owner differs from that of the home directory, as on
+    // Windows runners), to a temporary directory, isn't the point here.
+    val noLibraries = Files.createDirectory(dir.resolve("no-libraries"))
     val cmd = Seq(javaBin) ++ nativeAccess ++ Seq(
-      // A fresh cache, to check that the libraries are extracted from the JAR.
+      s"-Djava.library.path=$noLibraries",
+      // Not the cache of the user
       s"-Dz3.nativeCacheDir=${dir.resolve("cache")}",
       "-cp", cp, main.toString)
     val proc = new ProcessBuilder(cmd.asJava).redirectErrorStream(true).start()
@@ -92,6 +98,5 @@ class PackagedJar extends AnyFunSuite with Matchers {
       output should include ("Z3 5.4 ")
       output should include ("Some(true) Some(42)")
     }
-    Files.walk(dir.resolve("cache")).iterator().asScala.map(_.getFileName.toString).toSeq should contain (System.mapLibraryName("z3java"))
   }
 }

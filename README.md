@@ -99,14 +99,15 @@ Releasing
 ScalaZ3 is published to Maven Central as `"ch.epfl.lara" %% "scalaz3" % "5.4.1"`, by the
 [Release workflow](.github/workflows/release.yml):
 
-1. Set `version` in `build.sbt` (and `z3JarSha256`, for a new Z3 release). A version can't be
-   published twice: a new build of the same Z3 release gets a suffix, e.g. `5.4.1-1`.
-2. Push the tag `v<version>`, e.g. `git tag v5.4.1 && git push origin v5.4.1`. The workflow
-   tests, signs, uploads and releases that version.
+1. Set `version` in `build.sbt` (and `z3JarSha256`, for a new Z3 release), and merge it. A version
+   can't be published twice: a new build of the same Z3 release gets a suffix, e.g. `5.4.1-1`.
+2. Run the workflow from the Actions tab ("Run workflow" on `master`), or with
+   `gh workflow run release.yml -f version=v5.4.1`, giving the version with a leading `v`. It tests,
+   signs and publishes that version to Maven Central, then tags the commit `v<version>` and creates
+   the GitHub release, with generated notes and the JAR attached.
 
-To check a release before it goes out, run the workflow by hand instead ("Run workflow", mode
-`upload`): it uploads the artifacts to the
-[Central Portal](https://central.sonatype.com/publishing/deployments) without releasing them, to
-publish or drop them there.
+To check a release before it goes out, choose the mode `upload` instead: it only uploads the
+artifacts to the [Central Portal](https://central.sonatype.com/publishing/deployments), to publish
+or drop them there, and creates neither the tag nor the release.
 
 Locally, `sbt publishSigned` signs the artifacts and stages them in `target/sona-staging`.

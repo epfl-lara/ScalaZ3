@@ -1,28 +1,25 @@
-import ScalaZ3Build._
+import Z3Jar._
 
 lazy val root = (project in file("."))
   .settings(
     name := "ScalaZ3",
-    version := "4.8.14",
+    // ScalaZ3 is versioned after the Z3 release it wraps.
+    version := "5.4.1",
     organization := "ch.epfl.lara",
     scalacOptions ++= Seq(
       "-deprecation",
       "-unchecked",
       "-feature",
     ),
-    scalaVersion := "3.2.0",
-    libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.14" % "test",
-    Test / fork  := true,
-    checksumKey := checksumTask.value,
-    gccKey := gccTask.value,
-    z3Key := z3Task.value,
-    Compile / Keys.`package` := packageTask.value,
-    Compile / unmanagedJars += Attributed.blank(z3JarFile),
-    Compile / compile := ((Compile / compile) dependsOn checksumTask).value,
-    Test / test := ((Test / test) dependsOn (Compile / Keys.`package`)).value,
-    Test / compile := ((Test / compile) dependsOn (Compile / Keys.`package`)).value,
-    Test / testOnly := ((Test / testOnly) dependsOn (Compile / Keys.`package`)).evaluated,
-    Test / internalDependencyClasspath := testClasspath.value,
-    Compile / packageBin / mappings := newMappingsTask.value,
-  )
+    scalaVersion := "3.3.7",
+    libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.19" % "test",
+    Test / fork := true,
+    // Z3 loads its native libraries through JNI.
+    Test / javaOptions ++= {
+      if (scala.util.Properties.isJavaAtLeast("22")) Seq("--enable-native-access=ALL-UNNAMED") else Nil
+    },
 
+    z3Version := version.value,
+    z3JarSha256 := "8399700e2dd33eb538de53e7d087bcb1ba8214ea66571daf3330f0c600ab4aa2",
+    Z3Jar.settings,
+  )

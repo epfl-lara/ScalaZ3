@@ -17,6 +17,18 @@ object Z3Context {
     val Z3_PRINT_SMTLIB_FULL, Z3_PRINT_LOW_LEVEL, Z3_PRINT_SMTLIB_COMPLIANT, Z3_PRINT_SMTLIB2_COMPLIANT = Value
   }
   import AstPrintMode._
+
+  /** Sets a global Z3 parameter (e.g. `rlimit`, `timeout`, `smt.random_seed`), which serves as
+    * default for the contexts and solvers created afterwards, in the whole JVM.
+    */
+  def setGlobalParam(paramID: String, paramValue: Any): Unit = {
+    Native.globalParamSet(paramID, paramValue.toString)
+  }
+
+  /** Restores the default value of all global Z3 parameters. */
+  def resetGlobalParams(): Unit = {
+    Native.globalParamResetAll()
+  }
 }
 
 sealed class Z3Context(val config: Map[String, String]) {
@@ -102,6 +114,20 @@ sealed class Z3Context(val config: Map[String, String]) {
 
   def updateParamValue(paramID: String, paramValue: String) : Unit = {
     Native.updateParamValue(this.ptr, paramID, paramValue)
+  }
+
+  private[z3] def statisticsToMap(statsPtr: Long): Map[String, Double] = {
+    Native.statsIncRef(this.ptr, statsPtr)
+    try {
+      (0 until Native.statsSize(this.ptr, statsPtr)).map { i =>
+        val value =
+          if (Native.statsIsUint(this.ptr, statsPtr, i)) (Native.statsGetUintValue(this.ptr, statsPtr, i) & 0xFFFFFFFFL).toDouble
+          else Native.statsGetDoubleValue(this.ptr, statsPtr, i)
+        Native.statsGetKey(this.ptr, statsPtr, i) -> value
+      }.toMap
+    } finally {
+      Native.statsDecRef(this.ptr, statsPtr)
+    }
   }
 
   private val usedIntSymbols : MutableSet[Int] = MutableSet.empty

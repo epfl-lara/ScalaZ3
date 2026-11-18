@@ -38,6 +38,9 @@ object OpToInt  extends Z3DeclKind (Z3_decl_kind.Z3_OP_TO_INT.toInt)
 object OpIsInt  extends Z3DeclKind (Z3_decl_kind.Z3_OP_IS_INT.toInt)
 object OpPower  extends Z3DeclKind (Z3_decl_kind.Z3_OP_POWER.toInt)  // NEW in ScalaZ3 3.0
 object OpAbs    extends Z3DeclKind (Z3_decl_kind.Z3_OP_ABS.toInt)  // NEW in ScalaZ3 4.8.12
+object OpComplex  extends Z3DeclKind (Z3_decl_kind.Z3_OP_COMPLEX.toInt) // NEW in ScalaZ3 5.4.1
+object OpRealPart extends Z3DeclKind (Z3_decl_kind.Z3_OP_REAL_PART.toInt) // NEW in ScalaZ3 5.4.1
+object OpImagPart extends Z3DeclKind (Z3_decl_kind.Z3_OP_IMAG_PART.toInt) // NEW in ScalaZ3 5.4.1
 
 // Arrays & Sets
 object OpStore         extends Z3DeclKind (Z3_decl_kind.Z3_OP_STORE.toInt)
@@ -106,6 +109,22 @@ object OpExtRotateRight extends Z3DeclKind (Z3_decl_kind.Z3_OP_EXT_ROTATE_RIGHT.
 object OpIntToBV extends Z3DeclKind (Z3_decl_kind.Z3_OP_INT2BV.toInt) // NEW in ScalaZ3 3.0
 object OpBVToInt extends Z3DeclKind (Z3_decl_kind.Z3_OP_BV2INT.toInt) // NEW in ScalaZ3 3.0
 object OpCarry   extends Z3DeclKind (Z3_decl_kind.Z3_OP_CARRY.toInt)  // NEW in ScalaZ3 3.0
+object OpBSDiv0      extends Z3DeclKind (Z3_decl_kind.Z3_OP_BSDIV0.toInt) // NEW in ScalaZ3 5.4.1
+object OpBUDiv0      extends Z3DeclKind (Z3_decl_kind.Z3_OP_BUDIV0.toInt) // NEW in ScalaZ3 5.4.1
+object OpBSRem0      extends Z3DeclKind (Z3_decl_kind.Z3_OP_BSREM0.toInt) // NEW in ScalaZ3 5.4.1
+object OpBURem0      extends Z3DeclKind (Z3_decl_kind.Z3_OP_BUREM0.toInt) // NEW in ScalaZ3 5.4.1
+object OpBSMod0      extends Z3DeclKind (Z3_decl_kind.Z3_OP_BSMOD0.toInt) // NEW in ScalaZ3 5.4.1
+object OpBSDivI      extends Z3DeclKind (Z3_decl_kind.Z3_OP_BSDIV_I.toInt) // NEW in ScalaZ3 5.4.1
+object OpBUDivI      extends Z3DeclKind (Z3_decl_kind.Z3_OP_BUDIV_I.toInt) // NEW in ScalaZ3 5.4.1
+object OpBSRemI      extends Z3DeclKind (Z3_decl_kind.Z3_OP_BSREM_I.toInt) // NEW in ScalaZ3 5.4.1
+object OpBURemI      extends Z3DeclKind (Z3_decl_kind.Z3_OP_BUREM_I.toInt) // NEW in ScalaZ3 5.4.1
+object OpBSModI      extends Z3DeclKind (Z3_decl_kind.Z3_OP_BSMOD_I.toInt) // NEW in ScalaZ3 5.4.1
+object OpBitToBool   extends Z3DeclKind (Z3_decl_kind.Z3_OP_BIT2BOOL.toInt) // NEW in ScalaZ3 5.4.1
+object OpSBVToInt    extends Z3DeclKind (Z3_decl_kind.Z3_OP_SBV2INT.toInt) // NEW in ScalaZ3 5.4.1
+object OpMkBV        extends Z3DeclKind (Z3_decl_kind.Z3_OP_MKBV.toInt) // NEW in ScalaZ3 5.4.1
+object OpBSMulNoOvfl extends Z3DeclKind (Z3_decl_kind.Z3_OP_BSMUL_NO_OVFL.toInt) // NEW in ScalaZ3 5.4.1
+object OpBUMulNoOvfl extends Z3DeclKind (Z3_decl_kind.Z3_OP_BUMUL_NO_OVFL.toInt) // NEW in ScalaZ3 5.4.1
+object OpBSMulNoUdfl extends Z3DeclKind (Z3_decl_kind.Z3_OP_BSMUL_NO_UDFL.toInt) // NEW in ScalaZ3 5.4.1
 object OpXor3    extends Z3DeclKind (Z3_decl_kind.Z3_OP_XOR3.toInt)   // NEW in ScalaZ3 3.0
 
 // Proofs
@@ -145,6 +164,13 @@ object OpPrNNFNeg           extends Z3DeclKind (Z3_decl_kind.Z3_OP_PR_NNF_NEG.to
 object OpPrSkolemize        extends Z3DeclKind (Z3_decl_kind.Z3_OP_PR_SKOLEMIZE.toInt)         // NEW in ScalaZ3 3.0
 object OpPrModusPonensOEq   extends Z3DeclKind (Z3_decl_kind.Z3_OP_PR_MODUS_PONENS_OEQ.toInt)  // NEW in ScalaZ3 3.0
 object OpPrThLemma          extends Z3DeclKind (Z3_decl_kind.Z3_OP_PR_TH_LEMMA.toInt)          // NEW in ScalaZ3 3.0
+object OpPrBind            extends Z3DeclKind (Z3_decl_kind.Z3_OP_PR_BIND.toInt) // NEW in ScalaZ3 5.4.1
+object OpPrAssumptionAdd   extends Z3DeclKind (Z3_decl_kind.Z3_OP_PR_ASSUMPTION_ADD.toInt) // NEW in ScalaZ3 5.4.1
+object OpPrLemmaAdd        extends Z3DeclKind (Z3_decl_kind.Z3_OP_PR_LEMMA_ADD.toInt) // NEW in ScalaZ3 5.4.1
+object OpPrRedundantDel    extends Z3DeclKind (Z3_decl_kind.Z3_OP_PR_REDUNDANT_DEL.toInt) // NEW in ScalaZ3 5.4.1
+object OpPrClauseTrail     extends Z3DeclKind (Z3_decl_kind.Z3_OP_PR_CLAUSE_TRAIL.toInt) // NEW in ScalaZ3 5.4.1
+object OpPrThAssumptionAdd extends Z3DeclKind (Z3_decl_kind.Z3_OP_PR_TH_ASSUMPTION_ADD.toInt) // NEW in ScalaZ3 5.4.1
+object OpPrThLemmaAdd      extends Z3DeclKind (Z3_decl_kind.Z3_OP_PR_TH_LEMMA_ADD.toInt) // NEW in ScalaZ3 5.4.1
 object OpPrHyperResolve     extends Z3DeclKind (Z3_decl_kind.Z3_OP_PR_HYPER_RESOLVE.toInt)     // NEW in ScalaZ3 3.0
 
 // Relational algebra
@@ -178,6 +204,24 @@ object OpSeqLength   extends Z3DeclKind (Z3_decl_kind.Z3_OP_SEQ_LENGTH.toInt)   
 object OpSeqIndex    extends Z3DeclKind (Z3_decl_kind.Z3_OP_SEQ_INDEX.toInt)    // NEW in ScalaZ3 3.0
 object OpSeqToRE     extends Z3DeclKind (Z3_decl_kind.Z3_OP_SEQ_TO_RE.toInt)    // NEW in ScalaZ3 3.0
 object OpSeqInRE     extends Z3DeclKind (Z3_decl_kind.Z3_OP_SEQ_IN_RE.toInt)    // NEW in ScalaZ3 3.0
+object OpSeqReplaceRE    extends Z3DeclKind (Z3_decl_kind.Z3_OP_SEQ_REPLACE_RE.toInt) // NEW in ScalaZ3 5.4.1
+object OpSeqReplaceREAll extends Z3DeclKind (Z3_decl_kind.Z3_OP_SEQ_REPLACE_RE_ALL.toInt) // NEW in ScalaZ3 5.4.1
+object OpSeqReplaceAll   extends Z3DeclKind (Z3_decl_kind.Z3_OP_SEQ_REPLACE_ALL.toInt) // NEW in ScalaZ3 5.4.1
+object OpSeqNth          extends Z3DeclKind (Z3_decl_kind.Z3_OP_SEQ_NTH.toInt) // NEW in ScalaZ3 5.4.1
+object OpSeqLastIndex    extends Z3DeclKind (Z3_decl_kind.Z3_OP_SEQ_LAST_INDEX.toInt) // NEW in ScalaZ3 5.4.1
+object OpSeqMap          extends Z3DeclKind (Z3_decl_kind.Z3_OP_SEQ_MAP.toInt) // NEW in ScalaZ3 5.4.1
+object OpSeqMapI         extends Z3DeclKind (Z3_decl_kind.Z3_OP_SEQ_MAPI.toInt) // NEW in ScalaZ3 5.4.1
+object OpSeqFoldL        extends Z3DeclKind (Z3_decl_kind.Z3_OP_SEQ_FOLDL.toInt) // NEW in ScalaZ3 5.4.1
+object OpSeqFoldLI       extends Z3DeclKind (Z3_decl_kind.Z3_OP_SEQ_FOLDLI.toInt) // NEW in ScalaZ3 5.4.1
+object OpSeqPower        extends Z3DeclKind (Z3_decl_kind.Z3_OP_SEQ_POWER.toInt) // NEW in ScalaZ3 5.4.1
+object OpStrToInt        extends Z3DeclKind (Z3_decl_kind.Z3_OP_STR_TO_INT.toInt) // NEW in ScalaZ3 5.4.1
+object OpIntToStr        extends Z3DeclKind (Z3_decl_kind.Z3_OP_INT_TO_STR.toInt) // NEW in ScalaZ3 5.4.1
+object OpUBVToStr        extends Z3DeclKind (Z3_decl_kind.Z3_OP_UBV_TO_STR.toInt) // NEW in ScalaZ3 5.4.1
+object OpSBVToStr        extends Z3DeclKind (Z3_decl_kind.Z3_OP_SBV_TO_STR.toInt) // NEW in ScalaZ3 5.4.1
+object OpStrToCode       extends Z3DeclKind (Z3_decl_kind.Z3_OP_STR_TO_CODE.toInt) // NEW in ScalaZ3 5.4.1
+object OpStrFromCode     extends Z3DeclKind (Z3_decl_kind.Z3_OP_STR_FROM_CODE.toInt) // NEW in ScalaZ3 5.4.1
+object OpStringLT        extends Z3DeclKind (Z3_decl_kind.Z3_OP_STRING_LT.toInt) // NEW in ScalaZ3 5.4.1
+object OpStringLE        extends Z3DeclKind (Z3_decl_kind.Z3_OP_STRING_LE.toInt) // NEW in ScalaZ3 5.4.1
 
 // Regular expressions
 object OpREPlus   extends Z3DeclKind (Z3_decl_kind.Z3_OP_RE_PLUS.toInt)   // NEW in ScalaZ3 3.0
@@ -185,6 +229,24 @@ object OpREStar   extends Z3DeclKind (Z3_decl_kind.Z3_OP_RE_STAR.toInt)   // NEW
 object OpREOption extends Z3DeclKind (Z3_decl_kind.Z3_OP_RE_OPTION.toInt) // NEW in ScalaZ3 3.0
 object OpREConcat extends Z3DeclKind (Z3_decl_kind.Z3_OP_RE_CONCAT.toInt) // NEW in ScalaZ3 3.0
 object OpREUnion  extends Z3DeclKind (Z3_decl_kind.Z3_OP_RE_UNION.toInt)  // NEW in ScalaZ3 3.0
+object OpRERange       extends Z3DeclKind (Z3_decl_kind.Z3_OP_RE_RANGE.toInt) // NEW in ScalaZ3 5.4.1
+object OpREDiff        extends Z3DeclKind (Z3_decl_kind.Z3_OP_RE_DIFF.toInt) // NEW in ScalaZ3 5.4.1
+object OpREIntersect   extends Z3DeclKind (Z3_decl_kind.Z3_OP_RE_INTERSECT.toInt) // NEW in ScalaZ3 5.4.1
+object OpRELoop        extends Z3DeclKind (Z3_decl_kind.Z3_OP_RE_LOOP.toInt) // NEW in ScalaZ3 5.4.1
+object OpREPower       extends Z3DeclKind (Z3_decl_kind.Z3_OP_RE_POWER.toInt) // NEW in ScalaZ3 5.4.1
+object OpREComplement  extends Z3DeclKind (Z3_decl_kind.Z3_OP_RE_COMPLEMENT.toInt) // NEW in ScalaZ3 5.4.1
+object OpREEmptySet    extends Z3DeclKind (Z3_decl_kind.Z3_OP_RE_EMPTY_SET.toInt) // NEW in ScalaZ3 5.4.1
+object OpREFullSet     extends Z3DeclKind (Z3_decl_kind.Z3_OP_RE_FULL_SET.toInt) // NEW in ScalaZ3 5.4.1
+object OpREFullCharSet extends Z3DeclKind (Z3_decl_kind.Z3_OP_RE_FULL_CHAR_SET.toInt) // NEW in ScalaZ3 5.4.1
+object OpREOfPred      extends Z3DeclKind (Z3_decl_kind.Z3_OP_RE_OF_PRED.toInt) // NEW in ScalaZ3 5.4.1
+object OpREReverse     extends Z3DeclKind (Z3_decl_kind.Z3_OP_RE_REVERSE.toInt) // NEW in ScalaZ3 5.4.1
+object OpREDerivative  extends Z3DeclKind (Z3_decl_kind.Z3_OP_RE_DERIVATIVE.toInt) // NEW in ScalaZ3 5.4.1
+object OpCharConst     extends Z3DeclKind (Z3_decl_kind.Z3_OP_CHAR_CONST.toInt) // NEW in ScalaZ3 5.4.1
+object OpCharLE        extends Z3DeclKind (Z3_decl_kind.Z3_OP_CHAR_LE.toInt) // NEW in ScalaZ3 5.4.1
+object OpCharToInt     extends Z3DeclKind (Z3_decl_kind.Z3_OP_CHAR_TO_INT.toInt) // NEW in ScalaZ3 5.4.1
+object OpCharToBV      extends Z3DeclKind (Z3_decl_kind.Z3_OP_CHAR_TO_BV.toInt) // NEW in ScalaZ3 5.4.1
+object OpCharFromBV    extends Z3DeclKind (Z3_decl_kind.Z3_OP_CHAR_FROM_BV.toInt) // NEW in ScalaZ3 5.4.1
+object OpCharIsDigit   extends Z3DeclKind (Z3_decl_kind.Z3_OP_CHAR_IS_DIGIT.toInt) // NEW in ScalaZ3 5.4.1
 
 // Auxiliary
 object OpLabel    extends Z3DeclKind (Z3_decl_kind.Z3_OP_LABEL.toInt)     // NEW in ScalaZ3 3.0
@@ -195,11 +257,20 @@ object OpDTConstructor extends Z3DeclKind (Z3_decl_kind.Z3_OP_DT_CONSTRUCTOR.toI
 object OpDTRecogniser  extends Z3DeclKind (Z3_decl_kind.Z3_OP_DT_RECOGNISER.toInt)   // NEW in ScalaZ3 3.0
 object OpDTAccessor    extends Z3DeclKind (Z3_decl_kind.Z3_OP_DT_ACCESSOR.toInt)     // NEW in ScalaZ3 3.0
 object OpDTUpdateField extends Z3DeclKind (Z3_decl_kind.Z3_OP_DT_UPDATE_FIELD.toInt) // NEW in ScalaZ3 3.0
+object OpDTIs extends Z3DeclKind (Z3_decl_kind.Z3_OP_DT_IS.toInt) // NEW in ScalaZ3 5.4.1
 
 // Pseudo booleans
 object OpPBAtMost extends Z3DeclKind (Z3_decl_kind.Z3_OP_PB_AT_MOST.toInt) // NEW in ScalaZ3 3.0
 object OpPBLE     extends Z3DeclKind (Z3_decl_kind.Z3_OP_PB_LE.toInt)      // NEW in ScalaZ3 3.0
 object OpPBGE     extends Z3DeclKind (Z3_decl_kind.Z3_OP_PB_GE.toInt)      // NEW in ScalaZ3 3.0
+object OpPBAtLeast          extends Z3DeclKind (Z3_decl_kind.Z3_OP_PB_AT_LEAST.toInt) // NEW in ScalaZ3 5.4.1
+object OpPBEq               extends Z3DeclKind (Z3_decl_kind.Z3_OP_PB_EQ.toInt) // NEW in ScalaZ3 5.4.1
+object OpSpecialRelationLO  extends Z3DeclKind (Z3_decl_kind.Z3_OP_SPECIAL_RELATION_LO.toInt) // NEW in ScalaZ3 5.4.1
+object OpSpecialRelationPO  extends Z3DeclKind (Z3_decl_kind.Z3_OP_SPECIAL_RELATION_PO.toInt) // NEW in ScalaZ3 5.4.1
+object OpSpecialRelationPLO extends Z3DeclKind (Z3_decl_kind.Z3_OP_SPECIAL_RELATION_PLO.toInt) // NEW in ScalaZ3 5.4.1
+object OpSpecialRelationTO  extends Z3DeclKind (Z3_decl_kind.Z3_OP_SPECIAL_RELATION_TO.toInt) // NEW in ScalaZ3 5.4.1
+object OpSpecialRelationTC  extends Z3DeclKind (Z3_decl_kind.Z3_OP_SPECIAL_RELATION_TC.toInt) // NEW in ScalaZ3 5.4.1
+object OpSpecialRelationTRC extends Z3DeclKind (Z3_decl_kind.Z3_OP_SPECIAL_RELATION_TRC.toInt) // NEW in ScalaZ3 5.4.1
 
 // Floating-point arithmetic
 object OpFPARmNearestTiesToEven extends Z3DeclKind (Z3_decl_kind.Z3_OP_FPA_RM_NEAREST_TIES_TO_EVEN.toInt) // NEW in ScalaZ3 3.0
@@ -249,6 +320,27 @@ object OpFPAToSBV        extends Z3DeclKind (Z3_decl_kind.Z3_OP_FPA_TO_SBV.toInt
 object OpFPAToReal       extends Z3DeclKind (Z3_decl_kind.Z3_OP_FPA_TO_REAL.toInt)        // NEW in ScalaZ3 3.0
 
 object OpFPAToIEEEBV extends Z3DeclKind (Z3_decl_kind.Z3_OP_FPA_TO_IEEE_BV.toInt) // NEW in ScalaZ3 3.0
+object OpFPABVWrap           extends Z3DeclKind (Z3_decl_kind.Z3_OP_FPA_BVWRAP.toInt) // NEW in ScalaZ3 5.4.1
+object OpFPABVToRM           extends Z3DeclKind (Z3_decl_kind.Z3_OP_FPA_BV2RM.toInt) // NEW in ScalaZ3 5.4.1
+object OpFiniteSetEmpty      extends Z3DeclKind (Z3_decl_kind.Z3_OP_FINITE_SET_EMPTY.toInt) // NEW in ScalaZ3 5.4.1
+object OpFiniteSetSingleton  extends Z3DeclKind (Z3_decl_kind.Z3_OP_FINITE_SET_SINGLETON.toInt) // NEW in ScalaZ3 5.4.1
+object OpFiniteSetUnion      extends Z3DeclKind (Z3_decl_kind.Z3_OP_FINITE_SET_UNION.toInt) // NEW in ScalaZ3 5.4.1
+object OpFiniteSetIntersect  extends Z3DeclKind (Z3_decl_kind.Z3_OP_FINITE_SET_INTERSECT.toInt) // NEW in ScalaZ3 5.4.1
+object OpFiniteSetDifference extends Z3DeclKind (Z3_decl_kind.Z3_OP_FINITE_SET_DIFFERENCE.toInt) // NEW in ScalaZ3 5.4.1
+object OpFiniteSetIn         extends Z3DeclKind (Z3_decl_kind.Z3_OP_FINITE_SET_IN.toInt) // NEW in ScalaZ3 5.4.1
+object OpFiniteSetSize       extends Z3DeclKind (Z3_decl_kind.Z3_OP_FINITE_SET_SIZE.toInt) // NEW in ScalaZ3 5.4.1
+object OpFiniteSetSubset     extends Z3DeclKind (Z3_decl_kind.Z3_OP_FINITE_SET_SUBSET.toInt) // NEW in ScalaZ3 5.4.1
+object OpFiniteSetMap        extends Z3DeclKind (Z3_decl_kind.Z3_OP_FINITE_SET_MAP.toInt) // NEW in ScalaZ3 5.4.1
+object OpFiniteSetFilter     extends Z3DeclKind (Z3_decl_kind.Z3_OP_FINITE_SET_FILTER.toInt) // NEW in ScalaZ3 5.4.1
+object OpFiniteSetRange      extends Z3DeclKind (Z3_decl_kind.Z3_OP_FINITE_SET_RANGE.toInt) // NEW in ScalaZ3 5.4.1
+object OpFiniteSetExt        extends Z3DeclKind (Z3_decl_kind.Z3_OP_FINITE_SET_EXT.toInt) // NEW in ScalaZ3 5.4.1
+object OpFiniteSetMapInverse extends Z3DeclKind (Z3_decl_kind.Z3_OP_FINITE_SET_MAP_INVERSE.toInt) // NEW in ScalaZ3 5.4.1
+object OpRecursive           extends Z3DeclKind (Z3_decl_kind.Z3_OP_RECURSIVE.toInt) // NEW in ScalaZ3 5.4.1
+object OpFFNum               extends Z3DeclKind (Z3_decl_kind.Z3_OP_FF_NUM.toInt) // NEW in ScalaZ3 5.4.1
+object OpFFAdd               extends Z3DeclKind (Z3_decl_kind.Z3_OP_FF_ADD.toInt) // NEW in ScalaZ3 5.4.1
+object OpFFMul               extends Z3DeclKind (Z3_decl_kind.Z3_OP_FF_MUL.toInt) // NEW in ScalaZ3 5.4.1
+object OpFFNeg               extends Z3DeclKind (Z3_decl_kind.Z3_OP_FF_NEG.toInt) // NEW in ScalaZ3 5.4.1
+object OpFFBitSum            extends Z3DeclKind (Z3_decl_kind.Z3_OP_FF_BITSUM.toInt) // NEW in ScalaZ3 5.4.1
 
 object OpInternal extends Z3DeclKind (Z3_decl_kind.Z3_OP_INTERNAL.toInt)
 object OpUninterpreted extends Z3DeclKind (Z3_decl_kind.Z3_OP_UNINTERPRETED.toInt)
@@ -497,8 +589,102 @@ object Z3DeclKind {
 
     case Z3_decl_kind.Z3_OP_FPA_TO_IEEE_BV => OpFPAToIEEEBV
 
+    // NEW in ScalaZ3 5.4.1
+    case Z3_decl_kind.Z3_OP_COMPLEX => OpComplex
+    case Z3_decl_kind.Z3_OP_REAL_PART => OpRealPart
+    case Z3_decl_kind.Z3_OP_IMAG_PART => OpImagPart
+    case Z3_decl_kind.Z3_OP_BSDIV0 => OpBSDiv0
+    case Z3_decl_kind.Z3_OP_BUDIV0 => OpBUDiv0
+    case Z3_decl_kind.Z3_OP_BSREM0 => OpBSRem0
+    case Z3_decl_kind.Z3_OP_BUREM0 => OpBURem0
+    case Z3_decl_kind.Z3_OP_BSMOD0 => OpBSMod0
+    case Z3_decl_kind.Z3_OP_BSDIV_I => OpBSDivI
+    case Z3_decl_kind.Z3_OP_BUDIV_I => OpBUDivI
+    case Z3_decl_kind.Z3_OP_BSREM_I => OpBSRemI
+    case Z3_decl_kind.Z3_OP_BUREM_I => OpBURemI
+    case Z3_decl_kind.Z3_OP_BSMOD_I => OpBSModI
+    case Z3_decl_kind.Z3_OP_BIT2BOOL => OpBitToBool
+    case Z3_decl_kind.Z3_OP_SBV2INT => OpSBVToInt
+    case Z3_decl_kind.Z3_OP_MKBV => OpMkBV
+    case Z3_decl_kind.Z3_OP_BSMUL_NO_OVFL => OpBSMulNoOvfl
+    case Z3_decl_kind.Z3_OP_BUMUL_NO_OVFL => OpBUMulNoOvfl
+    case Z3_decl_kind.Z3_OP_BSMUL_NO_UDFL => OpBSMulNoUdfl
+    case Z3_decl_kind.Z3_OP_PR_BIND => OpPrBind
+    case Z3_decl_kind.Z3_OP_PR_ASSUMPTION_ADD => OpPrAssumptionAdd
+    case Z3_decl_kind.Z3_OP_PR_LEMMA_ADD => OpPrLemmaAdd
+    case Z3_decl_kind.Z3_OP_PR_REDUNDANT_DEL => OpPrRedundantDel
+    case Z3_decl_kind.Z3_OP_PR_CLAUSE_TRAIL => OpPrClauseTrail
+    case Z3_decl_kind.Z3_OP_PR_TH_ASSUMPTION_ADD => OpPrThAssumptionAdd
+    case Z3_decl_kind.Z3_OP_PR_TH_LEMMA_ADD => OpPrThLemmaAdd
+    case Z3_decl_kind.Z3_OP_SEQ_REPLACE_RE => OpSeqReplaceRE
+    case Z3_decl_kind.Z3_OP_SEQ_REPLACE_RE_ALL => OpSeqReplaceREAll
+    case Z3_decl_kind.Z3_OP_SEQ_REPLACE_ALL => OpSeqReplaceAll
+    case Z3_decl_kind.Z3_OP_SEQ_NTH => OpSeqNth
+    case Z3_decl_kind.Z3_OP_SEQ_LAST_INDEX => OpSeqLastIndex
+    case Z3_decl_kind.Z3_OP_SEQ_MAP => OpSeqMap
+    case Z3_decl_kind.Z3_OP_SEQ_MAPI => OpSeqMapI
+    case Z3_decl_kind.Z3_OP_SEQ_FOLDL => OpSeqFoldL
+    case Z3_decl_kind.Z3_OP_SEQ_FOLDLI => OpSeqFoldLI
+    case Z3_decl_kind.Z3_OP_SEQ_POWER => OpSeqPower
+    case Z3_decl_kind.Z3_OP_STR_TO_INT => OpStrToInt
+    case Z3_decl_kind.Z3_OP_INT_TO_STR => OpIntToStr
+    case Z3_decl_kind.Z3_OP_UBV_TO_STR => OpUBVToStr
+    case Z3_decl_kind.Z3_OP_SBV_TO_STR => OpSBVToStr
+    case Z3_decl_kind.Z3_OP_STR_TO_CODE => OpStrToCode
+    case Z3_decl_kind.Z3_OP_STR_FROM_CODE => OpStrFromCode
+    case Z3_decl_kind.Z3_OP_STRING_LT => OpStringLT
+    case Z3_decl_kind.Z3_OP_STRING_LE => OpStringLE
+    case Z3_decl_kind.Z3_OP_RE_RANGE => OpRERange
+    case Z3_decl_kind.Z3_OP_RE_DIFF => OpREDiff
+    case Z3_decl_kind.Z3_OP_RE_INTERSECT => OpREIntersect
+    case Z3_decl_kind.Z3_OP_RE_LOOP => OpRELoop
+    case Z3_decl_kind.Z3_OP_RE_POWER => OpREPower
+    case Z3_decl_kind.Z3_OP_RE_COMPLEMENT => OpREComplement
+    case Z3_decl_kind.Z3_OP_RE_EMPTY_SET => OpREEmptySet
+    case Z3_decl_kind.Z3_OP_RE_FULL_SET => OpREFullSet
+    case Z3_decl_kind.Z3_OP_RE_FULL_CHAR_SET => OpREFullCharSet
+    case Z3_decl_kind.Z3_OP_RE_OF_PRED => OpREOfPred
+    case Z3_decl_kind.Z3_OP_RE_REVERSE => OpREReverse
+    case Z3_decl_kind.Z3_OP_RE_DERIVATIVE => OpREDerivative
+    case Z3_decl_kind.Z3_OP_CHAR_CONST => OpCharConst
+    case Z3_decl_kind.Z3_OP_CHAR_LE => OpCharLE
+    case Z3_decl_kind.Z3_OP_CHAR_TO_INT => OpCharToInt
+    case Z3_decl_kind.Z3_OP_CHAR_TO_BV => OpCharToBV
+    case Z3_decl_kind.Z3_OP_CHAR_FROM_BV => OpCharFromBV
+    case Z3_decl_kind.Z3_OP_CHAR_IS_DIGIT => OpCharIsDigit
+    case Z3_decl_kind.Z3_OP_DT_IS => OpDTIs
+    case Z3_decl_kind.Z3_OP_PB_AT_LEAST => OpPBAtLeast
+    case Z3_decl_kind.Z3_OP_PB_EQ => OpPBEq
+    case Z3_decl_kind.Z3_OP_SPECIAL_RELATION_LO => OpSpecialRelationLO
+    case Z3_decl_kind.Z3_OP_SPECIAL_RELATION_PO => OpSpecialRelationPO
+    case Z3_decl_kind.Z3_OP_SPECIAL_RELATION_PLO => OpSpecialRelationPLO
+    case Z3_decl_kind.Z3_OP_SPECIAL_RELATION_TO => OpSpecialRelationTO
+    case Z3_decl_kind.Z3_OP_SPECIAL_RELATION_TC => OpSpecialRelationTC
+    case Z3_decl_kind.Z3_OP_SPECIAL_RELATION_TRC => OpSpecialRelationTRC
+    case Z3_decl_kind.Z3_OP_FPA_BVWRAP => OpFPABVWrap
+    case Z3_decl_kind.Z3_OP_FPA_BV2RM => OpFPABVToRM
+    case Z3_decl_kind.Z3_OP_FINITE_SET_EMPTY => OpFiniteSetEmpty
+    case Z3_decl_kind.Z3_OP_FINITE_SET_SINGLETON => OpFiniteSetSingleton
+    case Z3_decl_kind.Z3_OP_FINITE_SET_UNION => OpFiniteSetUnion
+    case Z3_decl_kind.Z3_OP_FINITE_SET_INTERSECT => OpFiniteSetIntersect
+    case Z3_decl_kind.Z3_OP_FINITE_SET_DIFFERENCE => OpFiniteSetDifference
+    case Z3_decl_kind.Z3_OP_FINITE_SET_IN => OpFiniteSetIn
+    case Z3_decl_kind.Z3_OP_FINITE_SET_SIZE => OpFiniteSetSize
+    case Z3_decl_kind.Z3_OP_FINITE_SET_SUBSET => OpFiniteSetSubset
+    case Z3_decl_kind.Z3_OP_FINITE_SET_MAP => OpFiniteSetMap
+    case Z3_decl_kind.Z3_OP_FINITE_SET_FILTER => OpFiniteSetFilter
+    case Z3_decl_kind.Z3_OP_FINITE_SET_RANGE => OpFiniteSetRange
+    case Z3_decl_kind.Z3_OP_FINITE_SET_EXT => OpFiniteSetExt
+    case Z3_decl_kind.Z3_OP_FINITE_SET_MAP_INVERSE => OpFiniteSetMapInverse
+    case Z3_decl_kind.Z3_OP_RECURSIVE => OpRecursive
+    case Z3_decl_kind.Z3_OP_FF_NUM => OpFFNum
+    case Z3_decl_kind.Z3_OP_FF_ADD => OpFFAdd
+    case Z3_decl_kind.Z3_OP_FF_MUL => OpFFMul
+    case Z3_decl_kind.Z3_OP_FF_NEG => OpFFNeg
+    case Z3_decl_kind.Z3_OP_FF_BITSUM => OpFFBitSum
+
     case Z3_decl_kind.Z3_OP_INTERNAL => OpInternal
     case Z3_decl_kind.Z3_OP_UNINTERPRETED => OpUninterpreted
-    case other => error("Unhandled int code for Z3KindDecl: " + other)
+    case null => error("Unhandled int code for Z3KindDecl: null")
   }
 }

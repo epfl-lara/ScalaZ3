@@ -1,116 +1,104 @@
 ScalaZ3 ![Build status](http://laraquad4.epfl.ch:9000/epfl-lara/ScalaZ3/status/master)
 =======
 
-This is ScalaZ3 for Z3 4.8.14 and Scala 3.2.0.
+This is ScalaZ3 for Z3 5.4.1 and Scala 3.
 
 [API documentation](https://epfl-lara.github.io/ScalaZ3/z3/index.html)
 -------------------
 
+How it works
+------------
+
+ScalaZ3 builds on the official Z3 Java distribution: each
+[Z3 release](https://github.com/Z3Prover/z3/releases) comes with a `z3-<version>-all.jar`, which
+contains the Java bindings (`com.microsoft.z3`) and the native libraries of all the supported
+platforms:
+
+| Platform      | Requirements          |
+|---------------|-----------------------|
+| `linux-x64`   | glibc 2.39 or later   |
+| `linux-arm64` | glibc 2.38 or later   |
+| `osx-arm64`   | macOS 13.3 or later   |
+| `win-x64`     |                       |
+
+The bindings pick, extract and load the native libraries of the current platform by themselves.
+ScalaZ3 therefore neither compiles Z3 nor contains native code: it is a plain, platform-independent
+Scala library, and the same JAR is used everywhere.
+
 Compiling ScalaZ3
 -----------------
 
-You should have Java and SBT 1.7.x installed.
+You should have Java and SBT 1.x installed. Run
 
-### Mac & Unix
+    sbt package
 
-Run
-
-    sbt +package
-
-to compile Z3 4.8.14 for Scala 3.2.0.
-
-The JAR files will be in `target/scala-3.2.0/scalaz3_3-4.8.14.jar`
-and will contain the shared library dependencies.
+to get `target/scala-3.3.7/scalaz3_3-5.4.1.jar`. The build downloads the Z3 JAR in `z3/` and
+checks it against the SHA-256 checksum recorded in `build.sbt`. To build from a copy you already
+have (e.g. when offline), run `sbt -Dscalaz3.z3jar=/path/to/z3-5.4.1-all.jar package`.
 
 For testing, run
 
-    sbt +test
-
-### Windows
-
-#### Prerequisites
-
-Install Visual Studio Community edition 2015
-Make sure to have the following:
-- Programming Languages
-  - Visual C++
-    - Common tools for Visual C++ 2015 (CHECK)
-
-Install JDK 1.8 (or higher)
-* There is a folder `include` in `C:\Program Files\Java\jdk1.8.0_121`. Create a copy of this `include` folder directly in `C:\Program Files\Java\`
-
-Install a 64-bit version of GCC. To chec that, run `gcc -v`, it should display 64. If it shows  `mingw32` you need to install a new version.
-
-We were able to successfully package and test ScalaZ3 with the MinGW 64bit compiler suite with the following options.
-
-    Version: 6.3.0
-    Architecture: x86_64
-    Threads: wind32
-    Esception: seh
-    Build revision: 2
-
-#### Packaging instructions
-
-Open the native x64 command prompt (available in the start menu under the Visual Studio folder)
-
-Now navigate to the scalaz3 folder and type:
-
-    sbt +package
-
-The JAR files will be in `target/scala-3.2.0/scalaz3_3-4.8.14.jar` and will contain the shared library
-dependencies.
-
-#### Test your package.
-
-Run
-
     sbt test
 
-If this does not work, check that `lib-bin/scalaz3.dll` is a correctly set up 64 bit dll:
-
-    dumpbin /headers lib-bin/scalaz3.dll | findstr machine
-
-The output should be (x64). If you encounter any other issue, please let us know.
+To move to another Z3 release, update `version` and `z3JarSha256` in `build.sbt`.
 
 Using ScalaZ3
 -------------
 
-### On a single operating system / architecture
+ScalaZ3 needs the Z3 JAR on the class path, in the same version as the one it was compiled against.
+There are two ways to get there.
 
-Create a folder named `unmanaged` at the same level as your `build.sbt` file, and copy the JAR file in `target/scala-3.2.0/scalaz3_3-4.8.14.jar` into it.
+### With the Z3 JAR as a separate dependency
 
-Then add, the following lines to your `build.sbt` file:
-
-```scala
-Compile / unmanagedJars += {
-  baseDirectory.value / "unmanaged" / s"scalaz3_3-4.8.14.jar"
-}
-```
-
-### On multiple operating systems / architectures
-
-If you want to use ScalaZ3 in a project which must support various operating systems and architectures, you will have to compile ScalaZ3 on each of those systems/architectures, following the instructions above.
-
-Make sure to name the resulting JAR files as `scalaz3-[osName]-[osArch]-3.jar`, where:
-
-- `[osName]` is one of: `mac`, `win`, `unix`.
-- `[osArch]` corresponds to `System.getProperty("sun.arch.data.model")`, ie. `x64`, `fds`, etc.
-
-Create a folder named `unmanaged` at the same level as your `build.sbt` file, and copy the aforementioned JAR files into it.
-
-Add the following lines to your `build.sbt` file:
+Create a folder named `unmanaged` at the same level as your `build.sbt` file, and copy
+`scalaz3_3-5.4.1.jar` and `z3-5.4.1-all.jar` into it. Then add the following lines to your
+`build.sbt` file:
 
 ```scala
-val osInf = Option(System.getProperty("os.name")).getOrElse("")
-val osArch = System.getProperty("sun.arch.data.model")
-
-val isUnix    = osInf.indexOf("nix") >= 0 || osInf.indexOf("nux") >= 0
-val isWindows = osInf.indexOf("Win") >= 0
-val isMac     = osInf.indexOf("Mac") >= 0
-
-val osName = if (isWindows) "win" else if (isMac) "mac" else "unix"
-
-Compile / unmanagedJars += {
-  baseDirectory.value / "unmanaged" / s"scalaz3-$osName-$osArch-3.jar"
-}
+Compile / unmanagedJars ++= Seq(
+  baseDirectory.value / "unmanaged" / "scalaz3_3-5.4.1.jar",
+  baseDirectory.value / "unmanaged" / "z3-5.4.1-all.jar",
+)
 ```
+
+The Z3 JAR is large (about 54MB): rather than keeping a copy of it, you may let your build download
+it, as `project/Z3Jar.scala` does for ScalaZ3 itself.
+
+### With a standalone JAR
+
+Run
+
+    sbt packageBundle
+
+to get `target/scala-3.3.7/scalaz3_3-5.4.1-bundle.jar`, which contains ScalaZ3 together with the
+content of the Z3 JAR, and is all you need on the class path.
+
+### Loading the native libraries
+
+The native libraries are extracted once to `~/.z3/native` and loaded from there. This can be changed
+with the system properties of the Z3 Java distribution:
+
+- `-Dz3.nativeCacheDir=<dir>` moves the cache;
+- `-Dz3.nativeCache=false` extracts the libraries to a fresh temporary directory at each run;
+- `-Dz3.skipLibraryLoad=true` loads nothing, for applications that load `z3java` by themselves.
+
+A `z3java` library found on `java.library.path` is preferred to the bundled ones. On Java 22 and
+later, pass `--enable-native-access=ALL-UNNAMED` to the JVM to avoid a warning about JNI.
+
+`z3.Z3Wrapper.ensureLoaded()` throws an `UnsatisfiedLinkError` if Z3 is not available on the
+current platform.
+
+### Resource limits
+
+Next to timeouts, Z3 can bound the work of a solver with a resource limit (`rlimit`), which unlike
+a timeout is deterministic: whether a query is solved does not depend on the machine or its load.
+
+```scala
+val solver = z3.mkSolver()
+solver.setRlimit(1000000)  // for each subsequent check; 0 means no limit
+solver.check()             // None once the limit is exhausted
+solver.getRlimitCount()    // resources consumed so far
+```
+
+The same is available on `Z3Optimizer`. A default for all solvers can be set per context with
+`new Z3Context("rlimit" -> 1000000)`, or globally with `Z3Context.setGlobalParam("rlimit", 1000000)`.

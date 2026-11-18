@@ -5,7 +5,7 @@ import _root_.scala.language.implicitConversions
 
 package object scala {
   // make sure Z3Wrapper has been loaded!
-  Z3Wrapper.withinJar()
+  Z3Wrapper.ensureLoaded()
 
   def toggleWarningMessages(enabled: Boolean) : Unit = {
     Native.toggleWarningMessages(enabled)

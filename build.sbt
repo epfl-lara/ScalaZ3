@@ -12,15 +12,9 @@ lazy val root = (project in file("."))
       "-feature",
     ),
     scalaVersion := "3.3.7",
-    // Like the Z3 Java bindings, ScalaZ3 runs on Java 8 and later, whatever the JDK it is built with.
-    // (javac warns that 8 is obsolete, but it is what the Z3 bindings target. JDK 8 itself has no
-    // --release option, and compiles for Java 8 anyway.)
-    Compile / javacOptions ++= {
-      if (scala.util.Properties.isJavaAtLeast("9")) Seq("--release", "8", "-Xlint:-options") else Nil
-    },
-    Compile / scalacOptions ++= {
-      if (scala.util.Properties.isJavaAtLeast("9")) Seq("-release", "8") else Nil
-    },
+    // ScalaZ3 runs on Java 21 and later, whatever the JDK it is built with.
+    javacOptions ++= Seq("--release", "21"),
+    scalacOptions ++= Seq("-release", "21"),
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.19" % "test",
     Test / fork := true,
     // Z3 loads its native libraries through JNI.

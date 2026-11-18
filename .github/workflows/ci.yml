@@ -1,6 +1,6 @@
 # Tests ScalaZ3 on every platform whose native libraries the Z3 JAR bundles
-# (see META-INF/z3/provenance.json in it), with the oldest Java it supports
-# (8, like the Z3 bindings) and the LTS releases since. The packaged JAR is
+# (see META-INF/z3/provenance.json in it), with the Java releases it supports
+# (21 and later, the LTS ones). The packaged JAR is
 # the same everywhere; what differs is which native libraries Z3's loader
 # extracts and loads, and whether they run on that system.
 name: CI
@@ -31,20 +31,14 @@ jobs:
           # macOS 15, the osx-arm64 libraries need 13.3
           - { name: osx-arm64,   runner: macos-15 }
           - { name: win-x64,     runner: windows-2025 }
-        java: [8, 17, 21, 25]
-        distribution: [temurin]
-        include:
-          # Temurin has no Java 8 for macOS on ARM
-          - { platform: { name: osx-arm64, runner: macos-15 }, java: 8, distribution: zulu }
-        exclude:
-          - { platform: { name: osx-arm64, runner: macos-15 }, java: 8, distribution: temurin }
+        java: [21, 25]
     steps:
     - name: Checkout
       uses: actions/checkout@v7
     - name: Setup JDK
       uses: actions/setup-java@v6
       with:
-        distribution: ${{ matrix.distribution }}
+        distribution: temurin
         java-version: ${{ matrix.java }}
         cache: sbt
     - name: Setup sbt

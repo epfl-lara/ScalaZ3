@@ -46,7 +46,7 @@ class PackagedJar extends AnyFunSuite with Matchers {
     finally zip.close()
   }
 
-  test("The classes of the JAR run on Java 8 and later") {
+  test("The classes of the JAR run on Java 21 and later") {
     val zip = new ZipFile(jar)
     try {
       val tooRecent = zip.entries().asScala.filter(_.getName.endsWith(".class")).flatMap { entry =>
@@ -55,7 +55,7 @@ class PackagedJar extends AnyFunSuite with Matchers {
           in.readInt() // magic
           in.readUnsignedShort() // minor version
           val major = in.readUnsignedShort()
-          if (major > 52) Some(s"${entry.getName} (class file version $major)") else None
+          if (major > 65) Some(s"${entry.getName} (class file version $major)") else None
         } finally in.close()
       }.toList
       tooRecent should be (empty)
@@ -65,7 +65,7 @@ class PackagedJar extends AnyFunSuite with Matchers {
   test("The JAR alone (with the Scala library) is enough to run Z3") {
     val dir = Files.createTempDirectory("scalaz3-packaged-jar")
     val main = dir.resolve("Main.java")
-    Files.write(main,
+    Files.writeString(main,
       """public class Main {
         |  public static void main(String[] args) {
         |    z3.scala.Z3Context ctx = new z3.scala.Z3Context(scala.collection.immutable.Map$.MODULE$.empty());
@@ -76,26 +76,17 @@ class PackagedJar extends AnyFunSuite with Matchers {
         |      solver.getModel().eval(x, true));
         |    ctx.delete();
         |  }
-        |}""".stripMargin.getBytes("UTF-8"))
+        |}""".stripMargin)
     val cp = jar.getPath + File.pathSeparator + sys.props("scalaz3.test.scalaLibrary")
-
-    // Compiled first, as Java 8 can't run a source file.
-    val javac = javax.tools.ToolProvider.getSystemJavaCompiler
-    javac should not be (null)
-    val compileOutput = new java.io.ByteArrayOutputStream
-    withClue(compileOutput) {
-      javac.run(null, compileOutput, compileOutput, "-cp", cp, "-d", dir.toString, main.toString) should equal (0)
-    }
-
     val javaBin = Seq("java.exe", "java").map(new File(new File(sys.props("java.home"), "bin"), _))
       .find(_.isFile).getOrElse(fail("No java executable in " + sys.props("java.home"))).getPath
     val nativeAccess = if (scala.util.Properties.isJavaAtLeast("22")) Seq("--enable-native-access=ALL-UNNAMED") else Nil
     val cmd = Seq(javaBin) ++ nativeAccess ++ Seq(
       // A fresh cache, to check that the libraries are extracted from the JAR.
       s"-Dz3.nativeCacheDir=${dir.resolve("cache")}",
-      "-cp", dir.toString + File.pathSeparator + cp, "Main")
+      "-cp", cp, main.toString)
     val proc = new ProcessBuilder(cmd.asJava).redirectErrorStream(true).start()
-    val output = scala.io.Source.fromInputStream(proc.getInputStream, "UTF-8").mkString
+    val output = new String(proc.getInputStream.readAllBytes())
     withClue(output) {
       proc.waitFor() should equal (0)
       output should include ("Z3 5.4 ")

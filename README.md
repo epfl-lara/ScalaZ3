@@ -22,8 +22,8 @@ platforms:
 | `win-x64`     |                       |
 
 The bindings pick, extract and load the native libraries of the current platform by themselves.
-ScalaZ3 therefore neither compiles Z3 nor contains native code: it is a plain, platform-independent
-Scala library, and the same JAR is used everywhere.
+ScalaZ3 therefore neither compiles Z3 nor has native code of its own. Its JAR bundles the content of
+the Z3 JAR, so that it is all you need on the class path, and the same JAR is used everywhere.
 
 Compiling ScalaZ3
 -----------------
@@ -32,8 +32,8 @@ You should have Java and SBT 1.x installed. Run
 
     sbt package
 
-to get `target/scala-3.3.7/scalaz3_3-5.4.1.jar`. The build downloads the Z3 JAR in `z3/` and
-checks it against the SHA-256 checksum recorded in `build.sbt`. To build from a copy you already
+to get `target/scala-3.3.7/scalaz3_3-5.4.1.jar` (about 55MB). The build downloads the Z3 JAR in
+`z3/`, checks it against the SHA-256 checksum recorded in `build.sbt`, and bundles its content. To build from a copy you already
 have (e.g. when offline), run `sbt -Dscalaz3.z3jar=/path/to/z3-5.4.1-all.jar package`.
 
 For testing, run
@@ -45,33 +45,15 @@ To move to another Z3 release, update `version` and `z3JarSha256` in `build.sbt`
 Using ScalaZ3
 -------------
 
-ScalaZ3 needs the Z3 JAR on the class path, in the same version as the one it was compiled against.
-There are two ways to get there.
-
-### With the Z3 JAR as a separate dependency
-
 Create a folder named `unmanaged` at the same level as your `build.sbt` file, and copy
-`scalaz3_3-5.4.1.jar` and `z3-5.4.1-all.jar` into it. Then add the following lines to your
-`build.sbt` file:
+`scalaz3_3-5.4.1.jar` into it. Then add the following line to your `build.sbt` file:
 
 ```scala
-Compile / unmanagedJars ++= Seq(
-  baseDirectory.value / "unmanaged" / "scalaz3_3-5.4.1.jar",
-  baseDirectory.value / "unmanaged" / "z3-5.4.1-all.jar",
-)
+Compile / unmanagedJars += baseDirectory.value / "unmanaged" / "scalaz3_3-5.4.1.jar"
 ```
 
-The Z3 JAR is large (about 54MB): rather than keeping a copy of it, you may let your build download
-it, as `project/Z3Jar.scala` does for ScalaZ3 itself.
-
-### With a standalone JAR
-
-Run
-
-    sbt packageBundle
-
-to get `target/scala-3.3.7/scalaz3_3-5.4.1-bundle.jar`, which contains ScalaZ3 together with the
-content of the Z3 JAR, and is all you need on the class path.
+ScalaZ3 includes the Z3 Java bindings (`com.microsoft.z3`): do not put another version of them on
+the class path.
 
 ### Loading the native libraries
 

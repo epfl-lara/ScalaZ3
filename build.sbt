@@ -47,6 +47,11 @@ lazy val root = (project in file("."))
     publishTo := localStaging.value,
     // The key that signs the artifacts, when the keyring holds several
     pgpSigningKey := sys.env.get("PGP_FINGERPRINT"),
+    // The bundle is about 60MB (the JAR includes Z3's native libraries), which can take longer
+    // than the default 10 minutes to upload to the Central Portal
+    Global / sonaUploadRequestTimeout := scala.concurrent.duration.Duration(60, "minutes"),
+    // Read by the sonaUpload and sonaRelease commands, which the unused-settings check can't see
+    Global / excludeLintKeys += sonaUploadRequestTimeout,
 
     z3Version := version.value,
     z3JarSha256 := "8399700e2dd33eb538de53e7d087bcb1ba8214ea66571daf3330f0c600ab4aa2",

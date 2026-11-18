@@ -50,7 +50,9 @@ jobs:
   release:
     name: Release ${{ inputs.version }} (${{ inputs.mode }})
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    # Uploading the bundle (about 60MB) to the Central Portal can take a while: sbt allows 1h
+    # per attempt, and retries once
+    timeout-minutes: 150
     environment: release
     env:
       TAG: ${{ inputs.version }}

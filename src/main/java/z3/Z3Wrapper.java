@@ -3,44 +3,35 @@ package z3;
 import com.microsoft.z3.Native;
 import z3.scala.Z3Context;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.lang.ref.WeakReference;
-import java.net.URL;
-import java.security.CodeSource;
 import java.util.HashMap;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 /**
- * This class contains all the native functions. It should be accessed
- * mostly through the other classes, though.
+ * Entry point to the native Z3 library.
+ *
+ * The native libraries are provided by the official Z3 Java distribution
+ * (<code>com.microsoft.z3</code>), which bundles them for all supported platforms and
+ * extracts and loads the right ones when {@link Native} is initialized. The lookup can be
+ * tuned with the system properties of that distribution, in particular:
+ * <ul>
+ *   <li><code>z3.skipLibraryLoad=true</code>: do not load anything, the application has
+ *       already loaded <code>z3java</code> by itself;</li>
+ *   <li><code>z3.nativeCache=false</code>: extract the libraries in a fresh temporary
+ *       directory instead of the per-user cache;</li>
+ *   <li><code>z3.nativeCacheDir</code>: location of that cache (<code>~/.z3/native</code>
+ *       by default).</li>
+ * </ul>
+ * A <code>z3java</code> library found on <code>java.library.path</code> takes precedence
+ * over the bundled ones.
  */
 public final class Z3Wrapper {
-    // related to the path in the jar file
-    private static final String DS = java.io.File.separator;
-
-    private static final String LIB_BIN = DS + "lib-bin" + DS;
-
     public static Object creation_lock = new Object();
-
-    private static final String versionString = LibraryChecksum.value;
 
     private static final String isDebug = System.getProperty("scalaz3.debug.load");
 
-    // this is just to force class loading, and therefore library loading.
+    // Forces the initialization of Native, and therefore the loading of the native libraries.
+    // An UnsatisfiedLinkError is thrown if there are none for the current platform.
     static {
-        if (!withinJar()) {
-            System.err.println("It seems you are not running ScalaZ3 from its JAR");
-            System.exit(1);
-        }
-
-        // We load the library by ourselves, so we kindly ask the Java Z3 bindings to not do so.
-        System.setProperty("z3.skipLibraryLoad", "true");
-        loadFromJar();
-        // We run this to ensure class loading of Native.
         debug("Z3 version: " + z3VersionString());
     }
 
@@ -50,14 +41,28 @@ public final class Z3Wrapper {
         }
     }
 
+    /**
+     * Makes sure the native Z3 library is loaded.
+     *
+     * @throws UnsatisfiedLinkError if it could not be loaded (and NoClassDefFoundError
+     *         on subsequent attempts).
+     */
+    public static void ensureLoaded() {
+        // Nothing to do, getting here means the static initializer succeeded.
+    }
+
+    /**
+     * Kept for compatibility: ScalaZ3 does not need to be run from its JAR anymore.
+     * Like {@link #ensureLoaded()}, calling this forces the native library to be loaded.
+     */
+    @Deprecated
     public static boolean withinJar() {
-        java.net.URL classJar = Z3Wrapper.class.getResource("/lib-bin/");
-        return classJar != null;
+        return true;
     }
 
     public static String wrapperVersionString() {
         // Version number should match smallest Z3 with which we know it to work, plus a letter for "internal" versions.
-        return "ScalaZ3 4.8.14a";
+        return "ScalaZ3 5.4.1";
     }
 
     public static String z3VersionString() {
@@ -67,59 +72,6 @@ public final class Z3Wrapper {
         Native.IntPtr revisionNumber = new Native.IntPtr();
         Native.getVersion(major, minor, buildNumber, revisionNumber);
         return "Z3 " + major.value + "." + minor.value + " (build " + buildNumber.value + ", rev. " + revisionNumber.value + ")";
-    }
-
-    private static void loadFromJar() {
-        String path = "SCALAZ3_" + versionString;
-        File libDir = new File(System.getProperty("java.io.tmpdir") + DS + path + LIB_BIN);
-
-        try {
-            if (!libDir.isDirectory() || !libDir.canRead()) {
-                libDir.mkdirs();
-                extractFromJar(libDir);
-            }
-
-            System.load(libDir.getAbsolutePath() + DS + System.mapLibraryName("z3"));
-            System.load(libDir.getAbsolutePath() + DS + System.mapLibraryName("z3java"));
-            System.load(libDir.getAbsolutePath() + DS + System.mapLibraryName("scalaz3"));
-        } catch (Exception e) {
-            System.err.println(e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    private static void extractFromJar(File toDir) throws Exception {
-        CodeSource src = Z3Wrapper.class.getProtectionDomain().getCodeSource();
-        if (src != null) {
-            URL jar = src.getLocation();
-            ZipInputStream zip = new ZipInputStream(jar.openStream());
-            while (true) {
-                ZipEntry e = zip.getNextEntry();
-                if (e == null) break;
-
-                String path = e.getName();
-
-                if (path.startsWith("lib-bin/") && !e.isDirectory()) {
-
-                    String name = new File(path).getName();
-
-                    debug("Extracting " + path + " from jar to " + name + "...");
-
-                    File to = new File(toDir.getAbsolutePath() + DS + name);
-
-                    InputStream in = Z3Wrapper.class.getResourceAsStream("/" + path);
-                    OutputStream out = new FileOutputStream(to);
-                    byte[] buf = new byte[4096];
-                    int len;
-                    while ((len = in.read(buf)) > 0) {
-                        out.write(buf, 0, len);
-                    }
-                    out.close();
-                    in.close();
-                }
-            }
-        }
-
     }
 
     public static long[] toPtrArray(Native.LongPtr[] ptrs) {

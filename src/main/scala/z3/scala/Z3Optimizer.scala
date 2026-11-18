@@ -25,6 +25,24 @@ class Z3Optimizer private[z3](val ptr: Long, val context: Z3Context) extends Z3O
     Native.optimizeSetParams(context.ptr, ptr, z3params.ptr)
   }
 
+  /** Limits the resources each subsequent `check` may consume, in Z3's own deterministic
+    * unit (the one of the `rlimit` parameter). Unlike a timeout, hitting this limit does not
+    * depend on the speed of or the load on the machine. When the limit is reached, `check`
+    * gives up and returns `None`. A limit of `0` means no limit.
+    */
+  def setRlimit(rlimit: Long): Unit = {
+    require(0 <= rlimit && rlimit <= 0xFFFFFFFFL, "rlimit must be an unsigned 32 bits integer")
+    set(Map("rlimit" -> rlimit))
+  }
+
+  /** The statistics Z3 collected so far, such as `rlimit count`, `conflicts` or `memory`. */
+  def getStatistics(): Map[String, Double] = {
+    context.statisticsToMap(Native.optimizeGetStatistics(context.ptr, this.ptr))
+  }
+
+  /** The resources consumed so far, in the unit of [[setRlimit]], if Z3 reports them. */
+  def getRlimitCount(): Option[Long] = getStatistics().get("rlimit count").map(_.toLong)
+
   def assertCnstr(ast: Z3AST) = {
     Native.optimizeAssert(context.ptr, this.ptr, ast.ptr)
   }

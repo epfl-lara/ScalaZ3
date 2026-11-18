@@ -10,7 +10,8 @@ import java.security.MessageDigest
   * Z3 publishes, with each release, a single JAR which contains the Java bindings
   * (`com.microsoft.z3`) together with the native libraries of all supported platforms.
   * The bindings extract and load the right native libraries by themselves, so ScalaZ3 has
-  * neither to build Z3 nor to ship any native code of its own.
+  * neither to build Z3 nor any native code of its own: it bundles the content of that JAR in
+  * its own, which is then all one needs on the class path, on every platform.
   */
 object Z3Jar {
 
@@ -19,8 +20,7 @@ object Z3Jar {
   val z3JarSha256 = settingKey[String]("Expected SHA-256 checksum of the all-platforms Z3 JAR")
   val z3JarFile = settingKey[File]("Where the all-platforms Z3 JAR is stored locally")
   val z3Jar     = taskKey[File]("Downloads (if needed) and verifies the all-platforms Z3 JAR")
-  val packageBundle = taskKey[File](
-    "Packages ScalaZ3 together with the Z3 Java bindings and native libraries in a standalone JAR")
+  val z3JarContents = taskKey[Seq[(File, String)]]("The files of the all-platforms Z3 JAR, to bundle in ScalaZ3's")
 
   def sha256(file: File): String = {
     val digest = MessageDigest.getInstance("SHA-256")
@@ -89,20 +89,20 @@ object Z3Jar {
 
     Compile / unmanagedJars += Attributed.blank(z3Jar.value),
 
-    packageBundle := {
-      val log = streams.value.log
-      val thin = (Compile / packageBin).value
-      val z3 = z3Jar.value
-      val out = thin.getParentFile / (thin.base + "-bundle.jar")
-      IO.withTemporaryDirectory { dir =>
-        // ScalaZ3 goes last, so that its manifest wins.
-        IO.unzip(z3, dir)
-        IO.unzip(thin, dir)
-        val entries = (dir ** "*").get.filter(_.isFile).map(f => f -> IO.relativize(dir, f).get.replace('\\', '/'))
-        IO.zip(entries, out, None)
+    // The Z3 JAR is merged into ScalaZ3's own, so that the latter is all one needs on the class path.
+    z3JarContents := {
+      val jar = z3Jar.value
+      val dir = target.value / "z3-jar-contents" / jar.base
+      val stamp = dir / ".unzipped"
+      if (!stamp.exists) {
+        IO.delete(dir)
+        IO.unzip(jar, dir)
+        IO.touch(stamp)
       }
-      log.info(s"Wrote $out")
-      out
+      (dir ** "*").get.filter(f => f.isFile && f != stamp).map(f => f -> IO.relativize(dir, f).get.replace('\\', '/'))
+        .filterNot(_._2 == "META-INF/MANIFEST.MF")
     },
+
+    Compile / packageBin / mappings ++= z3JarContents.value,
   )
 }

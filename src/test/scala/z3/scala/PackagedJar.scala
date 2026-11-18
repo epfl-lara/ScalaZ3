@@ -77,13 +77,23 @@ class PackagedJar extends AnyFunSuite with Matchers {
         |    ctx.delete();
         |  }
         |}""".stripMargin.getBytes("UTF-8"))
-    val java = new File(new File(sys.props("java.home"), "bin"), "java").getPath
     val cp = jar.getPath + File.pathSeparator + sys.props("scalaz3.test.scalaLibrary")
+
+    // Compiled first, as Java 8 can't run a source file.
+    val javac = javax.tools.ToolProvider.getSystemJavaCompiler
+    javac should not be (null)
+    val compileOutput = new java.io.ByteArrayOutputStream
+    withClue(compileOutput) {
+      javac.run(null, compileOutput, compileOutput, "-cp", cp, "-d", dir.toString, main.toString) should equal (0)
+    }
+
+    val javaBin = Seq("java.exe", "java").map(new File(new File(sys.props("java.home"), "bin"), _))
+      .find(_.isFile).getOrElse(fail("No java executable in " + sys.props("java.home"))).getPath
     val nativeAccess = if (scala.util.Properties.isJavaAtLeast("22")) Seq("--enable-native-access=ALL-UNNAMED") else Nil
-    val cmd = Seq(java) ++ nativeAccess ++ Seq(
+    val cmd = Seq(javaBin) ++ nativeAccess ++ Seq(
       // A fresh cache, to check that the libraries are extracted from the JAR.
       s"-Dz3.nativeCacheDir=${dir.resolve("cache")}",
-      "-cp", cp, main.toString)
+      "-cp", dir.toString + File.pathSeparator + cp, "Main")
     val proc = new ProcessBuilder(cmd.asJava).redirectErrorStream(true).start()
     val output = scala.io.Source.fromInputStream(proc.getInputStream, "UTF-8").mkString
     withClue(output) {

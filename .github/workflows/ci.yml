@@ -1,0 +1,94 @@
+# Tests ScalaZ3 on every platform whose native libraries the Z3 JAR bundles
+# (see META-INF/z3/provenance.json in it), with the oldest Java it supports
+# (8, like the Z3 bindings) and the LTS releases since. The packaged JAR is
+# the same everywhere; what differs is which native libraries Z3's loader
+# extracts and loads, and whether they run on that system.
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: ${{ matrix.platform.name }} / JDK ${{ matrix.java }}
+    runs-on: ${{ matrix.platform.runner }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          # glibc 2.39, which the linux-x64 libraries need
+          - { name: linux-x64,   runner: ubuntu-24.04 }
+          # glibc 2.39, the linux-arm64 libraries need 2.38
+          - { name: linux-arm64, runner: ubuntu-24.04-arm }
+          # macOS 15, the osx-arm64 libraries need 13.3
+          - { name: osx-arm64,   runner: macos-15 }
+          - { name: win-x64,     runner: windows-2025 }
+        java: [8, 17, 21, 25]
+        distribution: [temurin]
+        include:
+          # Temurin has no Java 8 for macOS on ARM
+          - { platform: { name: osx-arm64, runner: macos-15 }, java: 8, distribution: zulu }
+        exclude:
+          - { platform: { name: osx-arm64, runner: macos-15 }, java: 8, distribution: temurin }
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v7
+    - name: Setup JDK
+      uses: actions/setup-java@v6
+      with:
+        distribution: ${{ matrix.distribution }}
+        java-version: ${{ matrix.java }}
+        cache: sbt
+    - name: Setup sbt
+      uses: sbt/setup-sbt@v1
+    # The build downloads the Z3 JAR (about 54MB) to z3/; its checksum is in build.sbt.
+    - name: Cache the Z3 JAR
+      uses: actions/cache@v6
+      with:
+        path: z3
+        key: z3-jar-${{ hashFiles('build.sbt') }}
+    - name: Test
+      shell: bash
+      run: sbt -batch test
+    - name: Upload the test reports
+      if: failure()
+      uses: actions/upload-artifact@v7
+      with:
+        name: test-reports-${{ matrix.platform.name }}-jdk${{ matrix.java }}
+        path: target/test-reports
+
+  package:
+    name: Package
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v7
+    - name: Setup JDK
+      uses: actions/setup-java@v6
+      with:
+        distribution: temurin
+        java-version: 21
+        cache: sbt
+    - name: Setup sbt
+      uses: sbt/setup-sbt@v1
+    - name: Cache the Z3 JAR
+      uses: actions/cache@v6
+      with:
+        path: z3
+        key: z3-jar-${{ hashFiles('build.sbt') }}
+    - name: Package
+      run: sbt -batch package
+    - name: Upload the JAR
+      uses: actions/upload-artifact@v7
+      with:
+        name: scalaz3
+        path: target/scala-*/scalaz3_*.jar

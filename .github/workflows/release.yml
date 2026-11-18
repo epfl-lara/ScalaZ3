@@ -1,0 +1,110 @@
+# Publishes ScalaZ3 to Maven Central (ch.epfl.lara:scalaz3_3), through the
+# Central Portal.
+#
+# - Pushing a tag v<version> (e.g. v5.4.1, matching `version` in build.sbt)
+#   publishes and releases that version.
+# - Running the workflow by hand ("Run workflow") uploads by default without
+#   releasing: the deployment then waits in the Central Portal
+#   (https://central.sonatype.com/publishing/deployments), where it can be
+#   inspected, then published or dropped. Choose "release" to release directly.
+#
+# A version can't be published twice: the workflow does nothing when the
+# version is already on Maven Central.
+#
+# Needs, in the `release` environment of the repository:
+# - secrets PGP_SECRET (the ASCII-armored secret key that signs the artifacts,
+#   `gpg --armor --export-secret-keys <fingerprint>`) and PGP_PASSPHRASE,
+# - secrets SONATYPE_USERNAME and SONATYPE_PASSWORD (a user token of the
+#   Central Portal, for an account that can publish to ch.epfl.lara).
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'upload: upload only, to inspect and publish in the Central Portal; release: upload and release'
+        type: choice
+        options: [upload, release]
+        default: upload
+
+permissions:
+  contents: read
+
+# Never two publications at once
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Publish to Maven Central
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    environment: release
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v7
+    - name: Setup JDK
+      uses: actions/setup-java@v6
+      with:
+        distribution: temurin
+        java-version: 21
+        cache: sbt
+    - name: Setup sbt
+      uses: sbt/setup-sbt@v1
+    # The build downloads the Z3 JAR (about 54MB) to z3/; its checksum is in build.sbt.
+    - name: Cache the Z3 JAR
+      uses: actions/cache@v6
+      with:
+        path: z3
+        key: z3-jar-${{ hashFiles('build.sbt') }}
+    - name: Get the version
+      run: |
+        version=$(sbt -batch -no-colors "print version" | tail -n 1 | tr -d '[:space:]')
+        echo "VERSION=$version" >> "$GITHUB_ENV"
+        echo "Version: $version"
+    - name: Check that the tag matches the version
+      if: github.ref_type == 'tag'
+      run: |
+        if [ "$GITHUB_REF_NAME" != "v$VERSION" ]; then
+          echo "::error::Tag $GITHUB_REF_NAME doesn't match the version in build.sbt ($VERSION); expected v$VERSION"
+          exit 1
+        fi
+    - name: Check whether the version is already published
+      id: published
+      run: |
+        url="https://repo1.maven.org/maven2/ch/epfl/lara/scalaz3_3/$VERSION/scalaz3_3-$VERSION.pom"
+        if curl -sfI "$url" > /dev/null; then
+          echo "::notice::ScalaZ3 $VERSION is already on Maven Central, nothing to publish"
+          echo "already=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "already=false" >> "$GITHUB_OUTPUT"
+        fi
+    - name: Test
+      if: steps.published.outputs.already == 'false'
+      run: sbt -batch test
+    - name: Import the signing key
+      if: steps.published.outputs.already == 'false'
+      id: gpg
+      uses: crazy-max/ghaction-import-gpg@v7
+      with:
+        gpg_private_key: ${{ secrets.PGP_SECRET }}
+        passphrase: ${{ secrets.PGP_PASSPHRASE }}
+    - name: Publish
+      if: steps.published.outputs.already == 'false'
+      run: |
+        if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$MODE" = "upload" ]; then
+          sbt -batch publishSigned sonaUpload
+          echo "::notice::ScalaZ3 $VERSION uploaded; publish or drop it in the Central Portal"
+        else
+          sbt -batch publishSigned sonaRelease
+          echo "::notice::ScalaZ3 $VERSION released; it shows up on Maven Central within about 30 minutes"
+        fi
+      env:
+        MODE: ${{ inputs.mode }}
+        PGP_FINGERPRINT: ${{ steps.gpg.outputs.fingerprint }}
+        PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+        SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+        SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}

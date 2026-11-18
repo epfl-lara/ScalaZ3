@@ -28,6 +28,26 @@ lazy val root = (project in file("."))
         .filter(_.getName.startsWith("scala")).mkString(java.io.File.pathSeparator)}",
     ),
 
+    // Publishing to Maven Central (see .github/workflows/release.yml): `sbt publishSigned` signs
+    // the artifacts and stages them locally, `sbt sonaRelease` uploads them to the Central Portal
+    // and releases them (`sbt sonaUpload` only uploads them, to inspect them in the Portal first).
+    // Both read the Portal token from SONATYPE_USERNAME and SONATYPE_PASSWORD.
+    description := "Scala bindings for the Z3 SMT solver, with Z3 for Linux, macOS and Windows",
+    homepage := Some(url("https://github.com/epfl-lara/ScalaZ3")),
+    licenses := Seq("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0")),
+    scmInfo := Some(ScmInfo(
+      url("https://github.com/epfl-lara/ScalaZ3"),
+      "scm:git:git@github.com:epfl-lara/ScalaZ3.git",
+    )),
+    developers := List(
+      Developer("epfl-lara", "EPFL Lab for Automated Reasoning and Analysis", "lara.maven@epfl.ch", url("https://lara.epfl.ch")),
+    ),
+    publishMavenStyle := true,
+    pomIncludeRepository := { _ => false },
+    publishTo := localStaging.value,
+    // The key that signs the artifacts, when the keyring holds several
+    pgpSigningKey := sys.env.get("PGP_FINGERPRINT"),
+
     z3Version := version.value,
     z3JarSha256 := "8399700e2dd33eb538de53e7d087bcb1ba8214ea66571daf3330f0c600ab4aa2",
     Z3Jar.settings,

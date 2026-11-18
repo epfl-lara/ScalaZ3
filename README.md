@@ -28,7 +28,7 @@ the Z3 JAR, so that it is all you need on the class path, and the same JAR is us
 Compiling ScalaZ3
 -----------------
 
-You should have Java and SBT 1.x installed. Run
+You should have Java 21 or later and SBT 1.x installed. Run
 
     sbt package
 
@@ -54,6 +54,8 @@ Compile / unmanagedJars += baseDirectory.value / "unmanaged" / "scalaz3_3-5.4.1.
 
 ScalaZ3 includes the Z3 Java bindings (`com.microsoft.z3`): do not put another version of them on
 the class path.
+
+ScalaZ3 runs on Java 21 and later.
 
 ### Loading the native libraries
 

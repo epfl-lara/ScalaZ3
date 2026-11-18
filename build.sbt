@@ -11,7 +11,7 @@ lazy val root = (project in file("."))
       "-unchecked",
       "-feature",
     ),
-    scalaVersion := "3.3.7",
+    scalaVersion := "3.9.0",
     // ScalaZ3 runs on Java 21 and later, whatever the JDK it is built with.
     javacOptions ++= Seq("--release", "21"),
     scalacOptions ++= Seq("-release", "21"),

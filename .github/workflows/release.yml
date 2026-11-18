@@ -54,6 +54,17 @@ jobs:
         cache: sbt
     - name: Setup sbt
       uses: sbt/setup-sbt@v1
+    # Downloads sbt and the build's plugins, retrying: Maven Central sometimes answers 404 for
+    # files it has, which would otherwise fail the job.
+    - name: Fetch sbt
+      shell: bash
+      run: |
+        for attempt in 1 2 3; do
+          sbt -batch sbtVersion && exit 0
+          echo "::warning::Fetching sbt failed (attempt $attempt), retrying in 30s"
+          sleep 30
+        done
+        exit 1
     # The build downloads the Z3 JAR (about 54MB) to z3/; its checksum is in build.sbt.
     - name: Cache the Z3 JAR
       uses: actions/cache@v6

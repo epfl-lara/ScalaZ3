@@ -130,14 +130,12 @@ jobs:
         passphrase: ${{ secrets.PGP_PASSPHRASE }}
     - name: Publish to Maven Central
       if: steps.published.outputs.already == 'false'
-      # sbt signs and stages the artifacts; the script uploads them, reporting the Portal's errors
-      # (sbt's sonaUpload/sonaRelease retried silently, then hung)
       run: |
-        sbt --server -batch publishSigned
-        scripts/central-upload.sh "$MODE"
         if [ "$MODE" = "upload" ]; then
+          sbt --server -batch publishSigned sonaUpload
           echo "::notice::ScalaZ3 $VERSION uploaded: publish or drop it in the Central Portal. No tag or release was created."
         else
+          sbt --server -batch publishSigned sonaRelease
           echo "::notice::ScalaZ3 $VERSION released; it shows up on Maven Central within about 30 minutes"
         fi
       env:

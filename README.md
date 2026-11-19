@@ -110,6 +110,4 @@ To check a release before it goes out, choose the mode `upload` instead: it only
 artifacts to the [Central Portal](https://central.sonatype.com/publishing/deployments), to publish
 or drop them there, and creates neither the tag nor the release.
 
-Locally, `sbt publishSigned` signs the artifacts and stages them in `target/sona-staging`, and
-`scripts/central-upload.sh upload` (or `release`) uploads them to the Central Portal, with
-`SONATYPE_USERNAME` and `SONATYPE_PASSWORD` set.
+Locally, `sbt publishSigned` signs the artifacts and stages them in `target/sona-staging`.

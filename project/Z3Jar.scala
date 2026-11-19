@@ -5,6 +5,8 @@ import java.net.{HttpURLConnection, URI}
 import java.nio.file.{Files, StandardCopyOption}
 import java.security.MessageDigest
 
+import xsbti.HashedVirtualFileRef
+
 /** Fetches the official Z3 Java distribution.
   *
   * Z3 publishes, with each release, a single JAR which contains the Java bindings
@@ -20,7 +22,7 @@ object Z3Jar {
   val z3JarSha256 = settingKey[String]("Expected SHA-256 checksum of the all-platforms Z3 JAR")
   val z3JarFile = settingKey[File]("Where the all-platforms Z3 JAR is stored locally")
   val z3Jar     = taskKey[File]("Downloads (if needed) and verifies the all-platforms Z3 JAR")
-  val z3JarContents = taskKey[Seq[(File, String)]]("The files of the all-platforms Z3 JAR, to bundle in ScalaZ3's")
+  val z3JarContents = taskKey[Seq[(HashedVirtualFileRef, String)]]("The files of the all-platforms Z3 JAR, to bundle in ScalaZ3's")
 
   def sha256(file: File): String = {
     val digest = MessageDigest.getInstance("SHA-256")
@@ -46,7 +48,7 @@ object Z3Jar {
     } finally conn.disconnect()
   }
 
-  lazy val settings: Seq[Setting[_]] = Seq(
+  lazy val settings: Seq[Setting[?]] = Seq(
     z3JarUrl :=
       s"https://github.com/Z3Prover/z3/releases/download/z3-${z3Version.value}/z3-${z3Version.value}-all.jar",
 
@@ -54,7 +56,8 @@ object Z3Jar {
     z3JarFile := sys.props.get("scalaz3.z3jar").map(file)
       .getOrElse(baseDirectory.value / "z3" / s"z3-${z3Version.value}-all.jar"),
 
-    z3Jar := {
+    // Not cached by sbt: it checks the file itself
+    z3Jar := Def.uncached {
       val log = streams.value.log
       val jar = z3JarFile.value
       val expected = z3JarSha256.value
@@ -87,10 +90,12 @@ object Z3Jar {
       jar
     },
 
-    Compile / unmanagedJars += Attributed.blank(z3Jar.value),
+    Compile / unmanagedJars += Def.uncached(
+      Attributed.blank[HashedVirtualFileRef](fileConverter.value.toVirtualFile(z3Jar.value.toPath))),
 
     // The Z3 JAR is merged into ScalaZ3's own, so that the latter is all one needs on the class path.
-    z3JarContents := {
+    // Not cached by sbt: the result is a list of files of target/, which sbt doesn't cache
+    z3JarContents := Def.uncached {
       val jar = z3Jar.value
       val dir = target.value / "z3-jar-contents" / jar.base
       val stamp = dir / ".unzipped"
@@ -99,7 +104,9 @@ object Z3Jar {
         IO.unzip(jar, dir)
         IO.touch(stamp)
       }
-      (dir ** "*").get.filter(f => f.isFile && f != stamp).map(f => f -> IO.relativize(dir, f).get.replace('\\', '/'))
+      val converter = fileConverter.value
+      (dir ** "*").get().filter(f => f.isFile && f != stamp)
+        .map(f => (converter.toVirtualFile(f.toPath): HashedVirtualFileRef) -> IO.relativize(dir, f).get.replace('\\', '/'))
         .filterNot(_._2 == "META-INF/MANIFEST.MF")
     },
 

@@ -49,7 +49,7 @@ jobs:
       shell: bash
       run: |
         for attempt in 1 2 3; do
-          sbt -batch sbtVersion && exit 0
+          sbt --server -batch sbtVersion && exit 0
           echo "::warning::Fetching sbt failed (attempt $attempt), retrying in 30s"
           sleep 30
         done
@@ -62,7 +62,7 @@ jobs:
         key: z3-jar-${{ hashFiles('build.sbt') }}
     - name: Test
       shell: bash
-      run: sbt -batch test
+      run: sbt --server -batch test
     - name: Upload the test reports
       if: failure()
       uses: actions/upload-artifact@v7
@@ -91,7 +91,7 @@ jobs:
       shell: bash
       run: |
         for attempt in 1 2 3; do
-          sbt -batch sbtVersion && exit 0
+          sbt --server -batch sbtVersion && exit 0
           echo "::warning::Fetching sbt failed (attempt $attempt), retrying in 30s"
           sleep 30
         done
@@ -102,9 +102,9 @@ jobs:
         path: z3
         key: z3-jar-${{ hashFiles('build.sbt') }}
     - name: Package
-      run: sbt -batch package
+      run: sbt --server -batch package
     - name: Upload the JAR
       uses: actions/upload-artifact@v7
       with:
         name: scalaz3
-        path: target/scala-*/scalaz3_*.jar
+        path: target/out/jvm/scala-*/scalaz3/scalaz3_*.jar

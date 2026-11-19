@@ -28,11 +28,11 @@ the Z3 JAR, so that it is all you need on the class path, and the same JAR is us
 Compiling ScalaZ3
 -----------------
 
-You should have Java 21 or later and SBT 1.x installed. Run
+You should have Java 21 or later and sbt installed (the build uses sbt 2). Run
 
     sbt package
 
-to get `target/scala-3.3.7/scalaz3_3-5.4.1.jar` (about 55MB). The build downloads the Z3 JAR in
+to get `target/out/jvm/scala-3.9.0/scalaz3/scalaz3_3-5.4.1.jar` (about 55MB). The build downloads the Z3 JAR in
 `z3/`, checks it against the SHA-256 checksum recorded in `build.sbt`, and bundles its content. To build from a copy you already
 have (e.g. when offline), run `sbt -Dscalaz3.z3jar=/path/to/z3-5.4.1-all.jar package`.
 

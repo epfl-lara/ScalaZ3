@@ -617,6 +617,10 @@ sealed class Z3Context(val config: Map[String, String]) {
     new Z3AST(Native.mkSeqAt(this.ptr, seq.ptr, i.ptr), this)
   }
 
+  def mkSeqNth(seq: Z3AST, n: Z3AST): Z3AST = {
+    new Z3AST(Native.mkSeqNth(this.ptr, seq.ptr, n.ptr), this)
+  }
+
   def mkSeqExtract(seq: Z3AST, start: Z3AST, length: Z3AST): Z3AST = {
     new Z3AST(Native.mkSeqExtract(this.ptr, seq.ptr, start.ptr, length.ptr), this)
   }
